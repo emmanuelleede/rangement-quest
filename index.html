@@ -492,6 +492,87 @@
       }
     };
 
+    window.cleanCheckerboardBackground = function (imgEl) {
+      try {
+        if (!imgEl || imgEl.dataset.cleaned === '1') return;
+        const w = imgEl.naturalWidth;
+        const h = imgEl.naturalHeight;
+        if (!w || !h || w > 1200 || h > 1200) return;
+
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        ctx.drawImage(imgEl, 0, 0);
+        const imgData = ctx.getImageData(0, 0, w, h);
+        const data = imgData.data;
+
+        const isCheckerPixel = (pxIdx) => {
+          const r = data[pxIdx];
+          const g = data[pxIdx + 1];
+          const b = data[pxIdx + 2];
+          const a = data[pxIdx + 3];
+          if (a === 0) return true;
+          const maxDiff = Math.max(Math.abs(r - g), Math.abs(g - b), Math.abs(r - b));
+          if (maxDiff > 14) return false;
+          const isLightSquare = r >= 200 && g >= 200 && b >= 200;
+          const isGreySquare = r >= 130 && r <= 199 && g >= 130 && g <= 199 && b >= 130 && b <= 199;
+          return isLightSquare || isGreySquare;
+        };
+
+        const totalPixels = w * h;
+        const visited = new Uint8Array(totalPixels);
+        const queue = [];
+
+        const pushIfChecker = (x, y) => {
+          if (x < 0 || y < 0 || x >= w || y >= h) return;
+          const pIdx = y * w + x;
+          if (visited[pIdx]) return;
+          const dIdx = pIdx * 4;
+          if (isCheckerPixel(dIdx)) {
+            visited[pIdx] = 1;
+            queue.push(pIdx);
+          }
+        };
+
+        for (let x = 0; x < w; x++) {
+          pushIfChecker(x, 0);
+          pushIfChecker(x, h - 1);
+        }
+        for (let y = 0; y < h; y++) {
+          pushIfChecker(0, y);
+          pushIfChecker(w - 1, y);
+        }
+
+        let head = 0;
+        while (head < queue.length) {
+          const pIdx = queue[head++];
+          const x = pIdx % w;
+          const y = (pIdx - x) / w;
+          pushIfChecker(x + 1, y);
+          pushIfChecker(x - 1, y);
+          pushIfChecker(x, y + 1);
+          pushIfChecker(x, y - 1);
+        }
+
+        let removedCount = 0;
+        for (let pIdx = 0; pIdx < totalPixels; pIdx++) {
+          if (visited[pIdx]) {
+            data[pIdx * 4 + 3] = 0;
+            removedCount++;
+          }
+        }
+
+        if (removedCount > 0) {
+          ctx.putImageData(imgData, 0, 0);
+          imgEl.dataset.cleaned = '1';
+          imgEl.src = canvas.toDataURL('image/png');
+        }
+      } catch (e) {}
+    };
+
     function buildPetVisualHTML(speciesId, options = {}) {
       const {
         size = 'lg',
@@ -555,6 +636,7 @@
                 data-candidates="${encodedCandidates}"
                 data-idx="0"
                 class="${sz.img} w-auto object-contain drop-shadow-[0_14px_22px_rgba(0,0,0,0.55)]"
+                onload="cleanCheckerboardBackground(this)"
                 onerror="handlePetImageError(this)"
               />
               <div class="pet-emoji-fallback hidden items-center justify-center w-full h-full ${sz.emoji}">${sp.emoji}</div>
@@ -716,7 +798,6 @@
       const main = document.getElementById('main-content');
       if (!main) return;
 
-      const sp = SPECIES_DATA[state.species] || SPECIES_DATA.loutre;
       const stageInfo = getStageInfoFromXp(state.xp);
       const hab = HABITAT_THEMES[state.equippedHabitat] || HABITAT_THEMES.hab_clearing;
 
