@@ -39,12 +39,13 @@
     }
 
     @keyframes petBounce {
-      0%, 100% { transform: scale(1); }
-      35% { transform: scale(1.08) translateY(-8px); }
-      70% { transform: scale(0.96); }
+      0%, 100% { transform: scale(1) rotate(0deg); }
+      25% { transform: scale(1.1) translateY(-10px) rotate(-3deg); }
+      50% { transform: scale(1.05) translateY(-4px) rotate(3deg); }
+      75% { transform: scale(1.08) translateY(-8px) rotate(-2deg); }
     }
     .anim-bounce {
-      animation: petBounce 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+      animation: petBounce 0.65s cubic-bezier(0.34, 1.56, 0.64, 1) infinite;
     }
 
     @keyframes sparkleFloat {
@@ -427,10 +428,10 @@
 
     // Paliers d'évolution équilibrés pour durer sur plusieurs sessions de rangement
     const EVOLUTION_STAGES = [
-      { level: 1, label: 'Nouveau-né', minXp: 0, era: 'baby' },
+      { level: 1, label: 'Nouveau-né', minXp: 0, era: 'newborn' },
       { level: 2, label: 'Bébé', minXp: 100, era: 'baby' },
-      { level: 3, label: 'Junior', minXp: 250, era: 'grown' },
-      { level: 4, label: 'Adulte', minXp: 450, era: 'grown' }
+      { level: 3, label: 'Junior', minXp: 250, era: 'junior' },
+      { level: 4, label: 'Adulte', minXp: 450, era: 'adult' }
     ];
 
     // Habitats (aucun équipé au départ)
@@ -440,6 +441,7 @@
         name: 'Aucun habitat équipé',
         localBg: null,
         gradient: 'radial-gradient(circle at 50% 42%, #1E293B 0%, #0F172A 65%, #090D16 100%)',
+        borderClass: 'border-[#253044]',
         badgeIcon: '🏠',
         decorTop: [],
         decorBottom: []
@@ -448,76 +450,100 @@
         id: 'hab_clearing',
         name: 'Clairière Enchantée',
         localBg: 'images/clairiere.jpg',
-        gradient: 'radial-gradient(circle at 50% 35%, #164E3F 0%, #0F2922 58%, #091512 100%)',
+        gradient: 'radial-gradient(circle at 50% 30%, #10B981 0%, #065F46 48%, #06281E 100%)',
+        borderClass: 'border-emerald-400/50',
         badgeIcon: '🌿',
-        decorTop: ['✨', '🍃', '✨'],
-        decorBottom: ['🍄', '🌿', '🪵']
+        decorTop: ['✨', '🍃', '🦋', '✨'],
+        decorBottom: ['🍄', '🌿', '🌸', '🪵']
       },
       hab_cozy: {
         id: 'hab_cozy',
         name: 'Salon Cosy',
         localBg: 'images/salon.jpg',
-        gradient: 'radial-gradient(circle at 50% 35%, #5C3317 0%, #2D1810 58%, #160C08 100%)',
+        gradient: 'radial-gradient(circle at 50% 30%, #D97706 0%, #78350F 48%, #291206 100%)',
+        borderClass: 'border-amber-400/50',
         badgeIcon: '🕯️',
-        decorTop: ['🕯️', '✨', '🕯️'],
-        decorBottom: ['🛋️', '🧶', '📚']
+        decorTop: ['🕯️', '✨', '🧶', '🕯️'],
+        decorBottom: ['🛋️', '📚', '🧸', '☕']
       },
       hab_crystal: {
         id: 'hab_crystal',
         name: 'Grotte aux Cristaux',
         localBg: 'images/grotte.jpg',
-        gradient: 'radial-gradient(circle at 50% 35%, #1E3A8A 0%, #172554 58%, #0B1120 100%)',
+        gradient: 'radial-gradient(circle at 50% 30%, #3B82F6 0%, #1E3A8A 48%, #0B1437 100%)',
+        borderClass: 'border-sky-400/50',
         badgeIcon: '💎',
-        decorTop: ['💠', '✨', '💠'],
-        decorBottom: ['💎', '🪨', '💧']
+        decorTop: ['💎', '✨', '💠', '💎'],
+        decorBottom: ['🔮', '💎', '🌊', '🪨']
       },
       hab_space: {
         id: 'hab_space',
         name: 'Observatoire Spatial',
-        localBg: 'images/observatoire.jpg',
-        gradient: 'radial-gradient(circle at 50% 35%, #3B1D6E 0%, #1E1035 58%, #090514 100%)',
+        localBg: 'images/espace.jpg',
+        gradient: 'radial-gradient(circle at 50% 30%, #9333EA 0%, #3B0764 48%, #0D041C 100%)',
+        borderClass: 'border-purple-400/50',
         badgeIcon: '🪐',
-        decorTop: ['🌟', '🪐', '✨'],
-        decorBottom: ['🔭', '☄️', '🛸']
+        decorTop: ['⭐', '🪐', '🌙', '🌟'],
+        decorBottom: ['🔭', '🚀', '☄️', '✨']
       }
     };
 
-    // Objets de boutique adaptés à l'âge :
-    // - era: 'baby' (Nouveau-né & Bébé)
-    // - era: 'grown' (Junior & Adulte)
+    // Objets de boutique adaptés à chaque stade d'évolution :
+    // - era: 'newborn' (Nouveau-né)
+    // - era: 'baby' (Bébé)
+    // - era: 'junior' (Junior)
+    // - era: 'adult' (Adulte)
     // - era: 'all' (Habitats)
     const SHOP_ITEMS = [
-      // --- ACCESSOIRES BÉBÉ (4 cases max à côté de l'animal) ---
-      { id: 'baby_bottle', category: 'accessory', era: 'baby', name: 'Biberon Magique', desc: 'Un biberon tiède étoilé pour bien grandir.', icon: '🍼', price: 30 },
-      { id: 'baby_plush', category: 'accessory', era: 'baby', name: 'Doudou Tout-Doux', desc: 'Son compagnon câlin pour la sieste.', icon: '🧸', price: 40 },
-      { id: 'baby_duck', category: 'accessory', era: 'baby', name: 'Canard de Bain', desc: 'Un petit compagnon rigolo à ses côtés.', icon: '🦆', price: 50 },
-      { id: 'baby_cushion', category: 'accessory', era: 'baby', name: 'Coussin Nuage', desc: 'Un coussin moelleux pour se reposer.', icon: '🛏️', price: 65 },
-      { id: 'baby_rattle', category: 'accessory', era: 'baby', name: 'Hochet Étoilé', desc: 'Tinte doucement après chaque rangement.', icon: '🎐', price: 75 },
-      { id: 'baby_nightlight', category: 'accessory', era: 'baby', name: 'Veilleuse Lune', desc: 'Une douce lumière rassurante la nuit.', icon: '🌙', price: 90 },
+      // --- ACCESSOIRES NOUVEAU-NÉ (0 - 99 XP) ---
+      { id: 'nb_bottle', category: 'accessory', era: 'newborn', name: 'Biberon Magique', desc: 'Un biberon tiède étoilé pour bien grandir.', icon: '🍼', price: 25 },
+      { id: 'nb_plush', category: 'accessory', era: 'newborn', name: 'Doudou Tout-Doux', desc: 'Son compagnon câlin pour la sieste.', icon: '🧸', price: 35 },
+      { id: 'nb_yarn', category: 'accessory', era: 'newborn', name: 'Pelote Douillette', desc: 'Une boule toute douce pour se blottir.', icon: '🧶', price: 45 },
+      { id: 'nb_nightlight', category: 'accessory', era: 'newborn', name: 'Veilleuse Lune', desc: 'Une douce lumière rassurante la nuit.', icon: '🌙', price: 60 },
 
-      // --- ACCESSOIRES GRAND (Junior & Adulte) ---
-      { id: 'grown_glasses', category: 'accessory', era: 'grown', name: 'Lunettes Explorateur', desc: 'Pour repérer le moindre objet qui traîne.', icon: '👓', price: 45 },
-      { id: 'grown_bag', category: 'accessory', era: 'grown', name: 'Sac d’Aventure', desc: 'Prêt pour toutes les grandes expéditions.', icon: '🎒', price: 60 },
-      { id: 'grown_compass', category: 'accessory', era: 'grown', name: 'Boussole Astrale', desc: 'Indique toujours la bonne étagère.', icon: '🧭', price: 75 },
-      { id: 'grown_lantern', category: 'accessory', era: 'grown', name: 'Lanterne Féerique', desc: 'Éclaire les recoins secrets de la chambre.', icon: '🏮', price: 90 },
-      { id: 'grown_book', category: 'accessory', era: 'grown', name: 'Grimoire des Quêtes', desc: 'Contient tous les secrets des champions.', icon: '📖', price: 105 },
-      { id: 'grown_crown', category: 'accessory', era: 'grown', name: 'Couronne Champion', desc: 'La récompense ultime des maîtres du rangement.', icon: '👑', price: 130 },
+      // --- ACCESSOIRES BÉBÉ (100 - 249 XP) ---
+      { id: 'baby_duck', category: 'accessory', era: 'baby', name: 'Canard de Bain', desc: 'Un petit compagnon rigolo pour jouer.', icon: '🦆', price: 35 },
+      { id: 'baby_ball', category: 'accessory', era: 'baby', name: 'Balle Rebondissante', desc: 'Parfaite pour se dégourdir les pattes.', icon: '⚽', price: 45 },
+      { id: 'baby_rattle', category: 'accessory', era: 'baby', name: 'Carillon Étoilé', desc: 'Tinte doucement après chaque rangement.', icon: '🎐', price: 60 },
+      { id: 'baby_bow', category: 'accessory', era: 'baby', name: 'Ruban Joyeux', desc: 'Un joli nœud coloré pour les jeunes joueurs.', icon: '🎀', price: 75 },
+
+      // --- ACCESSOIRES JUNIOR (250 - 449 XP) ---
+      { id: 'jun_glasses', category: 'accessory', era: 'junior', name: 'Lunettes Explorateur', desc: 'Pour repérer le moindre objet qui traîne.', icon: '👓', price: 45 },
+      { id: 'jun_bag', category: 'accessory', era: 'junior', name: 'Sac d’Aventure', desc: 'Prêt pour toutes les grandes expéditions.', icon: '🎒', price: 60 },
+      { id: 'jun_compass', category: 'accessory', era: 'junior', name: 'Boussole Astrale', desc: 'Indique toujours la bonne étagère.', icon: '🧭', price: 75 },
+      { id: 'jun_skateboard', category: 'accessory', era: 'junior', name: 'Planche Agile', desc: 'Pour foncer ranger toute la chambre.', icon: '🛹', price: 95 },
+
+      // --- ACCESSOIRES ADULTE (450+ XP) ---
+      { id: 'adu_lantern', category: 'accessory', era: 'adult', name: 'Lanterne Féerique', desc: 'Éclaire les recoins secrets du sanctuaire.', icon: '🏮', price: 60 },
+      { id: 'adu_book', category: 'accessory', era: 'adult', name: 'Grimoire des Quêtes', desc: 'Contient tous les secrets des champions.', icon: '📖', price: 85 },
+      { id: 'adu_trophy', category: 'accessory', era: 'adult', name: 'Trophée Légendaire', desc: 'Symbole des plus grands maîtres du rangement.', icon: '🏆', price: 110 },
+      { id: 'adu_crown', category: 'accessory', era: 'adult', name: 'Couronne Royale', desc: 'La récompense ultime de ton compagnon adulte.', icon: '👑', price: 140 },
 
       // --- HABITATS (Tous à débloquer) ---
       { id: 'hab_clearing', category: 'habitat', era: 'all', name: 'Clairière Enchantée', desc: 'Un coin de forêt paisible sous les guirlandes.', icon: '🌿', price: 45 },
-      { id: 'hab_cozy', category: 'habitat', era: 'all', name: 'Salon Cosy', desc: 'Un fauteuil moelleux et une ambiance chaleureuse.', icon: '🕯️', price: 80 },
+      { id: 'hab_cozy', category: 'habitat', era: 'all', name: 'Salon Cosy', desc: 'Une ambiance chaleureuse et réconfortante.', icon: '🕯️', price: 80 },
       { id: 'hab_crystal', category: 'habitat', era: 'all', name: 'Grotte aux Cristaux', desc: 'Des cristaux lumineux et une source paisible.', icon: '💎', price: 120 },
       { id: 'hab_space', category: 'habitat', era: 'all', name: 'Observatoire Spatial', desc: 'Un dôme vitré face aux étoiles et planètes.', icon: '🪐', price: 160 },
 
-      // --- FRIANDISES & REPAS BÉBÉ ---
-      { id: 'baby_milk', category: 'care', era: 'baby', effectEnergy: 15, effectXp: 5, name: 'Lait Chaud Étoilé', desc: 'Redonne +15% d’énergie et +5 XP.', icon: '🥛', price: 15 },
-      { id: 'baby_compote', category: 'care', era: 'baby', effectEnergy: 25, effectXp: 10, name: 'Compote Douce', desc: 'Redonne +25% d’énergie et +10 XP.', icon: '🥣', price: 25 },
-      { id: 'baby_brioche', category: 'care', era: 'baby', effectEnergy: 40, effectXp: 20, name: 'Brioche Nuage', desc: 'Redonne +40% d’énergie et +20 XP.', icon: '🥐', price: 40 },
+      // --- FRIANDISES & REPAS NOUVEAU-NÉ ---
+      { id: 'nb_milk', category: 'care', era: 'newborn', effectEnergy: 15, effectXp: 5, name: 'Lait Chaud Étoilé', desc: 'Redonne +15% d’énergie et +5 XP.', icon: '🥛', price: 15 },
+      { id: 'nb_compote', category: 'care', era: 'newborn', effectEnergy: 25, effectXp: 10, name: 'Compote Douce', desc: 'Redonne +25% d’énergie et +10 XP.', icon: '🥣', price: 25 },
+      { id: 'nb_brioche', category: 'care', era: 'newborn', effectEnergy: 40, effectXp: 20, name: 'Brioche Nuage', desc: 'Redonne +40% d’énergie et +20 XP.', icon: '🥐', price: 40 },
 
-      // --- FRIANDISES & REPAS GRAND (Junior & Adulte) ---
-      { id: 'grown_apple', category: 'care', era: 'grown', effectEnergy: 15, effectXp: 10, name: 'Pomme Croquante', desc: 'Redonne +15% d’énergie et +10 XP.', icon: '🍎', price: 20 },
-      { id: 'grown_pie', category: 'care', era: 'grown', effectEnergy: 30, effectXp: 20, name: 'Tarte aux Baies', desc: 'Redonne +30% d’énergie et +20 XP.', icon: '🥧', price: 35 },
-      { id: 'grown_feast', category: 'care', era: 'grown', effectEnergy: 50, effectXp: 35, name: 'Grand Banquet', desc: 'Redonne +50% d’énergie et +35 XP.', icon: '🍲', price: 55 }
+      // --- FRIANDISES & REPAS BÉBÉ ---
+      { id: 'baby_strawberry', category: 'care', era: 'baby', effectEnergy: 15, effectXp: 8, name: 'Fraises des Bois', desc: 'Redonne +15% d’énergie et +8 XP.', icon: '🍓', price: 18 },
+      { id: 'baby_pancake', category: 'care', era: 'baby', effectEnergy: 30, effectXp: 15, name: 'Crêpe Dorée', desc: 'Redonne +30% d’énergie et +15 XP.', icon: '🥞', price: 30 },
+      { id: 'baby_honey', category: 'care', era: 'baby', effectEnergy: 45, effectXp: 25, name: 'Pot de Miel Doré', desc: 'Redonne +45% d’énergie et +25 XP.', icon: '🍯', price: 45 },
+
+      // --- FRIANDISES & REPAS JUNIOR ---
+      { id: 'jun_apple', category: 'care', era: 'junior', effectEnergy: 15, effectXp: 10, name: 'Pomme Croquante', desc: 'Redonne +15% d’énergie et +10 XP.', icon: '🍎', price: 20 },
+      { id: 'jun_pie', category: 'care', era: 'junior', effectEnergy: 30, effectXp: 20, name: 'Tarte aux Baies', desc: 'Redonne +30% d’énergie et +20 XP.', icon: '🥧', price: 35 },
+      { id: 'jun_ramen', category: 'care', era: 'junior', effectEnergy: 50, effectXp: 30, name: 'Bol Énergétique', desc: 'Redonne +50% d’énergie et +30 XP.', icon: '🍜', price: 50 },
+
+      // --- FRIANDISES & REPAS ADULTE ---
+      { id: 'adu_peach', category: 'care', era: 'adult', effectEnergy: 20, effectXp: 12, name: 'Pêche Solaire', desc: 'Redonne +20% d’énergie et +12 XP.', icon: '🍑', price: 25 },
+      { id: 'adu_feast', category: 'care', era: 'adult', effectEnergy: 40, effectXp: 25, name: 'Grand Banquet', desc: 'Redonne +40% d’énergie et +25 XP.', icon: '🍲', price: 45 },
+      { id: 'adu_cake', category: 'care', era: 'adult', effectEnergy: 60, effectXp: 40, name: 'Gâteau Céleste', desc: 'Redonne +60% d’énergie et +40 XP.', icon: '🎂', price: 65 }
     ];
 
     // Défis à contrainte classés par difficulté avec timer minimum verrouillé
@@ -573,7 +599,7 @@
         equippedHabitat: 'none',
         // 4 cases latérales autour de l'animal (index 0, 1 à gauche ; 2, 3 à droite)
         equippedSlots: [null, null, null, null],
-        lastEra: 'baby',
+        lastEra: 'newborn',
         lastActiveAt: Date.now()
       };
     }
@@ -663,18 +689,16 @@
       return getStageInfoFromXp(state.xp).current.era;
     }
 
-    // Ajoute de l'XP et vide automatiquement les 4 cases d'accessoires quand il passe Junior
+    // Ajoute de l'XP et vide automatiquement les 4 cases d'accessoires à chaque changement de stade
     function grantXp(amount) {
       const prevStage = getStageInfoFromXp(state.xp);
       state.xp += amount;
       const newStage = getStageInfoFromXp(state.xp);
 
-      if (prevStage.current.era === 'baby' && newStage.current.era === 'grown') {
+      if (newStage.index > prevStage.index) {
         state.equippedSlots = [null, null, null, null];
-        state.lastEra = 'grown';
+        state.lastEra = newStage.current.era;
         showToast(`🎉 ${state.petName} devient ${newStage.current.label} ! Nouveaux objets en boutique !`, 'success');
-      } else if (newStage.index > prevStage.index) {
-        showToast(`✨ Évolution ! ${state.petName} est maintenant ${newStage.current.label} !`, 'success');
       }
     }
 
@@ -750,9 +774,9 @@
       return `
         <div class="absolute inset-0 overflow-hidden pointer-events-none">
           ${hab.localBg
-            ? renderLocalImageWithFallback([hab.localBg], hab.name, 'w-full h-full object-cover opacity-75', '', fallbackBg)
+            ? renderLocalImageWithFallback([hab.localBg], hab.name, 'w-full h-full object-cover opacity-90', '', fallbackBg)
             : fallbackBg}
-          <div class="absolute inset-0 bg-gradient-to-b from-[#0D1117]/40 via-transparent to-[#0D1117]/80"></div>
+          <div class="absolute inset-0 bg-gradient-to-b from-[#0D1117]/20 via-transparent to-[#0D1117]/55"></div>
         </div>
       `;
     }
@@ -788,9 +812,9 @@
       ` : '';
 
       const eatingBadge = eatingItem
-        ? `<div class="mt-1 px-2.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-400/40 text-amber-200 text-[11px] font-semibold flex items-center gap-1 animate-bounce whitespace-nowrap">
+        ? `<div class="mt-1 px-3 py-1 rounded-full bg-amber-500/25 border border-amber-400/50 text-amber-100 text-xs font-bold flex items-center gap-1.5 animate-bounce whitespace-nowrap shadow-lg">
              <span>${eatingItem.icon}</span>
-             <span>Miam !</span>
+             <span>Miam ! 💖</span>
            </div>`
         : '';
 
@@ -998,9 +1022,13 @@
         ? 'bg-emerald-500'
         : (state.energy >= 25 ? 'bg-amber-500' : 'bg-rose-500');
 
-      const quickFood = era === 'baby'
-        ? { id: 'baby_milk', icon: '🥛', label: 'Lait', price: 15, energy: 15, xp: 5 }
-        : { id: 'grown_apple', icon: '🍎', label: 'Pomme', price: 20, energy: 15, xp: 10 };
+      const quickFoodByEra = {
+        newborn: { id: 'nb_milk', icon: '🥛', label: 'Lait', price: 15, energy: 15, xp: 5 },
+        baby: { id: 'baby_strawberry', icon: '🍓', label: 'Fraises', price: 18, energy: 15, xp: 8 },
+        junior: { id: 'jun_apple', icon: '🍎', label: 'Pomme', price: 20, energy: 15, xp: 10 },
+        adult: { id: 'adu_peach', icon: '🍑', label: 'Pêche', price: 25, energy: 20, xp: 12 }
+      };
+      const quickFood = quickFoodByEra[era] || quickFoodByEra.newborn;
 
       const topDecorHtml = (hab.decorTop && hab.decorTop.length)
         ? `<div class="flex items-center justify-center gap-6 text-sm opacity-80 select-none pointer-events-none">${hab.decorTop.map((d) => `<span>${d}</span>`).join('')}</div>`
@@ -1030,7 +1058,7 @@
           </div>
 
           <!-- Carte principale du compagnon (mise en page en flux vertical sans superposition) -->
-          <div id="pet-stage-card" class="relative rounded-3xl border border-[#253044] overflow-hidden shadow-xl">
+          <div id="pet-stage-card" class="relative rounded-3xl border ${hab.borderClass || 'border-[#253044]'} overflow-hidden shadow-xl transition-all duration-500">
             ${buildHabitatBackdropHTML(state.equippedHabitat)}
 
             <div class="relative z-10 p-4 flex flex-col gap-3">
@@ -1118,9 +1146,7 @@
                 <div class="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full transition-all duration-500" style="width: ${xpProgressPct}%"></div>
               </div>
               <p class="text-[11px] text-slate-400">
-                ${era === 'baby'
-                  ? 'Équipements actuels : gamme Bébé (4 cases autour de lui).'
-                  : 'Équipements actuels : gamme Grand explorateur.'}
+                Collection active : <span class="text-slate-200 font-semibold">${stageInfo.current.label}</span> (4 cases d'accessoires autour de lui).
               </p>
             </div>
           </div>
@@ -1129,31 +1155,41 @@
       `;
     }
 
+    function spawnJoyParticles() {
+      const card = document.getElementById('pet-stage-card');
+      if (!card) return;
+      const icons = ['💖', '✨', '😋', '💛'];
+      icons.forEach((sym, i) => {
+        const p = document.createElement('div');
+        p.className = 'floating-particle absolute z-30 text-xl';
+        p.style.left = `${36 + i * 9}%`;
+        p.style.top = `${42 + (i % 2) * 8}%`;
+        p.style.animationDelay = `${i * 0.08}s`;
+        p.textContent = sym;
+        card.appendChild(p);
+        setTimeout(() => p.remove(), 1100);
+      });
+    }
+
     function petCompanion(event) {
       sfxPet();
       state.energy = Math.min(100, state.energy + 3);
       state.lastActiveAt = Date.now();
       saveState();
 
-      const card = document.getElementById('pet-stage-card');
-      if (card) {
-        const heart = document.createElement('div');
-        heart.className = 'floating-particle absolute z-30 text-xl';
-        heart.style.left = '50%';
-        heart.style.top = '45%';
-        heart.textContent = '💖';
-        card.appendChild(heart);
-        setTimeout(() => heart.remove(), 900);
-      }
-
       renderSanctuary();
+      spawnJoyParticles();
     }
 
     function quickFeed() {
       const era = getCurrentEra();
-      const food = era === 'baby'
-        ? { id: 'baby_milk', name: 'Lait Chaud Étoilé', icon: '🥛', price: 15, effectEnergy: 15, effectXp: 5 }
-        : { id: 'grown_apple', name: 'Pomme Croquante', icon: '🍎', price: 20, effectEnergy: 15, effectXp: 10 };
+      const quickFoodByEra = {
+        newborn: { id: 'nb_milk', name: 'Lait Chaud Étoilé', icon: '🥛', price: 15, effectEnergy: 15, effectXp: 5 },
+        baby: { id: 'baby_strawberry', name: 'Fraises des Bois', icon: '🍓', price: 18, effectEnergy: 15, effectXp: 8 },
+        junior: { id: 'jun_apple', name: 'Pomme Croquante', icon: '🍎', price: 20, effectEnergy: 15, effectXp: 10 },
+        adult: { id: 'adu_peach', name: 'Pêche Solaire', icon: '🍑', price: 25, effectEnergy: 20, effectXp: 12 }
+      };
+      const food = quickFoodByEra[era] || quickFoodByEra.newborn;
 
       if (state.coins < food.price) {
         showToast(`Pas assez de pièces (${food.price} 🪙 requis).`, 'warning');
@@ -1169,10 +1205,11 @@
 
       eatingPreviewItem = food;
       renderSanctuary();
+      spawnJoyParticles();
       setTimeout(() => {
         eatingPreviewItem = null;
         if (currentTab === 'sanctuary') renderSanctuary();
-      }, 1500);
+      }, 1700);
     }
 
     function openSlotPicker(slotIndex) {
@@ -1196,8 +1233,10 @@
     }
 
     // =========================================================================
-    // 8. ONGLET DÉFIS (DIFFICULTÉ AJUSTABLE + TIMER VERROUILLÉ)
+    // 8. ONGLET DÉFIS & MINI-JEUX
     // =========================================================================
+    let selectedDifficulty = 'easy';
+
     function stopChallengeTimer() {
       if (challengeTimerInterval) {
         clearInterval(challengeTimerInterval);
@@ -1212,218 +1251,145 @@
       const main = document.getElementById('main-content');
 
       if (activeChallenge) {
-        renderActiveChallengeView(main);
+        const isDone = activeChallenge.remaining <= 0;
+        const pct = Math.min(100, Math.max(0, Math.round(((activeChallenge.total - activeChallenge.remaining) / activeChallenge.total) * 100)));
+
+        main.innerHTML = `
+          <div class="p-4 space-y-4 flex-1 flex flex-col justify-between">
+            <div class="bg-[#151B26] border border-[#232D3F] rounded-3xl p-5 text-center space-y-4">
+              <span class="inline-block px-3 py-1 rounded-full bg-blue-500/15 border border-blue-500/30 text-blue-300 text-xs font-bold">
+                Défi en cours
+              </span>
+              <h2 class="text-xl font-extrabold text-white">${activeChallenge.title}</h2>
+              <p class="text-xs text-slate-300 max-w-xs mx-auto">${activeChallenge.desc}</p>
+
+              <div class="py-4">
+                <div class="text-5xl font-extrabold tracking-tight ${isDone ? 'text-emerald-400' : 'text-white'}">
+                  ${activeChallenge.remaining}s
+                </div>
+                <div class="w-full h-3 bg-[#0D1117] rounded-full overflow-hidden border border-white/10 mt-4">
+                  <div class="h-full ${isDone ? 'bg-emerald-500' : 'bg-blue-500'} transition-all duration-300" style="width: ${pct}%"></div>
+                </div>
+              </div>
+
+              <div class="text-xs text-slate-400">
+                Récompense : <span class="text-amber-300 font-bold">+${activeChallenge.rewardCoins} 🪙</span> · <span class="text-blue-300 font-bold">+${activeChallenge.rewardXp} XP</span>
+              </div>
+            </div>
+
+            <div class="space-y-2.5">
+              ${isDone ? `
+                <button onclick="completeActiveChallenge()" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-extrabold text-sm shadow-lg shadow-emerald-500/25 transition active:scale-95">
+                  Valider et récupérer les récompenses 🎉
+                </button>
+              ` : `
+                <button disabled class="w-full py-3.5 rounded-2xl bg-[#1E2634] text-slate-500 font-bold text-sm cursor-not-allowed">
+                  Range vite pendant le chrono... ⏳
+                </button>
+              `}
+              <button onclick="cancelActiveChallenge()" class="w-full py-2.5 rounded-2xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-300 text-xs font-bold transition">
+                Abandonner le défi
+              </button>
+            </div>
+          </div>
+        `;
         return;
       }
 
+      const filteredChallenges = CONSTRAINT_CHALLENGES.filter((c) => c.difficulty === selectedDifficulty);
+
       main.innerHTML = `
         <div class="p-4 space-y-4">
-          <div class="space-y-1">
-            <h2 class="text-lg font-extrabold text-white">Défis de Rangement</h2>
-            <p class="text-xs text-slate-400">Choisis un défi chronométré ou tire une mission selon la difficulté voulue.</p>
-          </div>
-
-          <!-- Carte 1 : Tirer un défi à contrainte (Facile / Moyen / Difficile / Surprise) -->
-          <div class="bg-gradient-to-br from-[#182234] to-[#151B26] border border-blue-500/30 rounded-3xl p-4 space-y-3 shadow-lg">
-            <div class="flex items-start justify-between gap-2">
-              <div class="flex items-center gap-3">
-                <div class="w-11 h-11 rounded-2xl bg-blue-500/20 border border-blue-400/30 flex items-center justify-center text-xl">
-                  🎲
-                </div>
-                <div>
-                  <h3 class="text-sm font-bold text-white">Défi Mission & Contrainte</h3>
-                  <p class="text-xs text-slate-300">Tire un défi et change-le s'il est trop facile ou trop dur !</p>
-                </div>
-              </div>
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-lg font-extrabold text-white">Défis de Rangement</h2>
+              <p class="text-[11px] text-slate-400">Choisis un défi et range avant la fin du chrono</p>
             </div>
-
-            <button onclick="startRandomChallengeAnyDifficulty()" class="w-full py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-md shadow-blue-600/20 transition active:scale-[0.98]">
-              🎲 Tirer un défi surprise
-            </button>
-
-            <div class="grid grid-cols-3 gap-2 pt-1">
-              <button onclick="startConstraintChallenge('easy')" class="py-2.5 px-2 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-200 text-xs font-bold flex flex-col items-center gap-0.5 transition">
-                <span>🌱 Facile</span>
-                <span class="text-[10px] font-medium text-emerald-300/80">45s · +20 🪙</span>
-              </button>
-              <button onclick="startConstraintChallenge('medium')" class="py-2.5 px-2 rounded-xl bg-blue-500/15 hover:bg-blue-500/25 border border-blue-500/30 text-blue-200 text-xs font-bold flex flex-col items-center gap-0.5 transition">
-                <span>⚡ Moyen</span>
-                <span class="text-[10px] font-medium text-blue-300/80">60s · +30 🪙</span>
-              </button>
-              <button onclick="startConstraintChallenge('hard')" class="py-2.5 px-2 rounded-xl bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/30 text-purple-200 text-xs font-bold flex flex-col items-center gap-0.5 transition">
-                <span>🔥 Difficile</span>
-                <span class="text-[10px] font-medium text-purple-300/80">90s · +45 🪙</span>
-              </button>
+            <div class="px-3 py-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-extrabold">
+              🏆 ${state.totalChallenges}
             </div>
           </div>
 
-          <!-- Carte 2 : Sprint 30 secondes -->
-          <div class="bg-[#151B26] border border-[#232D3F] rounded-3xl p-4 space-y-3">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-3">
-                <div class="w-11 h-11 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-xl">
-                  ⏱️
-                </div>
-                <div>
-                  <h3 class="text-sm font-bold text-white">Sprint 30 Secondes</h3>
-                  <p class="text-xs text-slate-400">Range un maximum d'objets avant la fin du chrono !</p>
-                </div>
-              </div>
-              <span class="text-[11px] font-semibold text-amber-300 bg-amber-500/10 px-2.5 py-1 rounded-full">
-                Record : ${state.bestSprint30}
-              </span>
-            </div>
-            <button onclick="startSprint30()" class="w-full py-2.5 rounded-2xl bg-[#1E2634] hover:bg-[#283346] text-white text-xs font-bold transition">
-              Démarrer le Sprint 30s
-            </button>
+          <div class="grid grid-cols-3 gap-2 bg-[#151B26] p-1.5 rounded-2xl border border-[#232D3F]">
+            ${['easy', 'medium', 'hard'].map((diff) => {
+              const meta = DIFFICULTY_META[diff];
+              const isSel = selectedDifficulty === diff;
+              return `
+                <button onclick="setChallengeDifficulty('${diff}')" class="py-2 rounded-xl text-xs font-bold transition ${isSel ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}">
+                  ${meta.icon} ${meta.label}
+                </button>
+              `;
+            }).join('')}
           </div>
 
-          <!-- Carte 3 : Course aux 10 objets -->
-          <div class="bg-[#151B26] border border-[#232D3F] rounded-3xl p-4 space-y-3">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-3">
-                <div class="w-11 h-11 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-xl">
-                  🏁
+          <div class="space-y-2.5">
+            ${filteredChallenges.map((ch) => {
+              const meta = DIFFICULTY_META[ch.difficulty];
+              return `
+                <div class="bg-[#151B26] border border-[#232D3F] rounded-2xl p-4 space-y-3">
+                  <div class="flex items-start justify-between gap-2">
+                    <div>
+                      <span class="inline-block px-2 py-0.5 rounded-full border text-[10px] font-bold ${meta.badgeClass}">
+                        ${meta.icon} ${meta.label} · ${ch.minSeconds}s
+                      </span>
+                      <h3 class="text-sm font-bold text-white mt-1.5">${ch.title}</h3>
+                      <p class="text-xs text-slate-400 mt-0.5">${ch.desc}</p>
+                    </div>
+                  </div>
+                  <div class="flex items-center justify-between pt-2 border-t border-white/5">
+                    <span class="text-xs font-bold text-amber-300">+${ch.rewardCoins} 🪙 · +${ch.rewardXp} XP</span>
+                    <button onclick="startConstraintChallenge('${ch.id}')" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition active:scale-95">
+                      Démarrer ⚡
+                    </button>
+                  </div>
                 </div>
-                <div>
-                  <h3 class="text-sm font-bold text-white">Course aux 10 Objets</h3>
-                  <p class="text-xs text-slate-400">Chronomètre-toi pour ranger 10 objets (min. 20s).</p>
-                </div>
-              </div>
-              <span class="text-[11px] font-semibold text-emerald-300 bg-emerald-500/10 px-2.5 py-1 rounded-full">
-                ${state.bestRace10 ? `Record : ${state.bestRace10}s` : 'Pas de record'}
-              </span>
-            </div>
-            <button onclick="startRace10()" class="w-full py-2.5 rounded-2xl bg-[#1E2634] hover:bg-[#283346] text-white text-xs font-bold transition">
-              Lancer la Course aux 10 objets
-            </button>
+              `;
+            }).join('')}
           </div>
         </div>
       `;
     }
 
-    function pickChallengeByDifficulty(difficulty, excludeId = null) {
-      const pool = CONSTRAINT_CHALLENGES.filter((c) => c.difficulty === difficulty && c.id !== excludeId);
-      const list = pool.length ? pool : CONSTRAINT_CHALLENGES.filter((c) => c.difficulty === difficulty);
-      return list[Math.floor(Math.random() * list.length)];
-    }
-
-    function startRandomChallengeAnyDifficulty() {
-      const diffs = ['easy', 'medium', 'hard'];
-      const pick = diffs[Math.floor(Math.random() * diffs.length)];
-      startConstraintChallenge(pick);
-    }
-
-    function startConstraintChallenge(difficulty = 'medium', excludeId = null) {
+    function setChallengeDifficulty(diff) {
       sfxClick();
-      stopChallengeTimer();
-      const chosen = pickChallengeByDifficulty(difficulty, excludeId);
-
-      activeChallenge = {
-        type: 'constraint',
-        challenge: chosen,
-        remainingSeconds: chosen.minSeconds,
-        totalSeconds: chosen.minSeconds
-      };
-
+      selectedDifficulty = diff;
       renderChallenges();
-      challengeTimerInterval = setInterval(() => {
-        if (!activeChallenge || activeChallenge.type !== 'constraint') {
-          stopChallengeTimer();
-          return;
-        }
-        if (activeChallenge.remainingSeconds > 0) {
-          activeChallenge.remainingSeconds -= 1;
-          if (activeChallenge.remainingSeconds <= 3 && activeChallenge.remainingSeconds > 0) {
-            sfxTick();
-          }
-          if (activeChallenge.remainingSeconds === 0) {
-            sfxVictory();
-          }
-          renderChallenges();
-        } else {
-          stopChallengeTimer();
-        }
-      }, 1000);
     }
 
-    function rerollConstraintChallenge(direction) {
-      if (!activeChallenge || activeChallenge.type !== 'constraint') return;
-      const order = ['easy', 'medium', 'hard'];
-      const currentDiff = activeChallenge.challenge.difficulty;
-      const idx = order.indexOf(currentDiff);
+    function startConstraintChallenge(challengeId) {
+      const ch = CONSTRAINT_CHALLENGES.find((c) => c.id === challengeId);
+      if (!ch) return;
 
-      let targetDiff = currentDiff;
-      if (direction === 'easier') {
-        targetDiff = order[Math.max(0, idx - 1)];
-      } else if (direction === 'harder') {
-        targetDiff = order[Math.min(order.length - 1, idx + 1)];
-      }
-
-      startConstraintChallenge(targetDiff, activeChallenge.challenge.id);
-    }
-
-    function startSprint30() {
       sfxClick();
       stopChallengeTimer();
       activeChallenge = {
-        type: 'sprint30',
-        remainingSeconds: 30,
-        count: 0
+        ...ch,
+        total: ch.minSeconds,
+        remaining: ch.minSeconds
       };
-      renderChallenges();
 
       challengeTimerInterval = setInterval(() => {
-        if (!activeChallenge || activeChallenge.type !== 'sprint30') {
+        if (!activeChallenge) {
           stopChallengeTimer();
           return;
         }
-        if (activeChallenge.remainingSeconds > 0) {
-          activeChallenge.remainingSeconds -= 1;
-          if (activeChallenge.remainingSeconds <= 3 && activeChallenge.remainingSeconds > 0) {
-            sfxTick();
-          }
-          if (activeChallenge.remainingSeconds === 0) {
-            sfxVictory();
-          }
-          renderChallenges();
-        } else {
-          stopChallengeTimer();
+        activeChallenge.remaining -= 1;
+        if (activeChallenge.remaining <= 5 && activeChallenge.remaining > 0) {
+          sfxTick();
         }
-      }, 1000);
-    }
-
-    function incrementSprintCount() {
-      if (!activeChallenge || activeChallenge.type !== 'sprint30' || activeChallenge.remainingSeconds <= 0) return;
-      sfxClick();
-      activeChallenge.count += 1;
-      renderChallenges();
-    }
-
-    function startRace10() {
-      sfxClick();
-      stopChallengeTimer();
-      activeChallenge = {
-        type: 'race10',
-        elapsedSeconds: 0,
-        minSeconds: 20
-      };
-      renderChallenges();
-
-      challengeTimerInterval = setInterval(() => {
-        if (!activeChallenge || activeChallenge.type !== 'race10') {
+        if (activeChallenge.remaining <= 0) {
+          activeChallenge.remaining = 0;
           stopChallengeTimer();
-          return;
-        }
-        activeChallenge.elapsedSeconds += 1;
-        if (activeChallenge.elapsedSeconds === activeChallenge.minSeconds) {
           sfxVictory();
         }
-        renderChallenges();
+        if (currentTab === 'challenges') renderChallenges();
       }, 1000);
+
+      renderChallenges();
     }
 
     function cancelActiveChallenge() {
+      sfxClick();
       stopChallengeTimer();
       activeChallenge = null;
       renderChallenges();
@@ -1431,212 +1397,25 @@
 
     function completeActiveChallenge() {
       if (!activeChallenge) return;
-
-      let earnedCoins = 20;
-      let earnedXp = 20;
-
-      if (activeChallenge.type === 'constraint') {
-        if (activeChallenge.remainingSeconds > 0) {
-          showToast(`🔒 Attends la fin du chrono (${activeChallenge.remainingSeconds}s) avant de valider !`, 'warning');
-          return;
-        }
-        earnedCoins = activeChallenge.challenge.rewardCoins;
-        earnedXp = activeChallenge.challenge.rewardXp;
-      } else if (activeChallenge.type === 'sprint30') {
-        if (activeChallenge.remainingSeconds > 0) {
-          showToast(`🔒 Le sprint n'est pas encore terminé (${activeChallenge.remainingSeconds}s) !`, 'warning');
-          return;
-        }
-        const items = Math.max(1, activeChallenge.count);
-        earnedCoins = Math.min(45, 10 + items * 2);
-        earnedXp = Math.min(45, 10 + items * 2);
-        if (activeChallenge.count > state.bestSprint30) {
-          state.bestSprint30 = activeChallenge.count;
-        }
-      } else if (activeChallenge.type === 'race10') {
-        const left = activeChallenge.minSeconds - activeChallenge.elapsedSeconds;
-        if (left > 0) {
-          showToast(`🔒 Encore ${left}s minimum pour bien ranger les 10 objets !`, 'warning');
-          return;
-        }
-        earnedCoins = activeChallenge.elapsedSeconds <= 45 ? 35 : 25;
-        earnedXp = activeChallenge.elapsedSeconds <= 45 ? 35 : 25;
-        if (!state.bestRace10 || activeChallenge.elapsedSeconds < state.bestRace10) {
-          state.bestRace10 = activeChallenge.elapsedSeconds;
-        }
-      }
-
+      const ch = activeChallenge;
       stopChallengeTimer();
       activeChallenge = null;
 
       sfxVictory();
-      state.coins += earnedCoins;
+      state.coins += ch.rewardCoins;
       state.totalChallenges += 1;
-      // Un défi demande un petit effort d'énergie (-6%), équilibré avec les soins et friandises
-      state.energy = Math.max(10, state.energy - 6);
+      state.energy = Math.min(100, state.energy + 10);
       state.lastActiveAt = Date.now();
-      grantXp(earnedXp);
+      grantXp(ch.rewardXp);
       saveState();
 
-      showToast(`🏆 Bravo ! +${earnedCoins} 🪙 et +${earnedXp} XP !`, 'success');
+      showToast(`🏆 Défi réussi ! +${ch.rewardCoins} 🪙 et +${ch.rewardXp} XP`, 'success');
       switchTab('sanctuary');
-    }
-
-    function renderActiveChallengeView(container) {
-      if (activeChallenge.type === 'constraint') {
-        const ch = activeChallenge.challenge;
-        const meta = DIFFICULTY_META[ch.difficulty] || DIFFICULTY_META.medium;
-        const isLocked = activeChallenge.remainingSeconds > 0;
-        const pct = Math.round(((ch.minSeconds - activeChallenge.remainingSeconds) / ch.minSeconds) * 100);
-
-        container.innerHTML = `
-          <div class="p-4 space-y-4">
-            <div class="flex items-center justify-between">
-              <button onclick="cancelActiveChallenge()" class="text-xs font-semibold text-slate-400 hover:text-white">← Abandonner</button>
-              <span class="px-2.5 py-1 rounded-full border text-xs font-bold ${meta.badgeClass}">
-                ${meta.icon} ${meta.label}
-              </span>
-            </div>
-
-            <div class="bg-[#151B26] border border-[#2A3548] rounded-3xl p-5 space-y-4 text-center">
-              <div class="space-y-1.5">
-                <h3 class="text-lg font-extrabold text-white">${ch.title}</h3>
-                <p class="text-xs text-slate-300 leading-relaxed">${ch.desc}</p>
-              </div>
-
-              <!-- Timer verrouillé -->
-              <div class="py-3 px-4 rounded-2xl bg-[#0D1117] border border-white/5 space-y-2">
-                <div class="text-xs font-semibold ${isLocked ? 'text-amber-300' : 'text-emerald-300'}">
-                  ${isLocked
-                    ? `🔒 Récompense verrouillée pendant encore ${activeChallenge.remainingSeconds}s`
-                    : '🔓 Temps écoulé ! Tu peux réclamer ta récompense'}
-                </div>
-                <div class="text-3xl font-black tracking-tight text-white">
-                  ${activeChallenge.remainingSeconds}s
-                </div>
-                <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
-                  <div class="h-full ${isLocked ? 'bg-amber-400' : 'bg-emerald-500'} transition-all duration-500" style="width: ${pct}%"></div>
-                </div>
-              </div>
-
-              <!-- Boutons changer de défi : plus facile / autre / plus dur -->
-              <div class="space-y-1.5 pt-1">
-                <div class="text-[11px] font-semibold text-slate-400">Changer de défi :</div>
-                <div class="grid grid-cols-3 gap-2">
-                  <button
-                    onclick="rerollConstraintChallenge('easier')"
-                    ${ch.difficulty === 'easy' ? 'disabled' : ''}
-                    class="py-2 px-2 rounded-xl border text-[11px] font-bold transition ${ch.difficulty === 'easy' ? 'opacity-40 cursor-not-allowed bg-slate-900 border-white/5 text-slate-500' : 'bg-emerald-500/15 hover:bg-emerald-500/25 border-emerald-500/30 text-emerald-200'}"
-                  >
-                    ⬇ Plus facile
-                  </button>
-                  <button
-                    onclick="rerollConstraintChallenge('same')"
-                    class="py-2 px-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-white/10 text-slate-200 text-[11px] font-bold transition"
-                  >
-                    🔄 Autre défi
-                  </button>
-                  <button
-                    onclick="rerollConstraintChallenge('harder')"
-                    ${ch.difficulty === 'hard' ? 'disabled' : ''}
-                    class="py-2 px-2 rounded-xl border text-[11px] font-bold transition ${ch.difficulty === 'hard' ? 'opacity-40 cursor-not-allowed bg-slate-900 border-white/5 text-slate-500' : 'bg-purple-500/15 hover:bg-purple-500/25 border-purple-500/30 text-purple-200'}"
-                  >
-                    ⬆ Plus dur
-                  </button>
-                </div>
-              </div>
-
-              <!-- Bouton validation verrouillé tant que le timer n'est pas fini -->
-              <button
-                onclick="completeActiveChallenge()"
-                ${isLocked ? 'disabled' : ''}
-                class="w-full py-3.5 rounded-2xl text-xs font-extrabold transition ${isLocked
-                  ? 'bg-slate-800 border border-white/10 text-slate-400 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-lg shadow-emerald-600/25 active:scale-[0.98]'}"
-              >
-                ${isLocked
-                  ? `🔒 Verrouillé (${activeChallenge.remainingSeconds}s restantes)`
-                  : `✅ J'ai fini ! Réclamer +${ch.rewardCoins} 🪙 & +${ch.rewardXp} XP`}
-              </button>
-            </div>
-          </div>
-        `;
-        return;
-      }
-
-      if (activeChallenge.type === 'sprint30') {
-        const isLocked = activeChallenge.remainingSeconds > 0;
-        container.innerHTML = `
-          <div class="p-4 space-y-4">
-            <div class="flex items-center justify-between">
-              <button onclick="cancelActiveChallenge()" class="text-xs font-semibold text-slate-400 hover:text-white">← Abandonner</button>
-              <span class="text-xs font-bold text-amber-300">⏱️ Sprint 30s</span>
-            </div>
-
-            <div class="bg-[#151B26] border border-[#2A3548] rounded-3xl p-5 space-y-4 text-center">
-              <div class="text-4xl font-black text-white">${activeChallenge.remainingSeconds}s</div>
-              <p class="text-xs text-slate-300">Appuie sur le bouton à chaque objet rangé !</p>
-
-              <button
-                onclick="incrementSprintCount()"
-                ${!isLocked ? 'disabled' : ''}
-                class="w-full py-6 rounded-3xl text-lg font-black transition ${isLocked
-                  ? 'bg-amber-500/20 hover:bg-amber-500/30 border-2 border-amber-400/50 text-amber-200 active:scale-95'
-                  : 'bg-slate-800 border border-white/10 text-slate-500 cursor-not-allowed'}"
-              >
-                +1 Objet rangé (${activeChallenge.count})
-              </button>
-
-              <button
-                onclick="completeActiveChallenge()"
-                ${isLocked ? 'disabled' : ''}
-                class="w-full py-3.5 rounded-2xl text-xs font-extrabold transition ${isLocked
-                  ? 'bg-slate-800 border border-white/10 text-slate-400 cursor-not-allowed'
-                  : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg'}"
-              >
-                ${isLocked
-                  ? `🔒 Attends la fin du chrono (${activeChallenge.remainingSeconds}s)`
-                  : '✅ Réclamer ma récompense !'}
-              </button>
-            </div>
-          </div>
-        `;
-        return;
-      }
-
-      if (activeChallenge.type === 'race10') {
-        const left = Math.max(0, activeChallenge.minSeconds - activeChallenge.elapsedSeconds);
-        const isLocked = left > 0;
-        container.innerHTML = `
-          <div class="p-4 space-y-4">
-            <div class="flex items-center justify-between">
-              <button onclick="cancelActiveChallenge()" class="text-xs font-semibold text-slate-400 hover:text-white">← Abandonner</button>
-              <span class="text-xs font-bold text-emerald-300">🏁 Course aux 10 objets</span>
-            </div>
-
-            <div class="bg-[#151B26] border border-[#2A3548] rounded-3xl p-5 space-y-4 text-center">
-              <div class="text-4xl font-black text-white">${activeChallenge.elapsedSeconds}s</div>
-              <p class="text-xs text-slate-300">Range 10 objets le plus proprement possible.</p>
-
-              <button
-                onclick="completeActiveChallenge()"
-                ${isLocked ? 'disabled' : ''}
-                class="w-full py-3.5 rounded-2xl text-xs font-extrabold transition ${isLocked
-                  ? 'bg-slate-800 border border-white/10 text-slate-400 cursor-not-allowed'
-                  : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg'}"
-              >
-                ${isLocked
-                  ? `🔒 Verrouillé encore ${left}s`
-                  : "✅ J'ai rangé les 10 objets !"}
-              </button>
-            </div>
-          </div>
-        `;
-      }
+      spawnJoyParticles();
     }
 
     // =========================================================================
-    // 9. ONGLET BOUTIQUE (ADAPTÉE À L'ÂGE + 4 CASES D'ACCESSOIRES)
+    // 9. ONGLET BOUTIQUE (ADAPTÉE À CHAQUE STADE + 4 CASES D'ACCESSOIRES)
     // =========================================================================
     function renderShop() {
       const nav = document.getElementById('bottom-nav');
@@ -1644,7 +1423,8 @@
 
       const main = document.getElementById('main-content');
       const era = getCurrentEra();
-      const eraLabel = era === 'baby' ? 'Collection Bébé' : 'Collection Grand (Junior & Adulte)';
+      const stageInfo = getStageInfoFromXp(state.xp);
+      const eraLabel = `Collection ${stageInfo.current.label}`;
 
       const filteredItems = SHOP_ITEMS.filter((item) => {
         if (item.category !== shopCategory) return false;
@@ -1750,7 +1530,7 @@
       const item = SHOP_ITEMS.find((i) => i.id === itemId);
       if (!item) return;
 
-      // 1. Friandises / Repas
+      // 1. Friandises / Repas : retour immédiat sur le compagnon pour le voir se régaler
       if (item.category === 'care') {
         if (state.coins < item.price) {
           showToast(`Il te manque ${item.price - state.coins} 🪙 !`, 'warning');
@@ -1762,8 +1542,15 @@
         state.lastActiveAt = Date.now();
         grantXp(item.effectXp || 10);
         saveState();
-        showToast(`${item.icon} ${state.petName} se régale ! +${item.effectEnergy}% énergie`, 'success');
-        renderShop();
+
+        eatingPreviewItem = item;
+        showToast(`${item.icon} ${state.petName} adore : ${item.name} ! (+${item.effectEnergy}% énergie)`, 'success');
+        switchTab('sanctuary');
+        spawnJoyParticles();
+        setTimeout(() => {
+          eatingPreviewItem = null;
+          if (currentTab === 'sanctuary') renderSanctuary();
+        }, 1700);
         return;
       }
 
@@ -1786,7 +1573,7 @@
         state.lastActiveAt = Date.now();
         saveState();
         showToast(`🏡 Habitat installé : ${item.name}`, 'success');
-        renderShop();
+        switchTab('sanctuary');
         return;
       }
 
