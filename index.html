@@ -1269,6 +1269,389 @@
     }
 
     // =========================================================================
+    // 8. ONGLET DÉFIS & CHRONOMÈTRES
+    // =========================================================================
+    let selectedDifficulty = 'easy';
+
+    function stopChallengeTimer() {
+      if (challengeTimerInterval) {
+        clearInterval(challengeTimerInterval);
+        challengeTimerInterval = null;
+      }
+    }
+
+    function renderChallenges() {
+      const nav = document.getElementById('bottom-nav');
+      if (nav) nav.classList.remove('hidden');
+
+      const main = document.getElementById('main-content');
+      if (!main) return;
+
+      if (activeChallenge) {
+        const isDone = activeChallenge.remaining <= 0;
+        const pct = Math.min(100, Math.max(0, Math.round(((activeChallenge.total - activeChallenge.remaining) / activeChallenge.total) * 100)));
+
+        main.innerHTML = `
+          <div class="p-4 space-y-4 flex-1 flex flex-col justify-between">
+            <div class="bg-[#151B26] border border-[#232D3F] rounded-3xl p-5 text-center space-y-4">
+              <span class="inline-block px-3 py-1 rounded-full bg-blue-500/15 border border-blue-500/30 text-blue-300 text-xs font-bold">
+                Défi en cours
+              </span>
+              <h2 class="text-xl font-extrabold text-white">${activeChallenge.title}</h2>
+              <p class="text-xs text-slate-300 max-w-xs mx-auto">${activeChallenge.desc}</p>
+
+              <div class="py-4">
+                <div class="text-5xl font-extrabold tracking-tight ${isDone ? 'text-emerald-400' : 'text-white'}">
+                  ${activeChallenge.remaining}s
+                </div>
+                <div class="w-full h-3 bg-[#0D1117] rounded-full overflow-hidden border border-white/10 mt-4">
+                  <div class="h-full ${isDone ? 'bg-emerald-500' : 'bg-blue-500'} transition-all duration-300" style="width: ${pct}%"></div>
+                </div>
+              </div>
+
+              <div class="text-xs text-slate-400">
+                Récompense : <span class="text-amber-300 font-bold">+${activeChallenge.rewardCoins} 🪙</span> · <span class="text-blue-300 font-bold">+${activeChallenge.rewardXp} XP</span>
+              </div>
+            </div>
+
+            <div class="space-y-2.5">
+              ${isDone ? `
+                <button onclick="completeActiveChallenge()" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-extrabold text-sm shadow-lg shadow-emerald-500/25 transition active:scale-95">
+                  Valider et récupérer les récompenses 🎉
+                </button>
+              ` : `
+                <button disabled class="w-full py-3.5 rounded-2xl bg-[#1E2634] text-slate-500 font-bold text-sm cursor-not-allowed">
+                  Range vite pendant le chrono... ⏳
+                </button>
+              `}
+              <button onclick="cancelActiveChallenge()" class="w-full py-2.5 rounded-2xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-300 text-xs font-bold transition">
+                Abandonner le défi
+              </button>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      const filteredChallenges = CONSTRAINT_CHALLENGES.filter((c) => c.difficulty === selectedDifficulty);
+
+      main.innerHTML = `
+        <div class="p-4 space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-lg font-extrabold text-white">Défis de Rangement</h2>
+              <p class="text-[11px] text-slate-400">Choisis un défi et range avant la fin du chrono</p>
+            </div>
+            <div class="px-3 py-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-extrabold">
+              🏆 ${state.totalChallenges}
+            </div>
+          </div>
+
+          <div class="grid grid-cols-3 gap-2 bg-[#151B26] p-1.5 rounded-2xl border border-[#232D3F]">
+            ${['easy', 'medium', 'hard'].map((diff) => {
+              const meta = DIFFICULTY_META[diff];
+              const isSel = selectedDifficulty === diff;
+              return `
+                <button onclick="setChallengeDifficulty('${diff}')" class="py-2 rounded-xl text-xs font-bold transition ${isSel ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}">
+                  ${meta.icon} ${meta.label}
+                </button>
+              `;
+            }).join('')}
+          </div>
+
+          <div class="space-y-2.5">
+            ${filteredChallenges.map((ch) => {
+              const meta = DIFFICULTY_META[ch.difficulty];
+              return `
+                <div class="bg-[#151B26] border border-[#232D3F] rounded-2xl p-4 space-y-3">
+                  <div class="flex items-start justify-between gap-2">
+                    <div>
+                      <span class="inline-block px-2 py-0.5 rounded-full border text-[10px] font-bold ${meta.badgeClass}">
+                        ${meta.icon} ${meta.label} · ${ch.minSeconds}s
+                      </span>
+                      <h3 class="text-sm font-bold text-white mt-1.5">${ch.title}</h3>
+                      <p class="text-xs text-slate-400 mt-0.5">${ch.desc}</p>
+                    </div>
+                  </div>
+                  <div class="flex items-center justify-between pt-2 border-t border-white/5">
+                    <span class="text-xs font-bold text-amber-300">+${ch.rewardCoins} 🪙 · +${ch.rewardXp} XP</span>
+                    <button onclick="startConstraintChallenge('${ch.id}')" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition active:scale-95">
+                      Démarrer ⚡
+                    </button>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    function setChallengeDifficulty(diff) {
+      sfxClick();
+      selectedDifficulty = diff;
+      renderChallenges();
+    }
+
+    function startConstraintChallenge(challengeId) {
+      const ch = CONSTRAINT_CHALLENGES.find((c) => c.id === challengeId);
+      if (!ch) return;
+
+      sfxClick();
+      stopChallengeTimer();
+      activeChallenge = {
+        ...ch,
+        total: ch.minSeconds,
+        remaining: ch.minSeconds
+      };
+
+      challengeTimerInterval = setInterval(() => {
+        if (!activeChallenge) {
+          stopChallengeTimer();
+          return;
+        }
+        activeChallenge.remaining -= 1;
+        if (activeChallenge.remaining <= 5 && activeChallenge.remaining > 0) {
+          sfxTick();
+        }
+        if (activeChallenge.remaining <= 0) {
+          activeChallenge.remaining = 0;
+          stopChallengeTimer();
+          sfxVictory();
+        }
+        if (currentTab === 'challenges') renderChallenges();
+      }, 1000);
+
+      renderChallenges();
+    }
+
+    function cancelActiveChallenge() {
+      sfxClick();
+      stopChallengeTimer();
+      activeChallenge = null;
+      renderChallenges();
+    }
+
+    function completeActiveChallenge() {
+      if (!activeChallenge) return;
+      const ch = activeChallenge;
+      stopChallengeTimer();
+      activeChallenge = null;
+
+      sfxVictory();
+      state.coins += ch.rewardCoins;
+      state.totalChallenges += 1;
+      state.energy = Math.min(100, state.energy + 10);
+      state.lastActiveAt = Date.now();
+      grantXp(ch.rewardXp);
+      saveState();
+
+      showToast(`🏆 Défi réussi ! +${ch.rewardCoins} 🪙 et +${ch.rewardXp} XP`, 'success');
+      switchTab('sanctuary');
+      spawnJoyParticles();
+    }
+
+    // =========================================================================
+    // 9. ONGLET BOUTIQUE (ADAPTÉE À CHAQUE STADE + 4 CASES D'ACCESSOIRES)
+    // =========================================================================
+    function renderShop() {
+      const nav = document.getElementById('bottom-nav');
+      if (nav) nav.classList.remove('hidden');
+
+      const main = document.getElementById('main-content');
+      if (!main) return;
+
+      const era = getCurrentEra();
+      const stageInfo = getStageInfoFromXp(state.xp);
+      const eraLabel = `Collection ${stageInfo.current.label}`;
+
+      const filteredItems = SHOP_ITEMS.filter((item) => {
+        if (item.category !== shopCategory) return false;
+        if (item.era === 'all') return true;
+        return item.era === era;
+      });
+
+      const equippedCount = state.equippedSlots.filter(Boolean).length;
+
+      main.innerHTML = `
+        <div class="p-4 space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-lg font-extrabold text-white">Boutique</h2>
+              <p class="text-[11px] text-slate-400">${eraLabel}</p>
+            </div>
+            <div class="px-3 py-1.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-extrabold">
+              🪙 ${state.coins}
+            </div>
+          </div>
+
+          <div class="grid grid-cols-3 gap-2 bg-[#151B26] p-1.5 rounded-2xl border border-[#232D3F]">
+            <button onclick="setShopCategory('accessory')" class="py-2 rounded-xl text-xs font-bold transition ${shopCategory === 'accessory' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}">
+              🧸 Accessoires
+            </button>
+            <button onclick="setShopCategory('habitat')" class="py-2 rounded-xl text-xs font-bold transition ${shopCategory === 'habitat' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}">
+              🏡 Habitats
+            </button>
+            <button onclick="setShopCategory('care')" class="py-2 rounded-xl text-xs font-bold transition ${shopCategory === 'care' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}">
+              🍼 Friandises
+            </button>
+          </div>
+
+          ${shopCategory === 'accessory' ? `
+            <div class="px-3 py-2 rounded-2xl bg-blue-500/10 border border-blue-500/25 flex items-center justify-between text-xs">
+              <span class="text-blue-200 font-medium">Cases occupées autour de ${state.petName} :</span>
+              <span class="font-extrabold text-white">${equippedCount} / 4</span>
+            </div>
+          ` : ''}
+
+          <div class="space-y-2.5">
+            ${filteredItems.map((item) => {
+              const isOwned = state.ownedItems.includes(item.id);
+              const isEquippedSlot = shopCategory === 'accessory' && state.equippedSlots.includes(item.id);
+              const isEquippedHab = shopCategory === 'habitat' && state.equippedHabitat === item.id;
+              const reqStageIdx = typeof item.unlockStage === 'number' ? item.unlockStage : 0;
+              const isLocked = shopCategory === 'habitat' && stageInfo.index < reqStageIdx;
+              const reqStageLabel = EVOLUTION_STAGES[reqStageIdx] ? EVOLUTION_STAGES[reqStageIdx].label : '';
+
+              let actionBtn = '';
+              if (isLocked) {
+                actionBtn = `
+                  <span class="px-3 py-2 rounded-xl bg-slate-900/90 border border-white/10 text-slate-400 text-[11px] font-bold inline-flex items-center gap-1">
+                    🔒 Stade ${reqStageLabel}
+                  </span>
+                `;
+              } else if (shopCategory === 'care') {
+                actionBtn = `
+                  <button onclick="buyOrUseItem('${item.id}')" class="px-3.5 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/40 text-amber-200 text-xs font-bold transition active:scale-95">
+                    Donner · ${item.price} 🪙
+                  </button>
+                `;
+              } else if (isEquippedSlot || isEquippedHab) {
+                actionBtn = `
+                  <button onclick="buyOrUseItem('${item.id}')" class="px-3.5 py-2 rounded-xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-200 text-xs font-bold">
+                    ✓ Placé
+                  </button>
+                `;
+              } else if (isOwned) {
+                actionBtn = `
+                  <button onclick="buyOrUseItem('${item.id}')" class="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition">
+                    Installer
+                  </button>
+                `;
+              } else {
+                actionBtn = `
+                  <button onclick="buyOrUseItem('${item.id}')" class="px-3.5 py-2 rounded-xl bg-[#1E2634] hover:bg-blue-600 border border-white/10 text-white text-xs font-bold transition active:scale-95">
+                    Acheter · ${item.price} 🪙
+                  </button>
+                `;
+              }
+
+              return `
+                <div class="bg-[#151B26] border border-[#232D3F] rounded-2xl p-3.5 flex items-center justify-between gap-3 ${isLocked ? 'opacity-65' : ''}">
+                  <div class="flex items-center gap-3 min-w-0">
+                    <div class="w-12 h-12 rounded-2xl bg-[#0D1117] border border-white/5 flex items-center justify-center text-2xl shrink-0">
+                      ${isLocked ? '🔒' : item.icon}
+                    </div>
+                    <div class="min-w-0">
+                      <h3 class="text-sm font-bold text-white truncate">${item.name}</h3>
+                      <p class="text-[11px] text-slate-400 line-clamp-2">${item.desc}</p>
+                    </div>
+                  </div>
+                  <div class="shrink-0">${actionBtn}</div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    function setShopCategory(cat) {
+      sfxClick();
+      shopCategory = cat;
+      renderShop();
+    }
+
+    function buyOrUseItem(itemId) {
+      const item = SHOP_ITEMS.find((i) => i.id === itemId);
+      if (!item) return;
+
+      const stageInfo = getStageInfoFromXp(state.xp);
+      if (item.category === 'habitat' && typeof item.unlockStage === 'number' && stageInfo.index < item.unlockStage) {
+        const reqLabel = EVOLUTION_STAGES[item.unlockStage]?.label || '';
+        showToast(`🔒 Débloqué quand ${state.petName} atteindra le stade ${reqLabel} !`, 'warning');
+        return;
+      }
+
+      if (item.category === 'care') {
+        if (state.coins < item.price) {
+          showToast(`Il te manque ${item.price - state.coins} 🪙 !`, 'warning');
+          return;
+        }
+        sfxCoin();
+        state.coins -= item.price;
+        state.energy = Math.min(100, state.energy + (item.effectEnergy || 15));
+        state.lastActiveAt = Date.now();
+        grantXp(item.effectXp || 10);
+        saveState();
+
+        eatingPreviewItem = item;
+        showToast(`${item.icon} ${state.petName} adore : ${item.name} ! (+${item.effectEnergy}% énergie)`, 'success');
+        switchTab('sanctuary');
+        spawnJoyParticles();
+        setTimeout(() => {
+          eatingPreviewItem = null;
+          if (currentTab === 'sanctuary') renderSanctuary();
+        }, 1700);
+        return;
+      }
+
+      if (!state.ownedItems.includes(item.id)) {
+        if (state.coins < item.price) {
+          showToast(`Il te manque ${item.price - state.coins} 🪙 !`, 'warning');
+          return;
+        }
+        state.coins -= item.price;
+        state.ownedItems.push(item.id);
+        sfxCoin();
+      } else {
+        sfxClick();
+      }
+
+      if (item.category === 'habitat') {
+        state.equippedHabitat = item.id;
+        state.lastActiveAt = Date.now();
+        saveState();
+        showToast(`🏡 Habitat installé : ${item.name}`, 'success');
+        switchTab('sanctuary');
+        return;
+      }
+
+      if (item.category === 'accessory') {
+        const existingIdx = state.equippedSlots.indexOf(item.id);
+        if (existingIdx !== -1) {
+          state.equippedSlots[existingIdx] = null;
+          saveState();
+          showToast(`${item.name} rangé.`, 'info');
+          renderShop();
+          return;
+        }
+
+        const emptyIdx = state.equippedSlots.indexOf(null);
+        if (emptyIdx !== -1) {
+          state.equippedSlots[emptyIdx] = item.id;
+        } else {
+          state.equippedSlots.shift();
+          state.equippedSlots.push(item.id);
+        }
+        state.lastActiveAt = Date.now();
+        saveState();
+        showToast(`${item.icon} ${item.name} ajouté à côté de ${state.petName} !`, 'success');
+        renderShop();
+      }
+    }
+
+    // =========================================================================
     // 10. MENU DÉMO (MASQUÉ), RÉINITIALISATION & NAVIGATION GLOBALE
     // =========================================================================
     let secretDemoTapCount = 0;
