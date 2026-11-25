@@ -221,14 +221,14 @@
       },
       chat: {
         id: 'chat',
-        name: 'Chaton',
+        name: 'Chat',
         emoji: '🐱',
         defaultPetName: 'Moka',
         tagline: 'Calme et précis, parfait pour les missions minutieuses.'
       },
       dragon: {
         id: 'dragon',
-        name: 'Dragonnet',
+        name: 'Dragon',
         emoji: '🐉',
         defaultPetName: 'Ignis',
         tagline: 'Courageux et plein d’énergie à chaque victoire.'
@@ -307,7 +307,7 @@
       chat: {
         fallbackEmoji: '🐱',
         glow: 'rgba(96, 165, 250, 0.32)',
-        label: 'Chaton',
+        label: 'Chat',
         localStageImages: [
           'images/chat_nouveau_ne.png',
           'images/chat_bebe.png',
@@ -319,7 +319,7 @@
       dragon: {
         fallbackEmoji: '🐉',
         glow: 'rgba(168, 85, 247, 0.35)',
-        label: 'Dragonnet',
+        label: 'Dragon',
         localStageImages: [
           'images/dragonnet_nouveau_ne.png',
           'images/dragonnet_bebe.png',
@@ -426,15 +426,14 @@
       }
     };
 
-    // Paliers d'évolution équilibrés pour durer sur plusieurs sessions de rangement
     const EVOLUTION_STAGES = [
-      { level: 1, label: 'Nouveau-né', minXp: 0, era: 'newborn' },
-      { level: 2, label: 'Bébé', minXp: 100, era: 'baby' },
-      { level: 3, label: 'Junior', minXp: 250, era: 'junior' },
-      { level: 4, label: 'Adulte', minXp: 450, era: 'adult' }
+      { level: 1, era: 'newborn', label: 'Nouveau-né', minXp: 0 },
+      { level: 2, era: 'baby', label: 'Bébé', minXp: 100 },
+      { level: 3, era: 'junior', label: 'Junior', minXp: 250 },
+      { level: 4, era: 'adult', label: 'Adulte', minXp: 450 }
     ];
 
-    // Habitats (aucun équipé au départ)
+    // Habitats (aucun équipé au départ, tous compatibles avec les fichiers habitat_*.jpeg)
     const HABITAT_THEMES = {
       none: {
         id: 'none',
@@ -449,7 +448,7 @@
       hab_clearing: {
         id: 'hab_clearing',
         name: 'Clairière Enchantée',
-        localBg: 'images/clairiere.jpg',
+        localBg: ['images/habitat_clairiere.jpeg', 'images/habitat_clairiere.jpg'],
         gradient: 'radial-gradient(circle at 50% 30%, #10B981 0%, #065F46 48%, #06281E 100%)',
         borderClass: 'border-emerald-400/50',
         badgeIcon: '🌿',
@@ -459,27 +458,87 @@
       hab_cozy: {
         id: 'hab_cozy',
         name: 'Salon Cosy',
-        localBg: 'images/salon.jpg',
+        localBg: ['images/habitat_salon.jpeg', 'images/habitat_salon.jpg'],
         gradient: 'radial-gradient(circle at 50% 30%, #D97706 0%, #78350F 48%, #291206 100%)',
         borderClass: 'border-amber-400/50',
         badgeIcon: '🕯️',
         decorTop: ['🕯️', '✨', '🧶', '🕯️'],
         decorBottom: ['🛋️', '📚', '🧸', '☕']
       },
+      hab_serre: {
+        id: 'hab_serre',
+        name: 'Serre Suspendue',
+        localBg: ['images/habitat_serre.jpeg', 'images/habitat_serre.jpg'],
+        gradient: 'radial-gradient(circle at 50% 30%, #34D399 0%, #047857 48%, #042F2E 100%)',
+        borderClass: 'border-teal-300/50',
+        badgeIcon: '🪴',
+        decorTop: ['✨', '🌿', '🕊️', '✨'],
+        decorBottom: ['🪴', '🌸', '☀️', '🍃']
+      },
+      hab_jungle: {
+        id: 'hab_jungle',
+        name: 'Pavillon Jungle',
+        localBg: ['images/habitat_jungle.jpeg', 'images/habitat_jungle.jpg'],
+        gradient: 'radial-gradient(circle at 50% 30%, #16A34A 0%, #14532D 48%, #052E16 100%)',
+        borderClass: 'border-lime-400/50',
+        badgeIcon: '🌴',
+        decorTop: ['🦜', '🌿', '✨', '🍃'],
+        decorBottom: ['🌴', '🌺', '🎋', '🪵']
+      },
+      hab_oasis: {
+        id: 'hab_oasis',
+        name: 'Oasis Étoilée',
+        localBg: ['images/habitat_oasis.jpeg', 'images/habitat_oasis.jpg'],
+        gradient: 'radial-gradient(circle at 50% 30%, #F59E0B 0%, #B45309 48%, #451A03 100%)',
+        borderClass: 'border-amber-300/50',
+        badgeIcon: '🏜️',
+        decorTop: ['✨', '🌙', '🏮', '✨'],
+        decorBottom: ['🌴', '⛺', '💧', '⭐']
+      },
       hab_crystal: {
         id: 'hab_crystal',
         name: 'Grotte aux Cristaux',
-        localBg: 'images/grotte.jpg',
+        localBg: ['images/habitat_grotte.jpeg', 'images/habitat_grotte.jpg'],
         gradient: 'radial-gradient(circle at 50% 30%, #3B82F6 0%, #1E3A8A 48%, #0B1437 100%)',
         borderClass: 'border-sky-400/50',
         badgeIcon: '💎',
         decorTop: ['💎', '✨', '💠', '💎'],
         decorBottom: ['🔮', '💎', '🌊', '🪨']
       },
+      hab_igloo: {
+        id: 'hab_igloo',
+        name: 'Igloo Aurore',
+        localBg: ['images/habitat_igloo.jpeg', 'images/habitat_igloo.jpg'],
+        gradient: 'radial-gradient(circle at 50% 30%, #38BDF8 0%, #0369A1 48%, #082F49 100%)',
+        borderClass: 'border-cyan-300/50',
+        badgeIcon: '❄️',
+        decorTop: ['❄️', '✨', '🌨️', '❄️'],
+        decorBottom: ['🧊', '🕯️', '🧣', '⭐']
+      },
+      hab_marin: {
+        id: 'hab_marin',
+        name: 'Palais Sous-Marin',
+        localBg: ['images/habitat_marin.jpeg', 'images/habitat_marin.jpg'],
+        gradient: 'radial-gradient(circle at 50% 30%, #0EA5E9 0%, #1D4ED8 48%, #172554 100%)',
+        borderClass: 'border-blue-400/50',
+        badgeIcon: '🐚',
+        decorTop: ['🫧', '🐠', '✨', '🫧'],
+        decorBottom: ['🐚', '🪸', '🌊', ' pearls']
+      },
+      hab_volcan: {
+        id: 'hab_volcan',
+        name: 'Refuge Volcanique',
+        localBg: ['images/habitat_volcan.jpeg', 'images/habitat_volcan.jpg'],
+        gradient: 'radial-gradient(circle at 50% 30%, #EA580C 0%, #9A3412 48%, #431407 100%)',
+        borderClass: 'border-orange-500/50',
+        badgeIcon: '🔥',
+        decorTop: ['🔥', '✨', '🏮', '🔥'],
+        decorBottom: ['🌋', '🕯️', '🪨', '✨']
+      },
       hab_space: {
         id: 'hab_space',
         name: 'Observatoire Spatial',
-        localBg: 'images/espace.jpg',
+        localBg: ['images/habitat_observatoire.jpeg', 'images/habitat_observatoire.jpg'],
         gradient: 'radial-gradient(circle at 50% 30%, #9333EA 0%, #3B0764 48%, #0D041C 100%)',
         borderClass: 'border-purple-400/50',
         badgeIcon: '🪐',
@@ -514,16 +573,29 @@
       { id: 'jun_skateboard', category: 'accessory', era: 'junior', name: 'Planche Agile', desc: 'Pour foncer ranger toute la chambre.', icon: '🛹', price: 95 },
 
       // --- ACCESSOIRES ADULTE (450+ XP) ---
-      { id: 'adu_lantern', category: 'accessory', era: 'adult', name: 'Lanterne Féerique', desc: 'Éclaire les recoins secrets du sanctuaire.', icon: '🏮', price: 60 },
-      { id: 'adu_book', category: 'accessory', era: 'adult', name: 'Grimoire des Quêtes', desc: 'Contient tous les secrets des champions.', icon: '📖', price: 85 },
-      { id: 'adu_trophy', category: 'accessory', era: 'adult', name: 'Trophée Légendaire', desc: 'Symbole des plus grands maîtres du rangement.', icon: '🏆', price: 110 },
-      { id: 'adu_crown', category: 'accessory', era: 'adult', name: 'Couronne Royale', desc: 'La récompense ultime de ton compagnon adulte.', icon: '👑', price: 140 },
+      { id: 'adu_crown', category: 'accessory', era: 'adult', name: 'Couronne Stellaire', desc: 'La récompense suprême des grands maîtres.', icon: '👑', price: 110 },
+      { id: 'adu_trophy', category: 'accessory', era: 'adult', name: 'Trophée d’Or', desc: 'Symbole d’une chambre toujours impeccable.', icon: '🏆', price: 130 },
+      { id: 'adu_lantern', category: 'accessory', era: 'adult', name: 'Lanterne Ancienne', desc: 'Éclaire le sanctuaire d’une lueur dorée.', icon: '🏮', price: 145 },
+      { id: 'adu_orb', category: 'accessory', era: 'adult', name: 'Sphère Céleste', desc: 'Un artefact mystique de sagesse et d’ordre.', icon: '🔮', price: 165 },
 
-      // --- HABITATS (Tous à débloquer) ---
-      { id: 'hab_clearing', category: 'habitat', era: 'all', name: 'Clairière Enchantée', desc: 'Un coin de forêt paisible sous les guirlandes.', icon: '🌿', price: 45 },
-      { id: 'hab_cozy', category: 'habitat', era: 'all', name: 'Salon Cosy', desc: 'Une ambiance chaleureuse et réconfortante.', icon: '🕯️', price: 80 },
-      { id: 'hab_crystal', category: 'habitat', era: 'all', name: 'Grotte aux Cristaux', desc: 'Des cristaux lumineux et une source paisible.', icon: '💎', price: 120 },
-      { id: 'hab_space', category: 'habitat', era: 'all', name: 'Observatoire Spatial', desc: 'Un dôme vitré face aux étoiles et planètes.', icon: '🪐', price: 160 },
+      // --- HABITATS (Débloqués progressivement par stade, conservés ensuite) ---
+      // Stade 1 : Nouveau-né (3 styles très différents dès le départ)
+      { id: 'hab_clearing', category: 'habitat', era: 'all', unlockStage: 0, name: 'Clairière Enchantée', desc: 'Une cabane de branches et mousse sous les lucioles.', icon: '🌿', price: 45 },
+      { id: 'hab_cozy', category: 'habitat', era: 'all', unlockStage: 0, name: 'Salon Cosy', desc: 'Un salon douillet au cœur d’un arbre illuminé.', icon: '🕯️', price: 60 },
+      { id: 'hab_igloo', category: 'habitat', era: 'all', unlockStage: 0, name: 'Igloo Aurore', desc: 'Un cocon glacé réchauffé par de douces lanternes.', icon: '❄️', price: 75 },
+
+      // Stade 2 : Bébé (+2 habitats)
+      { id: 'hab_serre', category: 'habitat', era: 'all', unlockStage: 1, name: 'Serre Suspendue', desc: 'Un nid suspendu entouré de plantes et guirlandes.', icon: '🪴', price: 90 },
+      { id: 'hab_jungle', category: 'habitat', era: 'all', unlockStage: 1, name: 'Pavillon Jungle', desc: 'Un abri tropical niché au milieu des fougères.', icon: '🌴', price: 105 },
+
+      // Stade 3 : Junior (+2 habitats)
+      { id: 'hab_oasis', category: 'habitat', era: 'all', unlockStage: 2, name: 'Oasis Étoilée', desc: 'Une tente berbère au bord d’une source sous les palmiers.', icon: '🏜️', price: 120 },
+      { id: 'hab_crystal', category: 'habitat', era: 'all', unlockStage: 2, name: 'Grotte aux Cristaux', desc: 'Des cristaux lumineux et une cascade apaisante.', icon: '💎', price: 135 },
+
+      // Stade 4 : Adulte (+3 habitats)
+      { id: 'hab_marin', category: 'habitat', era: 'all', unlockStage: 3, name: 'Palais Sous-Marin', desc: 'Un salon coquillage face aux profondeurs bleutées.', icon: '🐚', price: 155 },
+      { id: 'hab_volcan', category: 'habitat', era: 'all', unlockStage: 3, name: 'Refuge Volcanique', desc: 'Une caverne chaleureuse éclairée par la braise.', icon: '🔥', price: 175 },
+      { id: 'hab_space', category: 'habitat', era: 'all', unlockStage: 3, name: 'Observatoire Spatial', desc: 'Un dôme vitré avec télescope face aux étoiles.', icon: '🪐', price: 200 },
 
       // --- FRIANDISES & REPAS NOUVEAU-NÉ ---
       { id: 'nb_milk', category: 'care', era: 'newborn', effectEnergy: 15, effectXp: 5, name: 'Lait Chaud Étoilé', desc: 'Redonne +15% d’énergie et +5 XP.', icon: '🥛', price: 15 },
@@ -774,7 +846,7 @@
       return `
         <div class="absolute inset-0 overflow-hidden pointer-events-none">
           ${hab.localBg
-            ? renderLocalImageWithFallback([hab.localBg], hab.name, 'w-full h-full object-cover opacity-90', '', fallbackBg)
+            ? renderLocalImageWithFallback(hab.localBg, hab.name, 'w-full h-full object-cover opacity-90', '', fallbackBg)
             : fallbackBg}
           <div class="absolute inset-0 bg-gradient-to-b from-[#0D1117]/20 via-transparent to-[#0D1117]/55"></div>
         </div>
@@ -1472,9 +1544,18 @@
               const isOwned = state.ownedItems.includes(item.id);
               const isEquippedSlot = shopCategory === 'accessory' && state.equippedSlots.includes(item.id);
               const isEquippedHab = shopCategory === 'habitat' && state.equippedHabitat === item.id;
+              const reqStageIdx = typeof item.unlockStage === 'number' ? item.unlockStage : 0;
+              const isLocked = shopCategory === 'habitat' && stageInfo.index < reqStageIdx;
+              const reqStageLabel = EVOLUTION_STAGES[reqStageIdx] ? EVOLUTION_STAGES[reqStageIdx].label : '';
 
               let actionBtn = '';
-              if (shopCategory === 'care') {
+              if (isLocked) {
+                actionBtn = `
+                  <span class="px-3 py-2 rounded-xl bg-slate-900/90 border border-white/10 text-slate-400 text-[11px] font-bold inline-flex items-center gap-1">
+                    🔒 Stade ${reqStageLabel}
+                  </span>
+                `;
+              } else if (shopCategory === 'care') {
                 actionBtn = `
                   <button onclick="buyOrUseItem('${item.id}')" class="px-3.5 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/40 text-amber-200 text-xs font-bold transition active:scale-95">
                     Donner · ${item.price} 🪙
@@ -1501,10 +1582,10 @@
               }
 
               return `
-                <div class="bg-[#151B26] border border-[#232D3F] rounded-2xl p-3.5 flex items-center justify-between gap-3">
+                <div class="bg-[#151B26] border border-[#232D3F] rounded-2xl p-3.5 flex items-center justify-between gap-3 ${isLocked ? 'opacity-65' : ''}">
                   <div class="flex items-center gap-3 min-w-0">
                     <div class="w-12 h-12 rounded-2xl bg-[#0D1117] border border-white/5 flex items-center justify-center text-2xl shrink-0">
-                      ${item.icon}
+                      ${isLocked ? '🔒' : item.icon}
                     </div>
                     <div class="min-w-0">
                       <h3 class="text-sm font-bold text-white truncate">${item.name}</h3>
@@ -1529,6 +1610,13 @@
     function buyOrUseItem(itemId) {
       const item = SHOP_ITEMS.find((i) => i.id === itemId);
       if (!item) return;
+
+      const stageInfo = getStageInfoFromXp(state.xp);
+      if (item.category === 'habitat' && typeof item.unlockStage === 'number' && stageInfo.index < item.unlockStage) {
+        const reqLabel = EVOLUTION_STAGES[item.unlockStage]?.label || '';
+        showToast(`🔒 Débloqué quand ${state.petName} atteindra le stade ${reqLabel} !`, 'warning');
+        return;
+      }
 
       // 1. Friandises / Repas : retour immédiat sur le compagnon pour le voir se régaler
       if (item.category === 'care') {
