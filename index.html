@@ -479,6 +479,7 @@
         const list = raw ? JSON.parse(decodeURIComponent(raw)) : [];
         if (idx + 1 < list.length) {
           imgEl.setAttribute('data-idx', String(idx + 1));
+          imgEl.dataset.cleaned = '';
           imgEl.src = list[idx + 1];
           return;
         }
@@ -494,7 +495,7 @@
 
     window.cleanCheckerboardBackground = function (imgEl) {
       try {
-        if (!imgEl || imgEl.dataset.cleaned === '1') return;
+        if (!imgEl || imgEl.dataset.cleaned === imgEl.currentSrc) return;
         const w = imgEl.naturalWidth;
         const h = imgEl.naturalHeight;
         if (!w || !h || w > 1400 || h > 1400) return;
@@ -516,10 +517,8 @@
           const a = data[pxIdx + 3];
           if (a === 0) return true;
           const maxDiff = Math.max(Math.abs(r - g), Math.abs(g - b), Math.abs(r - b));
-          if (maxDiff > 18) return false;
-          const isLightSquare = r >= 195 && g >= 195 && b >= 195;
-          const isGreySquare = r >= 120 && r <= 194 && g >= 120 && g <= 194 && b >= 120 && b <= 194;
-          return isLightSquare || isGreySquare;
+          if (maxDiff > 22) return false;
+          return r >= 115 && g >= 115 && b >= 115;
         };
 
         const totalPixels = w * h;
@@ -565,13 +564,16 @@
           }
         }
 
-        imgEl.dataset.cleaned = '1';
         if (removedCount > 0) {
           ctx.putImageData(imgData, 0, 0);
-          imgEl.src = canvas.toDataURL('image/png');
+          const cleanedUrl = canvas.toDataURL('image/png');
+          imgEl.dataset.cleaned = cleanedUrl;
+          imgEl.src = cleanedUrl;
+        } else {
+          imgEl.dataset.cleaned = imgEl.currentSrc || '1';
         }
       } catch (e) {
-        imgEl.dataset.cleaned = '1';
+        imgEl.dataset.cleaned = imgEl.currentSrc || '1';
       }
     };
 
