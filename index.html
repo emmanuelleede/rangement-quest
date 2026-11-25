@@ -90,7 +90,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
           </svg>
         </div>
-        <div>
+        <div onclick="handleSecretDemoTap()" class="cursor-pointer select-none">
           <h1 class="text-sm font-bold tracking-tight text-white leading-none">Rangement Quest</h1>
           <span class="text-[11px] text-slate-400 font-medium">Compagnon & Défis</span>
         </div>
@@ -106,7 +106,8 @@
           </svg>
         </button>
 
-        <button onclick="openDemoModal()" class="px-2.5 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold hover:bg-amber-500/20 transition flex items-center gap-1">
+        <!-- Bouton Démo masqué pour l'usage enfant (accessible via la console si besoin : openDemoModal()) -->
+        <button id="btn-demo" onclick="openDemoModal()" class="hidden px-2.5 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold hover:bg-amber-500/20 transition items-center gap-1">
           <span>⚙️</span><span>Démo</span>
         </button>
       </div>
@@ -151,13 +152,15 @@
     let audioCtx = null;
 
     function getAudioContext() {
-      if (!audioCtx && (window.AudioContext || window.webkitAudioContext)) {
-        const Ctx = window.AudioContext || window.webkitAudioContext;
-        audioCtx = new Ctx();
-      }
-      if (audioCtx && audioCtx.state === 'suspended') {
-        audioCtx.resume().catch(() => {});
-      }
+      try {
+        if (!audioCtx && (window.AudioContext || window.webkitAudioContext)) {
+          const Ctx = window.AudioContext || window.webkitAudioContext;
+          audioCtx = new Ctx();
+        }
+        if (audioCtx && audioCtx.state === 'suspended') {
+          audioCtx.resume().catch(() => {});
+        }
+      } catch (e) {}
       return audioCtx;
     }
 
@@ -440,7 +443,6 @@
       { level: 4, era: 'adult', label: 'Adulte', minXp: 450 }
     ];
 
-    // Habitats (aucun équipé au départ, tous compatibles avec les fichiers habitat_*.jpeg)
     const HABITAT_THEMES = {
       none: {
         id: 'none',
@@ -530,7 +532,7 @@
         borderClass: 'border-blue-400/50',
         badgeIcon: '🐚',
         decorTop: ['🫧', '🐠', '✨', '🫧'],
-        decorBottom: ['🐚', '🪸', '🌊', ' pearls']
+        decorBottom: ['🐚', '🪸', '🌊', '✨']
       },
       hab_volcan: {
         id: 'hab_volcan',
@@ -554,92 +556,69 @@
       }
     };
 
-    // Objets de boutique adaptés à chaque stade d'évolution :
-    // - era: 'newborn' (Nouveau-né)
-    // - era: 'baby' (Bébé)
-    // - era: 'junior' (Junior)
-    // - era: 'adult' (Adulte)
-    // - era: 'all' (Habitats)
     const SHOP_ITEMS = [
-      // --- ACCESSOIRES NOUVEAU-NÉ (0 - 99 XP) ---
       { id: 'nb_bottle', category: 'accessory', era: 'newborn', name: 'Biberon Magique', desc: 'Un biberon tiède étoilé pour bien grandir.', icon: '🍼', price: 25 },
       { id: 'nb_plush', category: 'accessory', era: 'newborn', name: 'Doudou Tout-Doux', desc: 'Son compagnon câlin pour la sieste.', icon: '🧸', price: 35 },
       { id: 'nb_yarn', category: 'accessory', era: 'newborn', name: 'Pelote Douillette', desc: 'Une boule toute douce pour se blottir.', icon: '🧶', price: 45 },
       { id: 'nb_nightlight', category: 'accessory', era: 'newborn', name: 'Veilleuse Lune', desc: 'Une douce lumière rassurante la nuit.', icon: '🌙', price: 60 },
 
-      // --- ACCESSOIRES BÉBÉ (100 - 249 XP) ---
       { id: 'baby_duck', category: 'accessory', era: 'baby', name: 'Canard de Bain', desc: 'Un petit compagnon rigolo pour jouer.', icon: '🦆', price: 35 },
       { id: 'baby_ball', category: 'accessory', era: 'baby', name: 'Balle Rebondissante', desc: 'Parfaite pour se dégourdir les pattes.', icon: '⚽', price: 45 },
       { id: 'baby_rattle', category: 'accessory', era: 'baby', name: 'Carillon Étoilé', desc: 'Tinte doucement après chaque rangement.', icon: '🎐', price: 60 },
       { id: 'baby_bow', category: 'accessory', era: 'baby', name: 'Ruban Joyeux', desc: 'Un joli nœud coloré pour les jeunes joueurs.', icon: '🎀', price: 75 },
 
-      // --- ACCESSOIRES JUNIOR (250 - 449 XP) ---
       { id: 'jun_glasses', category: 'accessory', era: 'junior', name: 'Lunettes Explorateur', desc: 'Pour repérer le moindre objet qui traîne.', icon: '👓', price: 45 },
       { id: 'jun_bag', category: 'accessory', era: 'junior', name: 'Sac d’Aventure', desc: 'Prêt pour toutes les grandes expéditions.', icon: '🎒', price: 60 },
       { id: 'jun_compass', category: 'accessory', era: 'junior', name: 'Boussole Astrale', desc: 'Indique toujours la bonne étagère.', icon: '🧭', price: 75 },
       { id: 'jun_skateboard', category: 'accessory', era: 'junior', name: 'Planche Agile', desc: 'Pour foncer ranger toute la chambre.', icon: '🛹', price: 95 },
 
-      // --- ACCESSOIRES ADULTE (450+ XP) ---
       { id: 'adu_crown', category: 'accessory', era: 'adult', name: 'Couronne Stellaire', desc: 'La récompense suprême des grands maîtres.', icon: '👑', price: 110 },
       { id: 'adu_trophy', category: 'accessory', era: 'adult', name: 'Trophée d’Or', desc: 'Symbole d’une chambre toujours impeccable.', icon: '🏆', price: 130 },
       { id: 'adu_lantern', category: 'accessory', era: 'adult', name: 'Lanterne Ancienne', desc: 'Éclaire le sanctuaire d’une lueur dorée.', icon: '🏮', price: 145 },
       { id: 'adu_orb', category: 'accessory', era: 'adult', name: 'Sphère Céleste', desc: 'Un artefact mystique de sagesse et d’ordre.', icon: '🔮', price: 165 },
 
-      // --- HABITATS (Débloqués progressivement par stade, conservés ensuite) ---
-      // Stade 1 : Nouveau-né (3 styles très différents dès le départ)
       { id: 'hab_clearing', category: 'habitat', era: 'all', unlockStage: 0, name: 'Clairière Enchantée', desc: 'Une cabane de branches et mousse sous les lucioles.', icon: '🌿', price: 45 },
       { id: 'hab_cozy', category: 'habitat', era: 'all', unlockStage: 0, name: 'Salon Cosy', desc: 'Un salon douillet au cœur d’un arbre illuminé.', icon: '🕯️', price: 60 },
       { id: 'hab_igloo', category: 'habitat', era: 'all', unlockStage: 0, name: 'Igloo Aurore', desc: 'Un cocon glacé réchauffé par de douces lanternes.', icon: '❄️', price: 75 },
 
-      // Stade 2 : Bébé (+2 habitats)
       { id: 'hab_serre', category: 'habitat', era: 'all', unlockStage: 1, name: 'Serre Suspendue', desc: 'Un nid suspendu entouré de plantes et guirlandes.', icon: '🪴', price: 90 },
       { id: 'hab_jungle', category: 'habitat', era: 'all', unlockStage: 1, name: 'Pavillon Jungle', desc: 'Un abri tropical niché au milieu des fougères.', icon: '🌴', price: 105 },
 
-      // Stade 3 : Junior (+2 habitats)
       { id: 'hab_oasis', category: 'habitat', era: 'all', unlockStage: 2, name: 'Oasis Étoilée', desc: 'Une tente berbère au bord d’une source sous les palmiers.', icon: '🏜️', price: 120 },
       { id: 'hab_crystal', category: 'habitat', era: 'all', unlockStage: 2, name: 'Grotte aux Cristaux', desc: 'Des cristaux lumineux et une cascade apaisante.', icon: '💎', price: 135 },
 
-      // Stade 4 : Adulte (+3 habitats)
       { id: 'hab_marin', category: 'habitat', era: 'all', unlockStage: 3, name: 'Palais Sous-Marin', desc: 'Un salon coquillage face aux profondeurs bleutées.', icon: '🐚', price: 155 },
       { id: 'hab_volcan', category: 'habitat', era: 'all', unlockStage: 3, name: 'Refuge Volcanique', desc: 'Une caverne chaleureuse éclairée par la braise.', icon: '🔥', price: 175 },
       { id: 'hab_space', category: 'habitat', era: 'all', unlockStage: 3, name: 'Observatoire Spatial', desc: 'Un dôme vitré avec télescope face aux étoiles.', icon: '🪐', price: 200 },
 
-      // --- FRIANDISES & REPAS NOUVEAU-NÉ ---
       { id: 'nb_milk', category: 'care', era: 'newborn', effectEnergy: 15, effectXp: 5, name: 'Lait Chaud Étoilé', desc: 'Redonne +15% d’énergie et +5 XP.', icon: '🥛', price: 15 },
       { id: 'nb_compote', category: 'care', era: 'newborn', effectEnergy: 25, effectXp: 10, name: 'Compote Douce', desc: 'Redonne +25% d’énergie et +10 XP.', icon: '🥣', price: 25 },
       { id: 'nb_brioche', category: 'care', era: 'newborn', effectEnergy: 40, effectXp: 20, name: 'Brioche Nuage', desc: 'Redonne +40% d’énergie et +20 XP.', icon: '🥐', price: 40 },
 
-      // --- FRIANDISES & REPAS BÉBÉ ---
       { id: 'baby_strawberry', category: 'care', era: 'baby', effectEnergy: 15, effectXp: 8, name: 'Fraises des Bois', desc: 'Redonne +15% d’énergie et +8 XP.', icon: '🍓', price: 18 },
       { id: 'baby_pancake', category: 'care', era: 'baby', effectEnergy: 30, effectXp: 15, name: 'Crêpe Dorée', desc: 'Redonne +30% d’énergie et +15 XP.', icon: '🥞', price: 30 },
       { id: 'baby_honey', category: 'care', era: 'baby', effectEnergy: 45, effectXp: 25, name: 'Pot de Miel Doré', desc: 'Redonne +45% d’énergie et +25 XP.', icon: '🍯', price: 45 },
 
-      // --- FRIANDISES & REPAS JUNIOR ---
       { id: 'jun_apple', category: 'care', era: 'junior', effectEnergy: 15, effectXp: 10, name: 'Pomme Croquante', desc: 'Redonne +15% d’énergie et +10 XP.', icon: '🍎', price: 20 },
       { id: 'jun_pie', category: 'care', era: 'junior', effectEnergy: 30, effectXp: 20, name: 'Tarte aux Baies', desc: 'Redonne +30% d’énergie et +20 XP.', icon: '🥧', price: 35 },
       { id: 'jun_ramen', category: 'care', era: 'junior', effectEnergy: 50, effectXp: 30, name: 'Bol Énergétique', desc: 'Redonne +50% d’énergie et +30 XP.', icon: '🍜', price: 50 },
 
-      // --- FRIANDISES & REPAS ADULTE ---
       { id: 'adu_peach', category: 'care', era: 'adult', effectEnergy: 20, effectXp: 12, name: 'Pêche Solaire', desc: 'Redonne +20% d’énergie et +12 XP.', icon: '🍑', price: 25 },
       { id: 'adu_feast', category: 'care', era: 'adult', effectEnergy: 40, effectXp: 25, name: 'Grand Banquet', desc: 'Redonne +40% d’énergie et +25 XP.', icon: '🍲', price: 45 },
       { id: 'adu_cake', category: 'care', era: 'adult', effectEnergy: 60, effectXp: 40, name: 'Gâteau Céleste', desc: 'Redonne +60% d’énergie et +40 XP.', icon: '🎂', price: 65 }
     ];
 
-    // Défis à contrainte classés par difficulté avec timer minimum verrouillé
     const CONSTRAINT_CHALLENGES = [
-      // Facile (45s)
       { id: 'c_easy_1', difficulty: 'easy', minSeconds: 45, title: 'Chasse à la lettre E', desc: 'Range 5 objets dont le nom contient la lettre E.', rewardCoins: 20, rewardXp: 20 },
       { id: 'c_easy_2', difficulty: 'easy', minSeconds: 45, title: 'Duo de Couleur', desc: 'Range 5 objets de la même couleur (ex. bleu, rouge ou bois).', rewardCoins: 20, rewardXp: 20 },
       { id: 'c_easy_3', difficulty: 'easy', minSeconds: 45, title: 'Mission Doudous & Peluches', desc: 'Remets toutes les peluches et figurines à leur place.', rewardCoins: 20, rewardXp: 20 },
       { id: 'c_easy_4', difficulty: 'easy', minSeconds: 45, title: 'Trio Express', desc: 'Choisis 3 gros objets qui traînent et range-les proprement.', rewardCoins: 20, rewardXp: 20 },
 
-      // Moyen (60s)
       { id: 'c_med_1', difficulty: 'medium', minSeconds: 60, title: 'Mission Livres & BD', desc: 'Aligne tous les livres, cahiers et BD sur l’étagère.', rewardCoins: 30, rewardXp: 30 },
       { id: 'c_med_2', difficulty: 'medium', minSeconds: 60, title: 'Trio du Bureau', desc: 'Range 8 petits objets (crayons, feutres, papiers) sur le bureau.', rewardCoins: 30, rewardXp: 30 },
       { id: 'c_med_3', difficulty: 'medium', minSeconds: 60, title: 'Panier à Linge', desc: 'Ramasse tous les vêtements qui traînent et mets-les au panier ou pliés.', rewardCoins: 30, rewardXp: 30 },
       { id: 'c_med_4', difficulty: 'medium', minSeconds: 60, title: 'Chasse aux Jouets', desc: 'Range 10 jouets ou pièces de construction dans leur boîte.', rewardCoins: 30, rewardXp: 30 },
 
-      // Difficile (90s)
       { id: 'c_hard_1', difficulty: 'hard', minSeconds: 90, title: 'Opération Sol Net', desc: 'Libère entièrement le sol de la chambre : plus rien ne doit toucher le tapis !', rewardCoins: 45, rewardXp: 45 },
       { id: 'c_hard_2', difficulty: 'hard', minSeconds: 90, title: 'Zéro Objet sur le Lit', desc: 'Débarrasse complètement le lit, refais la couette et range chaque affaire.', rewardCoins: 45, rewardXp: 45 },
       { id: 'c_hard_3', difficulty: 'hard', minSeconds: 90, title: 'Grand Tri des Boîtes', desc: 'Trie et range 15 objets dans leurs bacs respectifs.', rewardCoins: 45, rewardXp: 45 }
@@ -676,7 +655,6 @@
         bestRace10: null,
         ownedItems: [],
         equippedHabitat: 'none',
-        // 4 cases latérales autour de l'animal (index 0, 1 à gauche ; 2, 3 à droite)
         equippedSlots: [null, null, null, null],
         lastEra: 'newborn',
         lastActiveAt: Date.now()
@@ -712,7 +690,6 @@
 
     let state = loadState();
 
-    // Vérifie si 24h ou plus se sont écoulées sans visite (-10% par tranche de 24h)
     function applyInactivityDecay(silent = false) {
       if (!state.adopted) {
         state.lastActiveAt = Date.now();
@@ -768,7 +745,6 @@
       return getStageInfoFromXp(state.xp).current.era;
     }
 
-    // Ajoute de l'XP et vide automatiquement les 4 cases d'accessoires à chaque changement de stade
     function grantXp(amount) {
       const prevStage = getStageInfoFromXp(state.xp);
       state.xp += amount;
@@ -1008,7 +984,6 @@
             <p class="text-xs text-slate-400">Range ta chambre pour le faire grandir et débloquer ses objets.</p>
           </div>
 
-          <!-- Aperçu du compagnon sélectionné -->
           <div class="bg-[#151B26] border border-[#232D3F] rounded-3xl p-4 flex flex-col items-center text-center space-y-2 relative overflow-hidden">
             ${buildPetArtHTML(selectedSpecies, { size: 'lg', xp: 0, energy: 100, showSparkles: true })}
             <div>
@@ -1017,7 +992,6 @@
             </div>
           </div>
 
-          <!-- Sélecteur d'espèce -->
           <div class="grid grid-cols-4 gap-2 max-h-40 overflow-y-auto pr-0.5">
             ${speciesList.map((sp) => {
               const isSelected = sp.id === selectedSpecies;
@@ -1030,7 +1004,6 @@
             }).join('')}
           </div>
 
-          <!-- Saisie du prénom -->
           <div class="space-y-2">
             <label class="block text-xs font-semibold text-slate-300">Donne-lui un prénom :</label>
             <input
@@ -1087,7 +1060,6 @@
       const hab = HABITAT_THEMES[state.equippedHabitat] || HABITAT_THEMES.none;
       const era = getCurrentEra();
 
-      // Calcul progression XP vers stade suivant
       let xpProgressPct = 100;
       let xpProgressText = `${state.xp} XP (Stade Max)`;
       if (!stageInfo.isMax) {
@@ -1120,7 +1092,6 @@
       main.innerHTML = `
         <div class="p-4 space-y-4">
 
-          <!-- Barre de statistiques -->
           <div class="grid grid-cols-3 gap-2.5">
             <div class="bg-[#151B26] border border-[#232D3F] rounded-2xl p-2.5 text-center">
               <div class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Pièces</div>
@@ -1136,12 +1107,10 @@
             </div>
           </div>
 
-          <!-- Carte principale du compagnon (mise en page en flux vertical sans superposition) -->
           <div id="pet-stage-card" class="relative rounded-3xl border ${hab.borderClass || 'border-[#253044]'} overflow-hidden shadow-xl transition-all duration-500">
             ${buildHabitatBackdropHTML(state.equippedHabitat)}
 
             <div class="relative z-10 p-4 flex flex-col gap-3">
-              <!-- Ligne 1 : Nom + bouton Caresser -->
               <div class="flex items-start justify-between gap-2">
                 <div class="min-w-0">
                   <h2 class="text-lg font-extrabold text-white leading-tight truncate">${state.petName}</h2>
@@ -1153,10 +1122,8 @@
                 </button>
               </div>
 
-              <!-- Décors hauts éventuels de l'habitat -->
               ${topDecorHtml}
 
-              <!-- Ligne 2 : 2 cases à gauche + Animal au centre + 2 cases à droite -->
               <div class="grid grid-cols-[56px_1fr_56px] items-center gap-2 py-1">
                 <div class="flex flex-col items-center gap-3">
                   ${renderAccessorySlotHTML(0)}
@@ -1179,7 +1146,6 @@
                 </div>
               </div>
 
-              <!-- Ligne 3 : Bandeau Habitat (bien séparé au-dessus des boutons) -->
               <div class="flex items-center justify-between px-3 py-1.5 rounded-xl bg-slate-950/65 border border-white/10 backdrop-blur-sm">
                 <div class="flex items-center gap-1.5 min-w-0">
                   <span class="text-xs">${hab.badgeIcon}</span>
@@ -1188,7 +1154,6 @@
                 ${bottomDecorHtml}
               </div>
 
-              <!-- Ligne 4 : Boutons d'action rapides -->
               <div class="grid grid-cols-2 gap-2.5 pt-0.5">
                 <button onclick="quickFeed()" class="py-2.5 px-3 rounded-2xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/35 text-amber-200 text-xs font-bold flex items-center justify-center gap-1.5 transition active:scale-95">
                   <span>${quickFood.icon}</span>
@@ -1203,7 +1168,6 @@
             </div>
           </div>
 
-          <!-- Jauges Énergie & Croissance -->
           <div class="bg-[#151B26] border border-[#232D3F] rounded-3xl p-4 space-y-3.5">
             <div class="space-y-1.5">
               <div class="flex justify-between items-center text-xs">
@@ -1525,7 +1489,6 @@
             </div>
           </div>
 
-          <!-- Sous-onglets Boutique -->
           <div class="grid grid-cols-3 gap-2 bg-[#151B26] p-1.5 rounded-2xl border border-[#232D3F]">
             <button onclick="setShopCategory('accessory')" class="py-2 rounded-xl text-xs font-bold transition ${shopCategory === 'accessory' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}">
               🧸 Accessoires
@@ -1545,7 +1508,6 @@
             </div>
           ` : ''}
 
-          <!-- Liste des articles -->
           <div class="space-y-2.5">
             ${filteredItems.map((item) => {
               const isOwned = state.ownedItems.includes(item.id);
@@ -1625,7 +1587,6 @@
         return;
       }
 
-      // 1. Friandises / Repas : retour immédiat sur le compagnon pour le voir se régaler
       if (item.category === 'care') {
         if (state.coins < item.price) {
           showToast(`Il te manque ${item.price - state.coins} 🪙 !`, 'warning');
@@ -1649,7 +1610,6 @@
         return;
       }
 
-      // 2. Achat si pas encore possédé
       if (!state.ownedItems.includes(item.id)) {
         if (state.coins < item.price) {
           showToast(`Il te manque ${item.price - state.coins} 🪙 !`, 'warning');
@@ -1662,7 +1622,6 @@
         sfxClick();
       }
 
-      // 3. Équipement Habitat
       if (item.category === 'habitat') {
         state.equippedHabitat = item.id;
         state.lastActiveAt = Date.now();
@@ -1672,11 +1631,9 @@
         return;
       }
 
-      // 4. Placement dans l'une des 4 cases autour de l'animal
       if (item.category === 'accessory') {
         const existingIdx = state.equippedSlots.indexOf(item.id);
         if (existingIdx !== -1) {
-          // Retirer de la case si on reclique dessus
           state.equippedSlots[existingIdx] = null;
           saveState();
           showToast(`${item.name} rangé.`, 'info');
@@ -1688,7 +1645,6 @@
         if (emptyIdx !== -1) {
           state.equippedSlots[emptyIdx] = item.id;
         } else {
-          // Si les 4 cases sont pleines, remplace la plus ancienne (case 0)
           state.equippedSlots.shift();
           state.equippedSlots.push(item.id);
         }
@@ -1700,8 +1656,24 @@
     }
 
     // =========================================================================
-    // 10. MENU DÉMO & NAVIGATION GLOBALE
+    // 10. MENU DÉMO (MASQUÉ) & NAVIGATION GLOBALE
     // =========================================================================
+    let secretDemoTapCount = 0;
+    let secretDemoTapTimer = null;
+
+    function handleSecretDemoTap() {
+      secretDemoTapCount += 1;
+      clearTimeout(secretDemoTapTimer);
+      if (secretDemoTapCount >= 5) {
+        secretDemoTapCount = 0;
+        openDemoModal();
+        return;
+      }
+      secretDemoTapTimer = setTimeout(() => {
+        secretDemoTapCount = 0;
+      }, 1400);
+    }
+
     function openDemoModal() {
       sfxClick();
       openModal(`
