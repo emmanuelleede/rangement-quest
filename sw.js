@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rangement-quest-v1';
+const CACHE_NAME = 'rangement-quest-v2';
 const CORE_ASSETS = [
   './',
   './index.html',
