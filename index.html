@@ -59,6 +59,12 @@
       animation: floatUp 0.95s ease-out forwards;
       pointer-events: none;
     }
+
+    /* Fond propre sans damier autour de la loutre */
+    .otter-cutout-img {
+      background: transparent !important;
+      mix-blend-mode: normal;
+    }
   </style>
 </head>
 <body class="min-h-screen flex justify-center bg-[#090c10] text-slate-100">
@@ -136,9 +142,10 @@
           <div id="otter-anim-wrapper" class="anim-otter-breathe flex items-center justify-center transition-all duration-300">
             <img
               id="otter-img"
-              src="images/loutre_nouveau_ne.png"
+              src=""
               alt="Loutre Nouveau-né"
-              class="max-h-48 w-auto object-contain drop-shadow-[0_14px_24px_rgba(0,0,0,0.55)] transition-all duration-300"
+              class="otter-cutout-img max-h-48 w-auto object-contain drop-shadow-[0_14px_24px_rgba(0,0,0,0.55)] transition-all duration-300"
+              onload="handleOtterImageLoad()"
               onerror="handleOtterImageError()"
             />
             <div id="otter-fallback" class="hidden flex-col items-center justify-center text-center p-4">
@@ -241,33 +248,54 @@
 
   <script>
     // Définition claire et ordonnée des 4 stades de croissance de la loutre
+    // Chaque stade teste d'abord images/<nom>.png puis <nom>.png à la racine
     const OTTER_STAGES = [
       {
         index: 0,
         label: 'Nouveau-né',
         minXp: 0,
-        image: 'images/loutre_nouveau_ne.png',
+        candidates: [
+          'images/loutre_nouveau_ne.png',
+          'loutre_nouveau_ne.png',
+          'images/loutre_nouveau_ne.jpg',
+          'loutre_nouveau_ne.jpg'
+        ],
         scaleClass: 'max-h-40 sm:max-h-44'
       },
       {
         index: 1,
         label: 'Bébé',
         minXp: 80,
-        image: 'images/loutre_bebe.png',
+        candidates: [
+          'images/loutre_bebe.png',
+          'loutre_bebe.png',
+          'images/loutre_bebe.jpg',
+          'loutre_bebe.jpg'
+        ],
         scaleClass: 'max-h-44 sm:max-h-48'
       },
       {
         index: 2,
         label: 'Junior',
         minXp: 200,
-        image: 'images/loutre_junior.png',
+        candidates: [
+          'images/loutre_junior.png',
+          'loutre_junior.png',
+          'images/loutre_junior.jpg',
+          'loutre_junior.jpg'
+        ],
         scaleClass: 'max-h-48 sm:max-h-52'
       },
       {
         index: 3,
         label: 'Adulte',
         minXp: 360,
-        image: 'images/loutre_adulte.png',
+        candidates: [
+          'images/loutre_adulte.png',
+          'loutre_adulte.png',
+          'images/loutre_adulte.jpg',
+          'loutre_adulte.jpg'
+        ],
         scaleClass: 'max-h-52 sm:max-h-56'
       }
     ];
@@ -275,6 +303,10 @@
     const STORAGE_KEY = 'rangement_quest_otter_stages_v1';
     let soundEnabled = true;
     let audioCtx = null;
+    let activeCandidateIndex = 0;
+    let activeStageIndex = -1;
+    let isCleaningMosaic = false;
+    const cleanedDataUrlCache = {};
 
     function getDefaultState() {
       return {
@@ -289,10 +321,10 @@
         if (!raw) return getDefaultState();
         const parsed = JSON.parse(raw);
         return {
-          xp: typeof parsed.xp === 'number' && parsed.xp >= 0 ? parsed.xp : 0,
-          coins: typeof parsed.coins === 'number' && parsed.coins >= 0 ? parsed.coins : 50
+          ...getDefaultState(),
+          ...parsed
         };
-      } catch (err) {
+      } catch (e) {
         return getDefaultState();
       }
     }
@@ -300,18 +332,36 @@
     function saveState() {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-      } catch (err) {}
+      } catch (e) {}
     }
 
     let state = loadState();
 
-    // Petit son doux avec Web Audio API (sans fichier externe)
-    function playSoftTone(freq = 640, duration = 0.12) {
+    function getCurrentStageIndex(xp) {
+      let idx = 0;
+      for (let i = 0; i < OTTER_STAGES.length; i++) {
+        if (xp >= OTTER_STAGES[i].minXp) {
+          idx = i;
+        }
+      }
+      return idx;
+    }
+
+    function getStageProgressPercent(xp, stageIdx) {
+      const current = OTTER_STAGES[stageIdx] || OTTER_STAGES[0];
+      const next = OTTER_STAGES[stageIdx + 1] || null;
+      if (!next) return 100;
+      const span = Math.max(1, next.minXp - current.minXp);
+      const progress = ((xp - current.minXp) / span) * 100;
+      return Math.max(0, Math.min(100, Math.round(progress)));
+    }
+
+    function playSoftTone(freq, duration = 0.12) {
       if (!soundEnabled) return;
       try {
-        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-        if (!AudioContextClass) return;
-        if (!audioCtx) audioCtx = new AudioContextClass();
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        if (!Ctx) return;
+        if (!audioCtx) audioCtx = new Ctx();
         if (audioCtx.state === 'suspended') {
           audioCtx.resume().catch(() => {});
         }
@@ -325,7 +375,7 @@
         gain.connect(audioCtx.destination);
         osc.start();
         osc.stop(audioCtx.currentTime + duration);
-      } catch (err) {}
+      } catch (e) {}
     }
 
     function toggleSound() {
@@ -334,43 +384,21 @@
       if (btn) {
         btn.textContent = soundEnabled ? '🔊' : '🔇';
       }
-      if (soundEnabled) playSoftTone(700, 0.1);
+      if (soundEnabled) playSoftTone(660, 0.09);
     }
 
-    // Détermine l'index du stade actif selon l'XP accumulée
-    function getCurrentStageIndex(xp) {
-      let idx = 0;
-      for (let i = 0; i < OTTER_STAGES.length; i++) {
-        if (xp >= OTTER_STAGES[i].minXp) {
-          idx = i;
-        }
-      }
-      return idx;
-    }
-
-    // Calcule le pourcentage de progression entre le stade actuel et le suivant
-    function getStageProgressPercent(xp, stageIdx) {
-      const current = OTTER_STAGES[stageIdx];
-      const next = OTTER_STAGES[stageIdx + 1];
-      if (!next) return 100;
-      const span = Math.max(1, next.minXp - current.minXp);
-      const earnedInStage = Math.max(0, xp - current.minXp);
-      return Math.min(100, Math.round((earnedInStage / span) * 100));
-    }
-
-    // Fait apparaître une petite réaction visuelle (cœur, étoile, texte)
-    function spawnFloatingFx(text, xPercent = 50, yPercent = 45) {
+    function spawnFloatingFx(text, xPct = 50, yPct = 40) {
       const zone = document.getElementById('otter-stage-zone');
       if (!zone) return;
       const el = document.createElement('div');
-      el.className = 'floating-fx absolute z-30 text-sm font-bold text-amber-200 drop-shadow';
-      el.style.left = `${xPercent}%`;
-      el.style.top = `${yPercent}%`;
+      el.className = 'floating-fx absolute z-30 px-2.5 py-1 rounded-full bg-slate-900/85 border border-amber-300/40 text-xs font-bold text-amber-200 shadow-lg whitespace-nowrap';
+      el.style.left = `${xPct}%`;
+      el.style.top = `${yPct}%`;
       el.textContent = text;
       zone.appendChild(el);
       setTimeout(() => {
         if (el.parentNode) el.parentNode.removeChild(el);
-      }, 980);
+      }, 960);
     }
 
     // Déclenche le petit bond animé de la loutre
@@ -382,13 +410,172 @@
       wrapper.classList.add('anim-otter-hop');
     }
 
-    // Gère le cas où l'image locale n'est pas trouvée (évite un écran cassé)
+    // Vérifie si un pixel ressemble à une case de fond damier (gris/blanc/clair neutre)
+    function isCheckerboardPixel(r, g, b, a) {
+      if (a < 15) return true;
+      const maxC = Math.max(r, g, b);
+      const minC = Math.min(r, g, b);
+      const saturation = maxC - minC;
+      // Les cases de faux damier sont généralement des gris/blancs neutres peu saturés
+      return saturation <= 18 && maxC >= 115;
+    }
+
+    // Supprime un faux fond en damier (mosaïque gris/blanc) connecté aux bords de l'image
+    function stripCheckerboardBackground(imgEl, cacheKey) {
+      if (cleanedDataUrlCache[cacheKey]) {
+        return cleanedDataUrlCache[cacheKey];
+      }
+      const w = imgEl.naturalWidth;
+      const h = imgEl.naturalHeight;
+      if (!w || !h) return null;
+
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        if (!ctx) return null;
+
+        ctx.drawImage(imgEl, 0, 0, w, h);
+        const imgData = ctx.getImageData(0, 0, w, h);
+        const data = imgData.data;
+
+        const visited = new Uint8Array(w * h);
+        const queue = new Int32Array(w * h);
+        let head = 0;
+        let tail = 0;
+
+        // Ajoute les pixels de bordure qui correspondent au damier
+        for (let x = 0; x < w; x++) {
+          const topIdx = x;
+          const pTop = topIdx * 4;
+          if (isCheckerboardPixel(data[pTop], data[pTop + 1], data[pTop + 2], data[pTop + 3])) {
+            visited[topIdx] = 1;
+            queue[tail++] = topIdx;
+          }
+
+          const botIdx = (h - 1) * w + x;
+          const pBot = botIdx * 4;
+          if (isCheckerboardPixel(data[pBot], data[pBot + 1], data[pBot + 2], data[pBot + 3])) {
+            visited[botIdx] = 1;
+            queue[tail++] = botIdx;
+          }
+        }
+
+        for (let y = 0; y < h; y++) {
+          const leftIdx = y * w;
+          const pLeft = leftIdx * 4;
+          if (isCheckerboardPixel(data[pLeft], data[pLeft + 1], data[pLeft + 2], data[pLeft + 3])) {
+            visited[leftIdx] = 1;
+            queue[tail++] = leftIdx;
+          }
+
+          const rightIdx = y * w + (w - 1);
+          const pRight = rightIdx * 4;
+          if (isCheckerboardPixel(data[pRight], data[pRight + 1], data[pRight + 2], data[pRight + 3])) {
+            visited[rightIdx] = 1;
+            queue[tail++] = rightIdx;
+          }
+        }
+
+        // Propagation (BFS) sur les cases de damier adjacentes depuis les bords
+        while (head < tail) {
+          const idx = queue[head++];
+          const x = idx % w;
+          const y = (idx - x) / w;
+
+          // Rendre le pixel transparent
+          data[idx * 4 + 3] = 0;
+
+          const neighbors = [
+            x > 0 ? idx - 1 : -1,
+            x < w - 1 ? idx + 1 : -1,
+            y > 0 ? idx - w : -1,
+            y < h - 1 ? idx + w : -1
+          ];
+
+          for (let n = 0; n < 4; n++) {
+            const nIdx = neighbors[n];
+            if (nIdx >= 0 && !visited[nIdx]) {
+              const p = nIdx * 4;
+              if (isCheckerboardPixel(data[p], data[p + 1], data[p + 2], data[p + 3])) {
+                visited[nIdx] = 1;
+                queue[tail++] = nIdx;
+              }
+            }
+          }
+        }
+
+        ctx.putImageData(imgData, 0, 0);
+        const cleanedUrl = canvas.toDataURL('image/png');
+        cleanedDataUrlCache[cacheKey] = cleanedUrl;
+        return cleanedUrl;
+      } catch (err) {
+        // Si le canvas est bloqué (ex: CORS en local file://), on garde l'image brute sans planter
+        return null;
+      }
+    }
+
+    // Appelé quand une image charge avec succès
+    function handleOtterImageLoad() {
+      const img = document.getElementById('otter-img');
+      const fallback = document.getElementById('otter-fallback');
+      const fileHint = document.getElementById('stage-file-hint');
+      const idx = getCurrentStageIndex(state.xp);
+      const stage = OTTER_STAGES[idx] || OTTER_STAGES[0];
+      const currentPath = stage.candidates[activeCandidateIndex] || stage.candidates[0];
+
+      if (fallback) {
+        fallback.classList.add('hidden');
+        fallback.classList.remove('flex');
+      }
+      if (img) {
+        img.classList.remove('hidden');
+      }
+      if (fileHint) {
+        fileHint.innerHTML = `Chargé : <code class="text-slate-300">${currentPath}</code>`;
+      }
+
+      if (isCleaningMosaic) {
+        isCleaningMosaic = false;
+        return;
+      }
+
+      if (img && img.src && !img.src.startsWith('data:image/png')) {
+        isCleaningMosaic = true;
+        const cleaned = stripCheckerboardBackground(img, currentPath);
+        if (cleaned) {
+          img.src = cleaned;
+        } else {
+          isCleaningMosaic = false;
+        }
+      }
+    }
+
+    // Essaie le chemin suivant si l'image n'est pas trouvée à cet emplacement
     function handleOtterImageError() {
+      const idx = getCurrentStageIndex(state.xp);
+      const stage = OTTER_STAGES[idx] || OTTER_STAGES[0];
       const img = document.getElementById('otter-img');
       const fallback = document.getElementById('otter-fallback');
       const pathLabel = document.getElementById('otter-fallback-path');
-      const idx = getCurrentStageIndex(state.xp);
-      const stage = OTTER_STAGES[idx] || OTTER_STAGES[0];
+
+      if (isCleaningMosaic) {
+        isCleaningMosaic = false;
+        if (img && stage.candidates[activeCandidateIndex]) {
+          img.src = stage.candidates[activeCandidateIndex];
+        }
+        return;
+      }
+
+      if (activeCandidateIndex + 1 < stage.candidates.length) {
+        activeCandidateIndex += 1;
+        if (img) {
+          img.classList.remove('hidden');
+          img.src = stage.candidates[activeCandidateIndex];
+        }
+        return;
+      }
 
       if (img) img.classList.add('hidden');
       if (fallback) {
@@ -396,9 +583,12 @@
         fallback.classList.add('flex');
       }
       if (pathLabel) {
-        pathLabel.textContent = `Vérifie : ${stage.image}`;
+        pathLabel.textContent = `Testé : ${stage.candidates.join(' ou ')}`;
       }
     }
+
+    window.handleOtterImageLoad = handleOtterImageLoad;
+    window.handleOtterImageError = handleOtterImageError;
 
     // Met à jour toute l'interface selon l'état courant
     function renderUI() {
@@ -420,7 +610,7 @@
         badge.textContent = `Stade ${idx + 1}/4 · ${stage.label}`;
       }
       if (fileHint) {
-        fileHint.innerHTML = `Fichier : <code class="text-slate-300">${stage.image}</code>`;
+        fileHint.innerHTML = `Fichier : <code class="text-slate-300">${stage.candidates[0]}</code>`;
       }
       if (xpDisplay) {
         xpDisplay.textContent = `${state.xp} XP`;
@@ -444,10 +634,11 @@
         img.alt = `Loutre ${stage.label}`;
         img.classList.remove('hidden');
 
-        // Recharge uniquement si la source a changé
-        const currentSrcAttr = img.getAttribute('src');
-        if (currentSrcAttr !== stage.image) {
-          img.setAttribute('src', stage.image);
+        if (activeStageIndex !== idx) {
+          activeStageIndex = idx;
+          activeCandidateIndex = 0;
+          const primaryCandidate = stage.candidates[0];
+          img.src = cleanedDataUrlCache[primaryCandidate] || primaryCandidate;
         }
       }
 
