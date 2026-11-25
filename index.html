@@ -64,6 +64,10 @@
       pointer-events: none;
     }
 
+    .pet-clean-img {
+      background: transparent !important;
+    }
+
     ::-webkit-scrollbar { width: 4px; }
     ::-webkit-scrollbar-track { background: #0d1117; }
     ::-webkit-scrollbar-thumb { background: #232d3f; border-radius: 4px; }
@@ -442,7 +446,7 @@
     }
 
     // =========================================================================
-    // 4. PROGRESSION, STADES & AFFICHAGE VISUEL DES COMPAGNONS
+    // 4. PROGRESSION, STADES & SUPPRESSION DU FOND GRIS / DAMIER
     // =========================================================================
     function getStageIndexFromXp(xp) {
       let idx = 0;
@@ -493,12 +497,17 @@
       }
     };
 
+    // Supprime le fond damier gris/blanc relié aux bords de l'image
     window.cleanCheckerboardBackground = function (imgEl) {
       try {
-        if (!imgEl || imgEl.dataset.cleaned === imgEl.currentSrc) return;
+        if (!imgEl) return;
+        const currentSrc = imgEl.getAttribute('src') || '';
+        if (currentSrc.startsWith('data:image/png;base64,')) return;
+        if (imgEl.dataset.cleaned === currentSrc) return;
+
         const w = imgEl.naturalWidth;
         const h = imgEl.naturalHeight;
-        if (!w || !h || w > 1400 || h > 1400) return;
+        if (!w || !h || w > 1600 || h > 1600) return;
 
         const canvas = document.createElement('canvas');
         canvas.width = w;
@@ -510,39 +519,41 @@
         const imgData = ctx.getImageData(0, 0, w, h);
         const data = imgData.data;
 
-        const isCheckerPixel = (pxIdx) => {
-          const r = data[pxIdx];
-          const g = data[pxIdx + 1];
-          const b = data[pxIdx + 2];
-          const a = data[pxIdx + 3];
-          if (a === 0) return true;
-          const maxDiff = Math.max(Math.abs(r - g), Math.abs(g - b), Math.abs(r - b));
-          if (maxDiff > 22) return false;
-          return r >= 115 && g >= 115 && b >= 115;
+        // Détecte les pixels neutres clairs/moyens typiques des damiers (blanc + gris clair/moyen)
+        const isNeutralGreyOrWhite = (pxIdx) => {
+          const dIdx = pxIdx * 4;
+          const r = data[dIdx];
+          const g = data[dIdx + 1];
+          const b = data[dIdx + 2];
+          const a = data[dIdx + 3];
+          if (a < 15) return true;
+          const maxCh = Math.max(r, g, b);
+          const minCh = Math.min(r, g, b);
+          const spread = maxCh - minCh;
+          return spread <= 24 && maxCh >= 125;
         };
 
         const totalPixels = w * h;
         const visited = new Uint8Array(totalPixels);
         const queue = [];
 
-        const pushIfChecker = (x, y) => {
+        const enqueueIfMatch = (x, y) => {
           if (x < 0 || y < 0 || x >= w || y >= h) return;
           const pIdx = y * w + x;
           if (visited[pIdx]) return;
-          const dIdx = pIdx * 4;
-          if (isCheckerPixel(dIdx)) {
+          if (isNeutralGreyOrWhite(pIdx)) {
             visited[pIdx] = 1;
             queue.push(pIdx);
           }
         };
 
         for (let x = 0; x < w; x++) {
-          pushIfChecker(x, 0);
-          pushIfChecker(x, h - 1);
+          enqueueIfMatch(x, 0);
+          enqueueIfMatch(x, h - 1);
         }
         for (let y = 0; y < h; y++) {
-          pushIfChecker(0, y);
-          pushIfChecker(w - 1, y);
+          enqueueIfMatch(0, y);
+          enqueueIfMatch(w - 1, y);
         }
 
         let head = 0;
@@ -550,10 +561,10 @@
           const pIdx = queue[head++];
           const x = pIdx % w;
           const y = (pIdx - x) / w;
-          pushIfChecker(x + 1, y);
-          pushIfChecker(x - 1, y);
-          pushIfChecker(x, y + 1);
-          pushIfChecker(x, y - 1);
+          enqueueIfMatch(x + 1, y);
+          enqueueIfMatch(x - 1, y);
+          enqueueIfMatch(x, y + 1);
+          enqueueIfMatch(x, y - 1);
         }
 
         let removedCount = 0;
@@ -570,10 +581,10 @@
           imgEl.dataset.cleaned = cleanedUrl;
           imgEl.src = cleanedUrl;
         } else {
-          imgEl.dataset.cleaned = imgEl.currentSrc || '1';
+          imgEl.dataset.cleaned = currentSrc;
         }
       } catch (e) {
-        imgEl.dataset.cleaned = imgEl.currentSrc || '1';
+        imgEl.dataset.cleaned = imgEl.getAttribute('src') || '1';
       }
     };
 
@@ -639,7 +650,7 @@
                 alt="${sp.name} — ${stageInfo.current.label}"
                 data-candidates="${encodedCandidates}"
                 data-idx="0"
-                class="${sz.img} w-auto object-contain drop-shadow-[0_14px_22px_rgba(0,0,0,0.55)]"
+                class="${sz.img} w-auto object-contain pet-clean-img drop-shadow-[0_14px_22px_rgba(0,0,0,0.55)]"
                 onload="cleanCheckerboardBackground(this)"
                 onerror="handlePetImageError(this)"
               />
