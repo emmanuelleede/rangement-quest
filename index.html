@@ -83,7 +83,7 @@
         </div>
         <div>
           <h1 class="text-sm font-bold tracking-tight text-white leading-none">Rangement Quest</h1>
-          <span class="text-[11px] text-slate-400 font-medium">Compagnon & Défis</span>
+          <span class="text-[11px] text-slate-400 font-medium">Sauvegarde auto ✓</span>
         </div>
       </div>
 
@@ -213,13 +213,14 @@
     }
 
     // =========================================================================
-    // 2. DONNÉES : 11 ANIMAUX, 4 STADES, 10 HABITATS & OBJETS PAR STADE
+    // 2. CONFIGURATION DES 11 ESPÈCES, STADES DE CROISSANCE, 10 HABITATS & OBJETS
     // =========================================================================
     const SPECIES_VISUAL_CONFIG = {
       loutre: {
         id: 'loutre',
         name: 'Loutre',
         emoji: '🦦',
+        accent: '#38BDF8',
         tagline: 'Joueuse, curieuse et toujours prête pour une mission rangement !',
         images: {
           newborn: 'images/loutre_nouveau_ne.png',
@@ -232,6 +233,7 @@
         id: 'chaton',
         name: 'Chat',
         emoji: '🐱',
+        accent: '#F472B6',
         tagline: 'Ronronne de bonheur dès que la chambre est bien rangée.',
         images: {
           newborn: 'images/chaton_nouveau_ne.png',
@@ -244,6 +246,7 @@
         id: 'dragon',
         name: 'Dragon',
         emoji: '🐉',
+        accent: '#A855F7',
         tagline: 'Garde précieusement les jouets bien rangés comme un trésor.',
         images: {
           newborn: 'images/dragonnet_nouveau_ne.png',
@@ -256,6 +259,7 @@
         id: 'corbeau',
         name: 'Corbeau',
         emoji: '🐦‍⬛',
+        accent: '#60A5FA',
         tagline: 'Malin et observateur, il adore les bureaux impeccables.',
         images: {
           newborn: 'images/corbeau_nouveau_ne.png',
@@ -268,6 +272,7 @@
         id: 'renard',
         name: 'Renard',
         emoji: '🦊',
+        accent: '#FB923C',
         tagline: 'Agile et vif, il adore les défis chronométrés !',
         images: {
           newborn: 'images/renard_nouveau_ne.png',
@@ -280,6 +285,7 @@
         id: 'grenouille',
         name: 'Grenouille',
         emoji: '🐸',
+        accent: '#4ADE80',
         tagline: 'Bondit de joie à chaque vêtement plié et rangé.',
         images: {
           newborn: 'images/grenouille_nouveau_ne.png',
@@ -292,6 +298,7 @@
         id: 'panthere',
         name: 'Panthère',
         emoji: '🐆',
+        accent: '#E2E8F0',
         tagline: 'Discrète, élégante et ultra rapide pour ranger.',
         images: {
           newborn: 'images/panthere_nouveau_ne.png',
@@ -304,6 +311,7 @@
         id: 'daim',
         name: 'Daim',
         emoji: '🦌',
+        accent: '#FBBF24',
         tagline: 'Doux et attentif, il veille sur le calme de la chambre.',
         images: {
           newborn: 'images/daim_nouveau_ne.png',
@@ -316,6 +324,7 @@
         id: 'faucon',
         name: 'Faucon',
         emoji: '🦅',
+        accent: '#94A3B8',
         tagline: 'Œil de lynx : aucun jouet qui traîne ne lui échappe !',
         images: {
           newborn: 'images/faucon_nouveau_ne.png',
@@ -328,6 +337,7 @@
         id: 'souris',
         name: 'Souris',
         emoji: '🐭',
+        accent: '#FDBA74',
         tagline: 'Petite mais pleine d’énergie pour les missions express.',
         images: {
           newborn: 'images/souris_nouveau_ne.png',
@@ -340,6 +350,7 @@
         id: 'ecureuil',
         name: 'Écureuil',
         emoji: '🐿️',
+        accent: '#F97316',
         tagline: 'Champion de l’organisation : chaque chose à sa place !',
         images: {
           newborn: 'images/ecureuil_nouveau_ne.png',
@@ -518,9 +529,10 @@
     ];
 
     // =========================================================================
-    // 3. SAUVEGARDE LOCALE INDÉPENDANTE SUR CHAQUE TÉLÉPHONE
+    // 3. SAUVEGARDE AUTOMATIQUE ROBUSTE (localStorage + cookie de secours)
     // =========================================================================
     const STORAGE_KEY = 'rangement_quest_v2_state';
+    const BACKUP_COOKIE = 'rq_save_b64';
     const DAY_MS = 24 * 60 * 60 * 1000;
 
     function getDefaultState() {
@@ -542,20 +554,55 @@
       };
     }
 
+    function readCookieBackup() {
+      try {
+        const match = document.cookie.split('; ').find((row) => row.startsWith(BACKUP_COOKIE + '='));
+        if (!match) return null;
+        const encoded = decodeURIComponent(match.split('=')[1]);
+        const jsonStr = decodeURIComponent(escape(atob(encoded)));
+        return JSON.parse(jsonStr);
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function writeCookieBackup(obj) {
+      try {
+        const jsonStr = JSON.stringify(obj);
+        if (jsonStr.length > 2600) return; // Limite de taille cookie sécurisée
+        const b64 = btoa(unescape(encodeURIComponent(jsonStr)));
+        document.cookie = `${BACKUP_COOKIE}=${encodeURIComponent(b64)}; max-age=31536000; path=/; SameSite=Lax`;
+      } catch (e) {}
+    }
+
     function loadState() {
+      let parsed = null;
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
-        if (!raw) return getDefaultState();
-        const parsed = JSON.parse(raw);
-        const merged = { ...getDefaultState(), ...parsed };
-        if (merged.lastMissionDate !== new Date().toDateString()) {
-          merged.completedMissionsToday = [];
-          merged.lastMissionDate = new Date().toDateString();
-        }
-        return merged;
-      } catch (e) {
+        if (raw) parsed = JSON.parse(raw);
+      } catch (e) {}
+
+      if (!parsed || typeof parsed !== 'object') {
+        parsed = readCookieBackup();
+      }
+
+      if (!parsed || typeof parsed !== 'object') {
         return getDefaultState();
       }
+
+      const merged = { ...getDefaultState(), ...parsed };
+      if (!Array.isArray(merged.ownedHabitats) || merged.ownedHabitats.length === 0) {
+        merged.ownedHabitats = ['clairiere'];
+      }
+      if (!Array.isArray(merged.ownedItems)) merged.ownedItems = [];
+      if (!Array.isArray(merged.equippedItems)) merged.equippedItems = [];
+      if (!Array.isArray(merged.completedMissionsToday)) merged.completedMissionsToday = [];
+
+      if (merged.lastMissionDate !== new Date().toDateString()) {
+        merged.completedMissionsToday = [];
+        merged.lastMissionDate = new Date().toDateString();
+      }
+      return merged;
     }
 
     let state = loadState();
@@ -570,8 +617,16 @@
       try {
         state.lastActiveAt = Date.now();
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        writeCookieBackup(state);
       } catch (e) {}
     }
+
+    // Sauvegarde automatique supplémentaire quand on quitte ou cache l'appli
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') saveState();
+    });
+    window.addEventListener('pagehide', () => saveState());
+    window.addEventListener('beforeunload', () => saveState());
 
     function getCurrentStage() {
       let current = EVOLUTION_STAGES[0];
@@ -592,7 +647,6 @@
       if (daysMissed >= 1) {
         const drop = Math.min(60, daysMissed * 10);
         state.energy = Math.max(20, state.energy - drop);
-        state.lastActiveAt = Date.now();
         saveState();
         if (!silent) {
           showToast(`Ton compagnon s'est un peu ennuyé (-${drop}% d'énergie).`, 'info');
@@ -696,7 +750,7 @@
     }
 
     // =========================================================================
-    // 5. ÉCRAN D'ADOPTION (11 ANIMAUX)
+    // 5. ÉCRAN D'ADOPTION (ONBOARDING AVEC LES 11 ANIMAUX)
     // =========================================================================
     let selectedSpeciesDraft = state.species || 'loutre';
 
@@ -718,7 +772,6 @@
             <p class="text-xs text-slate-400">Il grandira à chaque fois que tu ranges ta chambre !</p>
           </div>
 
-          <!-- Aperçu du compagnon sélectionné -->
           <div class="bg-[#151B26] border border-[#253044] rounded-3xl p-4 flex items-center gap-4">
             <div class="w-20 h-20 rounded-2xl bg-[#0D1117] border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
               <img src="${selected.images.baby}" alt="${selected.name}"
@@ -735,7 +788,6 @@
             </div>
           </div>
 
-          <!-- Grille des 11 espèces -->
           <div class="grid grid-cols-3 gap-2.5">
             ${speciesList.map((sp) => {
               const active = sp.id === selectedSpeciesDraft;
@@ -758,7 +810,6 @@
             }).join('')}
           </div>
 
-          <!-- Nom du compagnon -->
           <div class="space-y-2">
             <label class="block text-xs font-bold text-slate-300">Donne-lui un petit nom :</label>
             <input id="pet-name-input" type="text" maxlength="16" placeholder="Ex : Noisette, Pixel, Lou..."
@@ -804,7 +855,7 @@
     }
 
     // =========================================================================
-    // 6. SANCTUAIRE DU COMPAGNON
+    // 6. ÉCRAN PRINCIPAL : SANCTUAIRE DU COMPAGNON
     // =========================================================================
     function renderSanctuary() {
       const nav = document.getElementById('bottom-nav');
@@ -981,7 +1032,7 @@
     }
 
     // =========================================================================
-    // 7. DÉFIS CHRONOMÉTRÉS
+    // 7. ÉCRAN DÉFIS CHRONOMÉTRÉS
     // =========================================================================
     function renderChallenges() {
       const main = document.getElementById('main-content');
@@ -1107,7 +1158,7 @@
     }
 
     // =========================================================================
-    // 8. BOUTIQUE (OBJETS PAR STADE & 10 HABITATS DÉBLOCABLES)
+    // 8. ÉCRAN BOUTIQUE (OBJETS PAR STADE & 10 HABITATS DÉBLOCABLES)
     // =========================================================================
     function renderShop() {
       const main = document.getElementById('main-content');
@@ -1280,7 +1331,7 @@
     }
 
     // =========================================================================
-    // 9. INSTALLATION PWA, MENU SECRET & NAVIGATION
+    // 9. INSTALLATION PWA, MENU SECRET & NAVIGATION GLOBALE
     // =========================================================================
     let deferredInstallPrompt = null;
     let secretTapCount = 0;
@@ -1375,7 +1426,7 @@
           <button onclick="closeModal()" class="text-slate-400 hover:text-white text-sm font-bold">✕</button>
         </div>
         <p class="text-xs text-slate-300 leading-relaxed">
-          Chaque téléphone garde sa propre sauvegarde indépendante avec son propre animal !
+          La progression est enregistrée automatiquement sur chaque téléphone.
         </p>
         ${canPrompt ? `
           <button onclick="triggerNativeInstall()" class="w-full py-3 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold text-xs shadow-lg">
@@ -1412,7 +1463,7 @@
           <h3 class="text-base font-extrabold text-white">⚙️ Outils Parent / Test</h3>
           <button onclick="closeModal()" class="text-slate-400 hover:text-white text-sm font-bold">✕</button>
         </div>
-        <p class="text-xs text-slate-400">Outils cachés (5 appuis sur le titre) pour tester ou réinitialiser.</p>
+        <p class="text-xs text-slate-400">Sauvegarde automatique active (mémoire locale + secours).</p>
         <div class="space-y-2">
           <button onclick="demoAddCoins()" class="w-full py-2.5 px-3 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-200 text-xs font-bold text-left">
             🪙 Ajouter +100 pièces
