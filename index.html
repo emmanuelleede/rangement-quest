@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Rangement Quest — Compagnon Loutre</title>
+  <title>Rangement Quest — Compagnon & Défis</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -16,71 +16,74 @@
       margin: 0;
     }
 
-    /* Animation douce de respiration selon le stade */
-    @keyframes otterBreathe {
-      0%, 100% {
-        transform: translateY(0px) scale(1);
-      }
-      50% {
-        transform: translateY(-6px) scale(1.03);
-      }
+    @keyframes petBreathe {
+      0%, 100% { transform: scale(1) translateY(0px); }
+      50% { transform: scale(1.035) translateY(-5px); }
     }
 
-    /* Petit bond joyeux lors d'un câlin, d'un clic ou d'une friandise */
-    @keyframes otterHop {
-      0% { transform: translateY(0px) scale(1) rotate(0deg); }
-      25% { transform: translateY(-16px) scale(1.06) rotate(-3deg); }
-      55% { transform: translateY(-4px) scale(0.97) rotate(3deg); }
-      80% { transform: translateY(-8px) scale(1.02) rotate(-1deg); }
-      100% { transform: translateY(0px) scale(1) rotate(0deg); }
+    .anim-breathe {
+      animation: petBreathe 3.2s ease-in-out infinite;
     }
 
-    /* Particules flottantes qui montent et s'estompent */
-    @keyframes floatUp {
-      0% {
-        opacity: 1;
-        transform: translate(-50%, 0px) scale(0.85);
-      }
-      100% {
-        opacity: 0;
-        transform: translate(-50%, -56px) scale(1.25);
-      }
+    @keyframes petTiredBreathe {
+      0%, 100% { transform: scale(0.98) translateY(2px); filter: saturate(0.75) brightness(0.9); }
+      50% { transform: scale(1.0) translateY(4px); filter: saturate(0.75) brightness(0.9); }
     }
 
-    .anim-otter-breathe {
-      animation: otterBreathe 3.2s ease-in-out infinite;
+    .anim-tired {
+      animation: petTiredBreathe 4.4s ease-in-out infinite;
     }
 
-    .anim-otter-hop {
-      animation: otterHop 0.65s cubic-bezier(0.34, 1.56, 0.64, 1);
+    @keyframes petBounce {
+      0% { transform: scale(1) translateY(0px) rotate(0deg); }
+      30% { transform: scale(1.08) translateY(-12px) rotate(-2.5deg); }
+      65% { transform: scale(0.97) translateY(-3px) rotate(2deg); }
+      100% { transform: scale(1) translateY(0px) rotate(0deg); }
     }
 
-    .floating-fx {
-      animation: floatUp 0.95s ease-out forwards;
+    .anim-bounce {
+      animation: petBounce 0.52s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes sparkleFloat {
+      0%, 100% { opacity: 0.25; transform: translateY(0px) scale(0.85); }
+      50% { opacity: 0.95; transform: translateY(-9px) scale(1.15); }
+    }
+
+    .sparkle-dot {
+      animation: sparkleFloat 2.8s ease-in-out infinite;
+    }
+
+    @keyframes floatUpFade {
+      0% { opacity: 1; transform: translate(-50%, 0px) scale(0.85); }
+      100% { opacity: 0; transform: translate(-50%, -48px) scale(1.25); }
+    }
+
+    .floating-particle {
+      animation: floatUpFade 0.95s ease-out forwards;
       pointer-events: none;
     }
 
-    /* Fond propre sans damier autour de la loutre */
-    .otter-cutout-img {
-      background: transparent !important;
-      mix-blend-mode: normal;
-    }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: #0d1117; }
+    ::-webkit-scrollbar-thumb { background: #232d3f; border-radius: 4px; }
   </style>
 </head>
 <body class="min-h-screen flex justify-center bg-[#090c10] text-slate-100">
 
-  <!-- Conteneur principal mobile-first -->
-  <div class="w-full max-w-md min-h-screen bg-[#0d1117] border-x border-[#1e2634] flex flex-col relative shadow-2xl overflow-hidden">
+  <div id="app-shell" class="w-full max-w-md min-h-screen bg-[#0d1117] border-x border-[#1e2634] flex flex-col relative shadow-2xl overflow-hidden">
 
     <!-- En-tête -->
-    <header class="px-4 py-3 bg-[#151b26]/95 backdrop-blur border-b border-[#1e2634] flex items-center justify-between z-20">
+    <header class="px-4 py-3 bg-[#151b26]/95 backdrop-blur-md border-b border-[#1e2634] flex items-center justify-between z-20">
       <div class="flex items-center gap-2.5">
-        <div class="w-9 h-9 rounded-2xl bg-amber-500/15 border border-amber-400/30 flex items-center justify-center text-lg">
-          🦦
+        <div class="w-8 h-8 rounded-xl bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-blue-400">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+          </svg>
         </div>
         <div>
-          <h1 class="text-sm font-bold text-white leading-tight">Rangement Quest</h1>
-          <p class="text-[11px] text-slate-400">Suivi des 4 stades de la loutre</p>
+          <h1 class="text-sm font-bold tracking-tight text-white leading-none">Rangement Quest</h1>
+          <span id="header-subtitle" class="text-[11px] text-slate-400 font-medium">Compagnon & Défis</span>
         </div>
       </div>
 
@@ -89,229 +92,307 @@
           id="btn-sound"
           type="button"
           onclick="toggleSound()"
-          class="px-2.5 py-1.5 rounded-xl bg-[#1e2634] hover:bg-[#283346] text-xs font-medium text-slate-200 transition"
-          title="Activer ou couper les sons"
+          title="Activer ou couper le son"
+          class="p-2 rounded-xl bg-[#1e2634] hover:bg-[#283346] text-slate-300 transition"
         >
-          🔊
+          <svg id="icon-sound-on" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+          </svg>
+          <svg id="icon-sound-off" class="w-4 h-4 hidden text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+          </svg>
         </button>
+
         <button
           type="button"
-          onclick="resetProgress()"
-          class="px-2.5 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-xs font-semibold text-rose-300 transition"
+          onclick="openDemoModal()"
+          class="px-2.5 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold hover:bg-amber-500/20 transition flex items-center gap-1"
         >
-          Reset
+          <span>⚙️</span><span>Démo</span>
         </button>
       </div>
     </header>
 
-    <!-- Zone d'affichage principale -->
-    <main class="flex-1 p-4 space-y-4 overflow-y-auto">
+    <!-- Notifications toast -->
+    <div id="toast-container" class="fixed top-16 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 pointer-events-none w-full max-w-sm px-4"></div>
 
-      <!-- Carte scène de la loutre -->
-      <section class="relative rounded-3xl border border-[#232d3f] bg-gradient-to-b from-[#132a33] via-[#0f1d29] to-[#0b1118] p-4 overflow-hidden shadow-lg">
-        <!-- Lueur douce d'ambiance derrière la loutre -->
-        <div class="absolute inset-x-0 top-10 mx-auto w-52 h-52 rounded-full bg-amber-400/15 blur-3xl pointer-events-none"></div>
+    <!-- Contenu principal -->
+    <main id="main-content" class="flex-1 overflow-y-auto pb-24 flex flex-col"></main>
 
-        <!-- Infos du stade actif -->
-        <div class="relative z-10 flex items-center justify-between gap-2 mb-3">
-          <div>
-            <span id="stage-badge" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/20 text-amber-200 border border-amber-400/30">
-              Stade 1/4 · Nouveau-né
-            </span>
-            <p id="stage-file-hint" class="text-[11px] text-slate-400 mt-1">
-              Fichier : <code class="text-slate-300">images/loutre_nouveau_ne.png</code>
-            </p>
-          </div>
-          <div class="text-right">
-            <div id="xp-display" class="text-sm font-bold text-amber-300">0 XP</div>
-            <div id="next-stage-hint" class="text-[11px] text-slate-400">Prochain stade : 80 XP</div>
-          </div>
-        </div>
+    <!-- Barre de navigation basse -->
+    <nav id="bottom-nav" class="hidden absolute bottom-0 inset-x-0 bg-[#151b26]/95 backdrop-blur-md border-t border-[#1e2634] px-3 py-2 flex justify-around items-center z-20">
+      <button type="button" onclick="switchTab('sanctuary')" id="nav-sanctuary" class="nav-btn flex flex-col items-center gap-1 py-1.5 px-4 rounded-xl text-blue-400 transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+        </svg>
+        <span class="text-[11px] font-semibold">Compagnon</span>
+      </button>
 
-        <!-- Barre de progression vers le stade suivant -->
-        <div class="relative z-10 w-full h-2.5 rounded-full bg-slate-900/80 border border-white/10 overflow-hidden mb-4">
-          <div id="xp-bar" class="h-full rounded-full bg-gradient-to-r from-amber-400 to-orange-500 transition-all duration-500" style="width: 0%;"></div>
-        </div>
+      <button type="button" onclick="switchTab('challenges')" id="nav-challenges" class="nav-btn flex flex-col items-center gap-1 py-1.5 px-4 rounded-xl text-slate-400 hover:text-slate-200 transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span class="text-[11px] font-semibold">Défis</span>
+      </button>
 
-        <!-- Zone interactive de la loutre -->
-        <div
-          id="otter-stage-zone"
-          onclick="petOtter(event)"
-          class="relative z-10 min-h-[250px] rounded-2xl bg-slate-950/35 border border-white/10 flex flex-col items-center justify-center p-4 cursor-pointer select-none"
-        >
-          <div id="otter-anim-wrapper" class="anim-otter-breathe flex items-center justify-center transition-all duration-300">
-            <img
-              id="otter-img"
-              src=""
-              alt="Loutre Nouveau-né"
-              class="otter-cutout-img max-h-48 w-auto object-contain drop-shadow-[0_14px_24px_rgba(0,0,0,0.55)] transition-all duration-300"
-              onload="handleOtterImageLoad()"
-              onerror="handleOtterImageError()"
-            />
-            <div id="otter-fallback" class="hidden flex-col items-center justify-center text-center p-4">
-              <div class="text-6xl mb-2">🦦</div>
-              <p class="text-xs font-semibold text-amber-200">Image introuvable</p>
-              <p id="otter-fallback-path" class="text-[11px] text-slate-400 mt-1"></p>
-            </div>
-          </div>
+      <button type="button" onclick="switchTab('shop')" id="nav-shop" class="nav-btn flex flex-col items-center gap-1 py-1.5 px-4 rounded-xl text-slate-400 hover:text-slate-200 transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+        </svg>
+        <span class="text-[11px] font-semibold">Boutique</span>
+      </button>
+    </nav>
 
-          <p class="mt-3 text-[11px] text-slate-300/80 bg-slate-900/60 px-3 py-1 rounded-full border border-white/10">
-            Touches la loutre pour lui faire un câlin ✨
-          </p>
-        </div>
+    <!-- Modale -->
+    <div id="modal-overlay" class="hidden fixed inset-0 bg-black/75 backdrop-blur-sm z-40 items-center justify-center p-4">
+      <div id="modal-box" class="bg-[#151b26] border border-[#2a3548] rounded-3xl w-full max-w-sm p-5 shadow-2xl space-y-4"></div>
+    </div>
 
-        <!-- Actions rapides de jeu / croissance -->
-        <div class="relative z-10 grid grid-cols-3 gap-2 mt-4">
-          <button
-            type="button"
-            onclick="addXpAndCoins(15, 10, 'Défi réussi !')"
-            class="py-2.5 px-2 rounded-2xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-400/30 text-emerald-200 text-xs font-semibold transition"
-          >
-            +15 XP
-          </button>
-          <button
-            type="button"
-            onclick="addXpAndCoins(40, 20, 'Grand rangement !')"
-            class="py-2.5 px-2 rounded-2xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-400/30 text-amber-200 text-xs font-semibold transition"
-          >
-            +40 XP
-          </button>
-          <button
-            type="button"
-            onclick="feedSnack()"
-            class="py-2.5 px-2 rounded-2xl bg-sky-500/15 hover:bg-sky-500/25 border border-sky-400/30 text-sky-200 text-xs font-semibold transition"
-          >
-            🍪 Friandise
-          </button>
-        </div>
-      </section>
-
-      <!-- Sélecteur direct des 4 stades pour tester visuellement -->
-      <section class="rounded-3xl border border-[#232d3f] bg-[#151b26] p-4 space-y-3">
-        <div class="flex items-center justify-between">
-          <h2 class="text-xs font-bold uppercase tracking-wider text-slate-300">
-            Tester les 4 stades directement
-          </h2>
-          <span id="coins-display" class="text-xs font-bold text-yellow-300">🪙 50 pièces</span>
-        </div>
-
-        <div class="grid grid-cols-2 gap-2">
-          <button
-            type="button"
-            onclick="setStageByIndex(0)"
-            id="btn-stage-0"
-            class="stage-btn p-2.5 rounded-2xl border border-amber-400/50 bg-amber-500/15 text-left transition"
-          >
-            <div class="text-xs font-bold text-white">1. Nouveau-né</div>
-            <div class="text-[11px] text-slate-300">0 XP · loutre_nouveau_ne.png</div>
-          </button>
-
-          <button
-            type="button"
-            onclick="setStageByIndex(1)"
-            id="btn-stage-1"
-            class="stage-btn p-2.5 rounded-2xl border border-[#283346] bg-[#0d1117]/70 hover:bg-[#1e2634] text-left transition"
-          >
-            <div class="text-xs font-bold text-white">2. Bébé</div>
-            <div class="text-[11px] text-slate-400">80 XP · loutre_bebe.png</div>
-          </button>
-
-          <button
-            type="button"
-            onclick="setStageByIndex(2)"
-            id="btn-stage-2"
-            class="stage-btn p-2.5 rounded-2xl border border-[#283346] bg-[#0d1117]/70 hover:bg-[#1e2634] text-left transition"
-          >
-            <div class="text-xs font-bold text-white">3. Junior</div>
-            <div class="text-[11px] text-slate-400">200 XP · loutre_junior.png</div>
-          </button>
-
-          <button
-            type="button"
-            onclick="setStageByIndex(3)"
-            id="btn-stage-3"
-            class="stage-btn p-2.5 rounded-2xl border border-[#283346] bg-[#0d1117]/70 hover:bg-[#1e2634] text-left transition"
-          >
-            <div class="text-xs font-bold text-white">4. Adulte</div>
-            <div class="text-[11px] text-slate-400">360 XP · loutre_adulte.png</div>
-          </button>
-        </div>
-
-        <!-- Message d'état discret -->
-        <p id="status-message" class="text-xs text-slate-400 pt-1">
-          Prêt : cliquez sur un stade ou gagnez de l'XP pour observer l'évolution.
-        </p>
-      </section>
-
-    </main>
   </div>
 
   <script>
-    // Définition claire et ordonnée des 4 stades de croissance de la loutre
-    // Chaque stade teste d'abord images/<nom>.png puis <nom>.png à la racine
-    const OTTER_STAGES = [
-      {
-        index: 0,
-        label: 'Nouveau-né',
-        minXp: 0,
-        candidates: [
-          'images/loutre_nouveau_ne.png',
-          'loutre_nouveau_ne.png',
-          'images/loutre_nouveau_ne.jpg',
-          'loutre_nouveau_ne.jpg'
-        ],
-        scaleClass: 'max-h-40 sm:max-h-44'
-      },
-      {
-        index: 1,
-        label: 'Bébé',
-        minXp: 80,
-        candidates: [
-          'images/loutre_bebe.png',
-          'loutre_bebe.png',
-          'images/loutre_bebe.jpg',
-          'loutre_bebe.jpg'
-        ],
-        scaleClass: 'max-h-44 sm:max-h-48'
-      },
-      {
-        index: 2,
-        label: 'Junior',
-        minXp: 200,
-        candidates: [
-          'images/loutre_junior.png',
-          'loutre_junior.png',
-          'images/loutre_junior.jpg',
-          'loutre_junior.jpg'
-        ],
-        scaleClass: 'max-h-48 sm:max-h-52'
-      },
-      {
-        index: 3,
-        label: 'Adulte',
-        minXp: 360,
-        candidates: [
-          'images/loutre_adulte.png',
-          'loutre_adulte.png',
-          'images/loutre_adulte.jpg',
-          'loutre_adulte.jpg'
-        ],
-        scaleClass: 'max-h-52 sm:max-h-56'
-      }
-    ];
-
-    const STORAGE_KEY = 'rangement_quest_otter_stages_v1';
+    // =========================================================================
+    // 1. EFFETS SONORES (WEB AUDIO API)
+    // =========================================================================
     let soundEnabled = true;
     let audioCtx = null;
-    let activeCandidateIndex = 0;
-    let activeStageIndex = -1;
-    let isCleaningMosaic = false;
-    const cleanedDataUrlCache = {};
+
+    function getAudioContext() {
+      try {
+        if (!audioCtx && (window.AudioContext || window.webkitAudioContext)) {
+          const Ctx = window.AudioContext || window.webkitAudioContext;
+          audioCtx = new Ctx();
+        }
+        if (audioCtx && audioCtx.state === 'suspended') {
+          audioCtx.resume().catch(() => {});
+        }
+        return audioCtx;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function playTone(freq, duration = 0.12, type = 'sine', gainVal = 0.08, delay = 0) {
+      if (!soundEnabled) return;
+      try {
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, ctx.currentTime + delay);
+        gain.gain.setValueAtTime(gainVal, ctx.currentTime + delay);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + duration);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(ctx.currentTime + delay);
+        osc.stop(ctx.currentTime + delay + duration);
+      } catch (e) {}
+    }
+
+    function updateSoundIcon() {
+      const onIcon = document.getElementById('icon-sound-on');
+      const offIcon = document.getElementById('icon-sound-off');
+      if (!onIcon || !offIcon) return;
+      if (soundEnabled) {
+        onIcon.classList.remove('hidden');
+        offIcon.classList.add('hidden');
+      } else {
+        onIcon.classList.add('hidden');
+        offIcon.classList.remove('hidden');
+      }
+    }
+
+    function toggleSound() {
+      soundEnabled = !soundEnabled;
+      updateSoundIcon();
+      if (soundEnabled) sfxClick();
+    }
+
+    function sfxClick() { playTone(520, 0.07, 'sine', 0.06); }
+    function sfxTick() { playTone(760, 0.05, 'triangle', 0.05); }
+    function sfxPet() {
+      playTone(587.33, 0.12, 'sine', 0.07, 0);
+      playTone(880, 0.16, 'sine', 0.07, 0.08);
+    }
+    function sfxCoin() {
+      playTone(987.77, 0.09, 'triangle', 0.08, 0);
+      playTone(1318.51, 0.18, 'triangle', 0.08, 0.07);
+    }
+    function sfxVictory() {
+      playTone(523.25, 0.12, 'triangle', 0.08, 0);
+      playTone(659.25, 0.12, 'triangle', 0.08, 0.1);
+      playTone(783.99, 0.12, 'triangle', 0.08, 0.2);
+      playTone(1046.50, 0.28, 'triangle', 0.09, 0.3);
+    }
+
+    // =========================================================================
+    // 2. DONNÉES DU JEU & IMAGES DES STADES
+    // =========================================================================
+    const SPECIES_DATA = {
+      loutre: {
+        id: 'loutre',
+        name: 'Loutre',
+        emoji: '🦦',
+        defaultPetName: 'Loulou',
+        tagline: 'Curieuse, joueuse et adore les défis rapides.',
+        glow: 'rgba(251, 191, 36, 0.35)',
+        stageImages: [
+          ['images/loutre_nouveau_ne.png', 'loutre_nouveau_ne.png'],
+          ['images/loutre_bebe.png', 'loutre_bebe.png'],
+          ['images/loutre_junior.png', 'loutre_junior.png'],
+          ['images/loutre_adulte.png', 'loutre_adulte.png']
+        ]
+      },
+      chat: {
+        id: 'chat',
+        name: 'Chaton',
+        emoji: '🐱',
+        defaultPetName: 'Moka',
+        tagline: 'Calme et précis, parfait pour les missions minutieuses.',
+        glow: 'rgba(96, 165, 250, 0.35)',
+        stageImages: [
+          ['images/chat_nouveau_ne.png', 'chat_nouveau_ne.png'],
+          ['images/chat_bebe.png', 'chat_bebe.png'],
+          ['images/chat_junior.png', 'chat_junior.png'],
+          ['images/chat_adulte.png', 'chat_adulte.png']
+        ]
+      },
+      dragon: {
+        id: 'dragon',
+        name: 'Dragonnet',
+        emoji: '🐉',
+        defaultPetName: 'Ignis',
+        tagline: 'Courageux et plein d’énergie à chaque victoire.',
+        glow: 'rgba(168, 85, 247, 0.38)',
+        stageImages: [
+          ['images/dragon_nouveau_ne.png', 'dragon_nouveau_ne.png'],
+          ['images/dragon_bebe.png', 'dragon_bebe.png'],
+          ['images/dragon_junior.png', 'dragon_junior.png'],
+          ['images/dragon_adulte.png', 'dragon_adulte.png']
+        ]
+      },
+      corbeau: {
+        id: 'corbeau',
+        name: 'Corbeau',
+        emoji: '🐦‍⬛',
+        defaultPetName: 'Kael',
+        tagline: 'Malin et observateur, roi des chasseurs d’objets.',
+        glow: 'rgba(99, 102, 241, 0.38)',
+        stageImages: [
+          ['images/corbeau_nouveau_ne.png', 'corbeau_nouveau_ne.png'],
+          ['images/corbeau_bebe.png', 'corbeau_bebe.png'],
+          ['images/corbeau_junior.png', 'corbeau_junior.png'],
+          ['images/corbeau_adulte.png', 'corbeau_adulte.png']
+        ]
+      },
+      renard: {
+        id: 'renard',
+        name: 'Renard',
+        emoji: '🦊',
+        defaultPetName: 'Vesper',
+        tagline: 'Rapide et astucieux sur les sprints chronométrés.',
+        glow: 'rgba(249, 115, 22, 0.35)',
+        stageImages: [
+          ['images/renard_nouveau_ne.png', 'renard_nouveau_ne.png'],
+          ['images/renard_bebe.png', 'renard_bebe.png'],
+          ['images/renard_junior.png', 'renard_junior.png'],
+          ['images/renard_adulte.png', 'renard_adulte.png']
+        ]
+      }
+    };
+
+    const EVOLUTION_STAGES = [
+      { level: 1, label: 'Nouveau-né', minXp: 0 },
+      { level: 2, label: 'Bébé', minXp: 80 },
+      { level: 3, label: 'Junior', minXp: 200 },
+      { level: 4, label: 'Adulte', minXp: 360 }
+    ];
+
+    const HABITAT_THEMES = {
+      hab_clearing: {
+        id: 'hab_clearing',
+        name: 'Clairière Enchantée',
+        gradient: 'linear-gradient(180deg, #132a24 0%, #0f1d22 55%, #0b1118 100%)',
+        accentText: 'text-emerald-300',
+        borderAccent: 'border-emerald-500/30'
+      },
+      hab_cozy: {
+        id: 'hab_cozy',
+        name: 'Salon Cosy',
+        gradient: 'linear-gradient(180deg, #2b1d16 0%, #1b1518 55%, #0d1117 100%)',
+        accentText: 'text-amber-300',
+        borderAccent: 'border-amber-500/30'
+      },
+      hab_crystal: {
+        id: 'hab_crystal',
+        name: 'Grotte aux Cristaux',
+        gradient: 'linear-gradient(180deg, #11263b 0%, #121a33 55%, #0b1118 100%)',
+        accentText: 'text-cyan-300',
+        borderAccent: 'border-cyan-500/30'
+      },
+      hab_space: {
+        id: 'hab_space',
+        name: 'Observatoire Spatial',
+        gradient: 'linear-gradient(180deg, #1d1538 0%, #11162b 55%, #090c14 100%)',
+        accentText: 'text-purple-300',
+        borderAccent: 'border-purple-500/30'
+      }
+    };
+
+    const SHOP_ITEMS = [
+      { id: 'acc_scarf', category: 'accessory', slot: 'neck', name: 'Écharpe Rayée', desc: 'Douce et chaleureuse pour l’hiver.', icon: '🧣', price: 35 },
+      { id: 'acc_glasses', category: 'accessory', slot: 'eyes', name: 'Lunettes Rondes', desc: 'Un air de petit explorateur savant.', icon: '👓', price: 45 },
+      { id: 'acc_wizard', category: 'accessory', slot: 'head', name: 'Chapeau Étoilé', desc: 'Un chapeau magique plein d’étoiles.', icon: '🎩', price: 60 },
+      { id: 'acc_crown', category: 'accessory', slot: 'head', name: 'Couronne Dorée', desc: 'Pour célébrer les grands rangements.', icon: '👑', price: 90 },
+      { id: 'acc_orb', category: 'accessory', slot: 'companion', name: 'Sphère Astrale', desc: 'Une petite lumière qui accompagne le duo.', icon: '🔮', price: 75 },
+
+      { id: 'hab_clearing', category: 'habitat', name: 'Clairière Enchantée', desc: 'Un coin de forêt paisible sous les guirlandes.', icon: '🌿', price: 0 },
+      { id: 'hab_cozy', category: 'habitat', name: 'Salon Cosy', desc: 'Un fauteuil moelleux et un petit poêle chaleureux.', icon: '🕯️', price: 60 },
+      { id: 'hab_crystal', category: 'habitat', name: 'Grotte aux Cristaux', desc: 'Des cristaux lumineux et une mare paisible.', icon: '💎', price: 110 },
+      { id: 'hab_space', category: 'habitat', name: 'Observatoire Spatial', desc: 'Un dôme vitré face aux étoiles et planètes.', icon: '🪐', price: 150 },
+
+      { id: 'food_treat', category: 'care', effectType: 'treat', effectValue: 20, name: 'Friandise Dorée', desc: 'Redonne +20% d’énergie immédiatement.', icon: '🍪', price: 15 },
+      { id: 'food_feast', category: 'care', effectType: 'feast', effectValue: 40, name: 'Grand Festin', desc: 'Redonne +40% d’énergie et +30 XP.', icon: '🍲', price: 35 }
+    ];
+
+    const CONSTRAINT_CHALLENGES = [
+      { title: 'Chasse à la lettre E', desc: 'Range 5 objets dont le nom contient ou commence par la lettre E.', rewardCoins: 25, rewardXp: 30 },
+      { title: 'Opération Sol Net', desc: 'Libère entièrement le sol de la chambre pendant 2 minutes.', rewardCoins: 30, rewardXp: 35 },
+      { title: 'Duo de Couleur', desc: 'Range 6 objets de la même couleur (ex. bleu, rouge ou bois).', rewardCoins: 25, rewardXp: 30 },
+      { title: 'Mission Livres & BD', desc: 'Remets tous les livres et magazines qui traînent sur l’étagère.', rewardCoins: 25, rewardXp: 30 },
+      { title: 'Zéro Objet sur le Lit', desc: 'Débarrasse le lit et range chaque affaire à sa place.', rewardCoins: 30, rewardXp: 35 },
+      { title: 'Trio du Bureau', desc: 'Range 8 petits objets (crayons, papiers, gommes) autour du bureau.', rewardCoins: 35, rewardXp: 40 }
+    ];
+
+    // =========================================================================
+    // 3. ÉTAT & SAUVEGARDE LOCALE
+    // =========================================================================
+    const STORAGE_KEY = 'rangement_quest_complete_v1';
+    let currentTab = 'sanctuary';
+    let shopCategory = 'accessory';
+    let activeChallenge = null;
+    let challengeTimerInterval = null;
 
     function getDefaultState() {
       return {
+        adopted: false,
+        species: 'loutre',
+        petName: 'Loulou',
+        coins: 50,
         xp: 0,
-        coins: 50
+        energy: 80,
+        totalChallenges: 0,
+        bestSprint30: 0,
+        bestRace10: null,
+        ownedItems: ['hab_clearing'],
+        equippedHabitat: 'hab_clearing',
+        equippedAccessories: {
+          head: null,
+          eyes: null,
+          neck: null,
+          companion: null
+        }
       };
     }
 
@@ -322,7 +403,11 @@
         const parsed = JSON.parse(raw);
         return {
           ...getDefaultState(),
-          ...parsed
+          ...parsed,
+          equippedAccessories: {
+            ...getDefaultState().equippedAccessories,
+            ...(parsed.equippedAccessories || {})
+          }
         };
       } catch (e) {
         return getDefaultState();
@@ -337,416 +422,1053 @@
 
     let state = loadState();
 
-    function getCurrentStageIndex(xp) {
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      if (!container) return;
+      const palette = {
+        success: 'bg-emerald-950/95 border-emerald-500/40 text-emerald-200',
+        warning: 'bg-amber-950/95 border-amber-500/40 text-amber-200',
+        info: 'bg-[#1b2434]/95 border-blue-500/40 text-slate-100'
+      };
+      const el = document.createElement('div');
+      el.className = `px-3.5 py-2.5 rounded-2xl border text-xs font-semibold shadow-xl backdrop-blur-md transition-all ${palette[type] || palette.info}`;
+      el.textContent = message;
+      container.appendChild(el);
+      setTimeout(() => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(-6px)';
+        setTimeout(() => el.remove(), 220);
+      }, 2400);
+    }
+
+    // =========================================================================
+    // 4. PROGRESSION, STADES & AFFICHAGE VISUEL DES COMPAGNONS
+    // =========================================================================
+    function getStageIndexFromXp(xp) {
       let idx = 0;
-      for (let i = 0; i < OTTER_STAGES.length; i++) {
-        if (xp >= OTTER_STAGES[i].minXp) {
+      for (let i = 0; i < EVOLUTION_STAGES.length; i++) {
+        if (xp >= EVOLUTION_STAGES[i].minXp) {
           idx = i;
         }
       }
       return idx;
     }
 
-    function getStageProgressPercent(xp, stageIdx) {
-      const current = OTTER_STAGES[stageIdx] || OTTER_STAGES[0];
-      const next = OTTER_STAGES[stageIdx + 1] || null;
-      if (!next) return 100;
-      const span = Math.max(1, next.minXp - current.minXp);
-      const progress = ((xp - current.minXp) / span) * 100;
-      return Math.max(0, Math.min(100, Math.round(progress)));
-    }
-
-    function playSoftTone(freq, duration = 0.12) {
-      if (!soundEnabled) return;
-      try {
-        const Ctx = window.AudioContext || window.webkitAudioContext;
-        if (!Ctx) return;
-        if (!audioCtx) audioCtx = new Ctx();
-        if (audioCtx.state === 'suspended') {
-          audioCtx.resume().catch(() => {});
-        }
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-        gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.start();
-        osc.stop(audioCtx.currentTime + duration);
-      } catch (e) {}
-    }
-
-    function toggleSound() {
-      soundEnabled = !soundEnabled;
-      const btn = document.getElementById('btn-sound');
-      if (btn) {
-        btn.textContent = soundEnabled ? '🔊' : '🔇';
+    function getStageInfoFromXp(xp) {
+      const idx = getStageIndexFromXp(xp);
+      const current = EVOLUTION_STAGES[idx] || EVOLUTION_STAGES[0];
+      const next = EVOLUTION_STAGES[idx + 1] || null;
+      let progressPct = 100;
+      if (next) {
+        const span = Math.max(1, next.minXp - current.minXp);
+        progressPct = Math.max(0, Math.min(100, Math.round(((xp - current.minXp) / span) * 100)));
       }
-      if (soundEnabled) playSoftTone(660, 0.09);
+      return {
+        index: idx,
+        current,
+        next,
+        progressPct,
+        isMax: !next
+      };
     }
 
-    function spawnFloatingFx(text, xPct = 50, yPct = 40) {
-      const zone = document.getElementById('otter-stage-zone');
-      if (!zone) return;
+    window.handlePetImageError = function (imgEl) {
+      try {
+        const raw = imgEl.getAttribute('data-candidates');
+        const idx = parseInt(imgEl.getAttribute('data-idx') || '0', 10);
+        const list = raw ? JSON.parse(decodeURIComponent(raw)) : [];
+        if (idx + 1 < list.length) {
+          imgEl.setAttribute('data-idx', String(idx + 1));
+          imgEl.src = list[idx + 1];
+          return;
+        }
+      } catch (e) {}
+
+      imgEl.classList.add('hidden');
+      const fallback = imgEl.parentElement && imgEl.parentElement.querySelector('.pet-emoji-fallback');
+      if (fallback) {
+        fallback.classList.remove('hidden');
+        fallback.classList.add('flex');
+      }
+    };
+
+    function buildPetVisualHTML(speciesId, options = {}) {
+      const {
+        size = 'lg',
+        xp = state.xp,
+        energy = state.energy,
+        accessories = state.equippedAccessories,
+        eatingItem = null,
+        bounce = false
+      } = options;
+
+      const sp = SPECIES_DATA[speciesId] || SPECIES_DATA.loutre;
+      const stageInfo = getStageInfoFromXp(xp);
+      const candidates = (sp.stageImages && sp.stageImages[stageInfo.index]) || [];
+      const encodedCandidates = encodeURIComponent(JSON.stringify(candidates));
+      const firstSrc = candidates[0] || '';
+
+      const isTired = energy < 25;
+      const animClass = bounce
+        ? 'anim-bounce'
+        : (eatingItem ? 'anim-bounce' : (isTired ? 'anim-tired' : 'anim-breathe'));
+
+      const sizeMap = {
+        sm: { box: 'w-20 h-20', img: 'max-h-16 max-w-16', emoji: 'text-4xl' },
+        md: { box: 'w-28 h-28', img: 'max-h-24 max-w-24', emoji: 'text-5xl' },
+        lg: { box: 'w-48 h-48 sm:w-52 sm:h-52', img: 'max-h-44 max-w-44 sm:max-h-48 sm:max-w-48', emoji: 'text-7xl' }
+      };
+      const sz = sizeMap[size] || sizeMap.lg;
+
+      const equippedIcons = [];
+      ['head', 'eyes', 'neck', 'companion'].forEach((slot) => {
+        const id = accessories && accessories[slot];
+        if (id) {
+          const item = SHOP_ITEMS.find((i) => i.id === id);
+          if (item) {
+            equippedIcons.push(`<span class="px-1.5 py-0.5 rounded-full bg-slate-900/85 border border-white/15 text-xs shadow">${item.icon}</span>`);
+          }
+        }
+      });
+
+      const eatingPill = eatingItem
+        ? `<div class="mt-1 px-2.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-400/40 text-amber-200 text-[11px] font-semibold flex items-center gap-1">
+             <span>${eatingItem.icon}</span><span>Miam !</span>
+           </div>`
+        : '';
+
+      const sparkles = size === 'lg' ? `
+        <span class="sparkle-dot absolute top-3 left-4 w-2 h-2 rounded-full bg-amber-300/80 pointer-events-none" style="animation-delay:0s;"></span>
+        <span class="sparkle-dot absolute top-7 right-5 w-1.5 h-1.5 rounded-full bg-yellow-200/80 pointer-events-none" style="animation-delay:1s;"></span>
+        <span class="sparkle-dot absolute bottom-7 left-6 w-1.5 h-1.5 rounded-full bg-amber-400/70 pointer-events-none" style="animation-delay:1.8s;"></span>
+      ` : '';
+
+      return `
+        <div id="pet-anim-box" class="relative flex flex-col items-center justify-center ${sz.box} ${animClass} select-none">
+          <div class="absolute inset-4 rounded-full blur-2xl pointer-events-none" style="background: ${sp.glow};"></div>
+          ${sparkles}
+          <div class="relative z-10 w-full h-full flex items-center justify-center">
+            ${firstSrc ? `
+              <img
+                src="${firstSrc}"
+                alt="${sp.name} — ${stageInfo.current.label}"
+                data-candidates="${encodedCandidates}"
+                data-idx="0"
+                class="${sz.img} w-auto object-contain drop-shadow-[0_14px_22px_rgba(0,0,0,0.55)]"
+                onerror="handlePetImageError(this)"
+              />
+              <div class="pet-emoji-fallback hidden items-center justify-center w-full h-full ${sz.emoji}">${sp.emoji}</div>
+            ` : `
+              <div class="flex items-center justify-center w-full h-full ${sz.emoji}">${sp.emoji}</div>
+            `}
+          </div>
+          ${equippedIcons.length ? `<div class="relative z-20 -mt-2 flex items-center gap-1 flex-wrap justify-center">${equippedIcons.join('')}</div>` : ''}
+          ${eatingPill}
+        </div>
+      `;
+    }
+
+    function spawnFloatingParticle(text, xPct = 50, yPct = 42) {
+      const stage = document.getElementById('pet-stage-box');
+      if (!stage) return;
       const el = document.createElement('div');
-      el.className = 'floating-fx absolute z-30 px-2.5 py-1 rounded-full bg-slate-900/85 border border-amber-300/40 text-xs font-bold text-amber-200 shadow-lg whitespace-nowrap';
+      el.className = 'floating-particle absolute z-30 px-2.5 py-1 rounded-full bg-slate-900/90 border border-amber-300/40 text-xs font-bold text-amber-200 shadow-lg whitespace-nowrap';
       el.style.left = `${xPct}%`;
       el.style.top = `${yPct}%`;
       el.textContent = text;
-      zone.appendChild(el);
+      stage.appendChild(el);
       setTimeout(() => {
         if (el.parentNode) el.parentNode.removeChild(el);
       }, 960);
     }
 
-    // Déclenche le petit bond animé de la loutre
-    function triggerOtterHop() {
-      const wrapper = document.getElementById('otter-anim-wrapper');
-      if (!wrapper) return;
-      wrapper.classList.remove('anim-otter-hop');
-      void wrapper.offsetWidth; // Force le redémarrage de l'animation CSS
-      wrapper.classList.add('anim-otter-hop');
+    function bouncePetNow() {
+      const box = document.getElementById('pet-anim-box');
+      if (!box) return;
+      box.classList.remove('anim-bounce');
+      void box.offsetWidth;
+      box.classList.add('anim-bounce');
     }
 
-    // Vérifie si un pixel ressemble à une case de fond damier (gris/blanc/clair neutre)
-    function isCheckerboardPixel(r, g, b, a) {
-      if (a < 15) return true;
-      const maxC = Math.max(r, g, b);
-      const minC = Math.min(r, g, b);
-      const saturation = maxC - minC;
-      // Les cases de faux damier sont généralement des gris/blancs neutres peu saturés
-      return saturation <= 18 && maxC >= 115;
-    }
+    function awardRewards(xpGain, coinGain, energyGain = 0, reason = '') {
+      const beforeStage = getStageIndexFromXp(state.xp);
+      state.xp = Math.max(0, state.xp + xpGain);
+      state.coins = Math.max(0, state.coins + coinGain);
+      state.energy = Math.max(0, Math.min(100, state.energy + energyGain));
+      const afterStage = getStageIndexFromXp(state.xp);
+      saveState();
 
-    // Supprime un faux fond en damier (mosaïque gris/blanc) connecté aux bords de l'image
-    function stripCheckerboardBackground(imgEl, cacheKey) {
-      if (cleanedDataUrlCache[cacheKey]) {
-        return cleanedDataUrlCache[cacheKey];
+      if (afterStage > beforeStage) {
+        sfxVictory();
+        showToast(`🎉 ${state.petName} passe au stade ${EVOLUTION_STAGES[afterStage].label} !`, 'success');
+      } else if (coinGain > 0 || xpGain > 0) {
+        sfxCoin();
+        const parts = [];
+        if (xpGain > 0) parts.push(`+${xpGain} XP`);
+        if (coinGain > 0) parts.push(`+${coinGain} 🪙`);
+        showToast(`${reason ? reason + ' : ' : ''}${parts.join(' · ')}`, 'success');
       }
-      const w = imgEl.naturalWidth;
-      const h = imgEl.naturalHeight;
-      if (!w || !h) return null;
+    }
 
-      try {
-        const canvas = document.createElement('canvas');
-        canvas.width = w;
-        canvas.height = h;
-        const ctx = canvas.getContext('2d', { willReadFrequently: true });
-        if (!ctx) return null;
+    // =========================================================================
+    // 5. ÉCRAN D'ADOPTION
+    // =========================================================================
+    let selectedSpeciesDraft = 'loutre';
 
-        ctx.drawImage(imgEl, 0, 0, w, h);
-        const imgData = ctx.getImageData(0, 0, w, h);
-        const data = imgData.data;
+    function renderOnboarding() {
+      const nav = document.getElementById('bottom-nav');
+      const sub = document.getElementById('header-subtitle');
+      if (nav) nav.classList.add('hidden');
+      if (sub) sub.textContent = 'Choisis ton compagnon';
 
-        const visited = new Uint8Array(w * h);
-        const queue = new Int32Array(w * h);
-        let head = 0;
-        let tail = 0;
+      const main = document.getElementById('main-content');
+      if (!main) return;
 
-        // Ajoute les pixels de bordure qui correspondent au damier
-        for (let x = 0; x < w; x++) {
-          const topIdx = x;
-          const pTop = topIdx * 4;
-          if (isCheckerboardPixel(data[pTop], data[pTop + 1], data[pTop + 2], data[pTop + 3])) {
-            visited[topIdx] = 1;
-            queue[tail++] = topIdx;
-          }
+      const sp = SPECIES_DATA[selectedSpeciesDraft] || SPECIES_DATA.loutre;
 
-          const botIdx = (h - 1) * w + x;
-          const pBot = botIdx * 4;
-          if (isCheckerboardPixel(data[pBot], data[pBot + 1], data[pBot + 2], data[pBot + 3])) {
-            visited[botIdx] = 1;
-            queue[tail++] = botIdx;
-          }
+      main.innerHTML = `
+        <div class="p-4 space-y-5">
+          <div class="text-center space-y-1 pt-1">
+            <h2 class="text-xl font-extrabold text-white">Adopte ton compagnon</h2>
+            <p class="text-xs text-slate-400">Il grandit au fil de tes rangements et de tes défis.</p>
+          </div>
+
+          <div class="rounded-3xl border border-[#232d3f] bg-gradient-to-b from-[#162336] to-[#0e141f] p-4 flex flex-col items-center">
+            ${buildPetVisualHTML(selectedSpeciesDraft, { size: 'md', xp: 0, energy: 80 })}
+            <div class="mt-2 text-sm font-bold text-white">${sp.name} · Nouveau-né</div>
+            <p class="text-xs text-slate-400 text-center mt-0.5">${sp.tagline}</p>
+          </div>
+
+          <div class="grid grid-cols-5 gap-2">
+            ${Object.values(SPECIES_DATA).map((item) => {
+              const active = item.id === selectedSpeciesDraft;
+              return `
+                <button
+                  type="button"
+                  onclick="selectSpeciesDraft('${item.id}')"
+                  class="p-2 rounded-2xl border flex flex-col items-center gap-1 transition ${
+                    active
+                      ? 'border-blue-400 bg-blue-500/20 text-white'
+                      : 'border-[#232d3f] bg-[#151b26] text-slate-400 hover:bg-[#1c2433]'
+                  }"
+                >
+                  <span class="text-2xl">${item.emoji}</span>
+                  <span class="text-[10px] font-semibold truncate w-full text-center">${item.name}</span>
+                </button>
+              `;
+            }).join('')}
+          </div>
+
+          <div class="space-y-1.5">
+            <label for="pet-name-input" class="block text-xs font-semibold text-slate-300">
+              Prénom de ton compagnon
+            </label>
+            <input
+              id="pet-name-input"
+              type="text"
+              maxlength="18"
+              value="${sp.defaultPetName}"
+              class="w-full px-3.5 py-2.5 rounded-2xl bg-[#151b26] border border-[#283346] text-sm text-white focus:outline-none focus:border-blue-400"
+            />
+          </div>
+
+          <button
+            type="button"
+            onclick="confirmAdoption()"
+            class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-400 hover:to-indigo-400 text-sm font-bold text-white shadow-lg transition"
+          >
+            Commencer l’aventure ✨
+          </button>
+        </div>
+      `;
+    }
+
+    function selectSpeciesDraft(speciesId) {
+      sfxClick();
+      selectedSpeciesDraft = speciesId;
+      renderOnboarding();
+    }
+
+    function confirmAdoption() {
+      const input = document.getElementById('pet-name-input');
+      const customName = input && input.value.trim() ? input.value.trim() : (SPECIES_DATA[selectedSpeciesDraft]?.defaultPetName || 'Loulou');
+      state = {
+        ...getDefaultState(),
+        adopted: true,
+        species: selectedSpeciesDraft,
+        petName: customName
+      };
+      saveState();
+      sfxVictory();
+      showToast(`${state.petName} est prêt pour le rangement !`, 'success');
+      switchTab('sanctuary');
+    }
+
+    // =========================================================================
+    // 6. ONGLET COMPAGNON (SANCTUAIRE)
+    // =========================================================================
+    function renderSanctuary() {
+      const nav = document.getElementById('bottom-nav');
+      const sub = document.getElementById('header-subtitle');
+      if (nav) nav.classList.remove('hidden');
+      if (sub) sub.textContent = `${state.petName} · Compagnon`;
+
+      const main = document.getElementById('main-content');
+      if (!main) return;
+
+      const sp = SPECIES_DATA[state.species] || SPECIES_DATA.loutre;
+      const stageInfo = getStageInfoFromXp(state.xp);
+      const hab = HABITAT_THEMES[state.equippedHabitat] || HABITAT_THEMES.hab_clearing;
+
+      main.innerHTML = `
+        <div class="p-4 space-y-4">
+          <!-- Compteurs de ressources -->
+          <div class="grid grid-cols-3 gap-2">
+            <div class="rounded-2xl bg-[#151b26] border border-[#232d3f] px-3 py-2 flex items-center justify-between">
+              <span class="text-xs text-slate-400">Pièces</span>
+              <span class="text-xs font-bold text-amber-300">🪙 ${state.coins}</span>
+            </div>
+            <div class="rounded-2xl bg-[#151b26] border border-[#232d3f] px-3 py-2 flex items-center justify-between">
+              <span class="text-xs text-slate-400">XP</span>
+              <span class="text-xs font-bold text-blue-300">⭐ ${state.xp}</span>
+            </div>
+            <div class="rounded-2xl bg-[#151b26] border border-[#232d3f] px-3 py-2 flex items-center justify-between">
+              <span class="text-xs text-slate-400">Énergie</span>
+              <span class="text-xs font-bold text-emerald-300">⚡ ${state.energy}%</span>
+            </div>
+          </div>
+
+          <!-- Carte scène du compagnon -->
+          <section
+            class="relative rounded-3xl border ${hab.borderAccent} p-4 overflow-hidden shadow-lg"
+            style="background: ${hab.gradient};"
+          >
+            <div class="flex items-center justify-between gap-2 mb-2">
+              <div>
+                <div class="flex items-center gap-2">
+                  <h2 class="text-base font-extrabold text-white">${state.petName}</h2>
+                  <span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-white/10 text-amber-200 border border-white/15">
+                    ${stageInfo.current.label} (${stageInfo.index + 1}/4)
+                  </span>
+                </div>
+                <p class="text-[11px] ${hab.accentText} mt-0.5">${hab.name}</p>
+              </div>
+              <div class="text-right text-[11px] text-slate-300">
+                ${stageInfo.next ? `Prochain : ${stageInfo.next.minXp} XP` : 'Stade max atteint'}
+              </div>
+            </div>
+
+            <!-- Barre d'évolution -->
+            <div class="w-full h-2 rounded-full bg-black/40 border border-white/10 overflow-hidden mb-3">
+              <div class="h-full rounded-full bg-gradient-to-r from-amber-400 to-orange-500 transition-all duration-500" style="width:${stageInfo.progressPct}%;"></div>
+            </div>
+
+            <!-- Zone interactive -->
+            <div
+              id="pet-stage-box"
+              onclick="petCompanion(event)"
+              class="relative min-h-[235px] rounded-2xl bg-black/25 border border-white/10 flex flex-col items-center justify-center p-4 cursor-pointer"
+            >
+              ${buildPetVisualHTML(state.species, { size: 'lg', xp: state.xp, energy: state.energy })}
+              <span class="mt-2 text-[11px] text-slate-200/85 bg-slate-950/55 px-3 py-1 rounded-full border border-white/10">
+                Clique pour faire un câlin ✨
+              </span>
+            </div>
+
+            <!-- Actions rapides -->
+            <div class="grid grid-cols-2 gap-2 mt-3">
+              <button
+                type="button"
+                onclick="quickSnackAction()"
+                class="py-2.5 px-3 rounded-2xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/35 text-xs font-bold text-amber-200 transition"
+              >
+                🍪 Friandise (15 🪙)
+              </button>
+              <button
+                type="button"
+                onclick="switchTab('challenges')"
+                class="py-2.5 px-3 rounded-2xl bg-blue-500/20 hover:bg-blue-500/30 border border-blue-400/35 text-xs font-bold text-blue-200 transition"
+              >
+                ⚡ Lancer un défi
+              </button>
+            </div>
+          </section>
+
+          <!-- Résumé des statistiques -->
+          <section class="rounded-3xl bg-[#151b26] border border-[#232d3f] p-4 grid grid-cols-3 gap-2 text-center">
+            <div>
+              <div class="text-sm font-extrabold text-white">${state.totalChallenges}</div>
+              <div class="text-[11px] text-slate-400">Défis finis</div>
+            </div>
+            <div>
+              <div class="text-sm font-extrabold text-emerald-300">${state.bestSprint30}</div>
+              <div class="text-[11px] text-slate-400">Record 30s</div>
+            </div>
+            <div>
+              <div class="text-sm font-extrabold text-purple-300">${state.bestRace10 !== null ? state.bestRace10 + 's' : '—'}</div>
+              <div class="text-[11px] text-slate-400">Record 10 obj.</div>
+            </div>
+          </section>
+        </div>
+      `;
+    }
+
+    function petCompanion(event) {
+      const stage = document.getElementById('pet-stage-box');
+      let xPct = 50;
+      let yPct = 42;
+      if (stage && event && typeof event.clientX === 'number') {
+        const rect = stage.getBoundingClientRect();
+        if (rect.width > 0 && rect.height > 0) {
+          xPct = Math.max(18, Math.min(82, ((event.clientX - rect.left) / rect.width) * 100));
+          yPct = Math.max(22, Math.min(72, ((event.clientY - rect.top) / rect.height) * 100));
         }
+      }
+      bouncePetNow();
+      sfxPet();
+      const lines = ['💛 Câlin !', '✨ Trop bien !', '🦦 *ronron*'];
+      spawnFloatingParticle(lines[Math.floor(Math.random() * lines.length)], xPct, yPct);
+    }
 
-        for (let y = 0; y < h; y++) {
-          const leftIdx = y * w;
-          const pLeft = leftIdx * 4;
-          if (isCheckerboardPixel(data[pLeft], data[pLeft + 1], data[pLeft + 2], data[pLeft + 3])) {
-            visited[leftIdx] = 1;
-            queue[tail++] = leftIdx;
-          }
+    function quickSnackAction() {
+      if (state.coins < 15) {
+        showToast('Pas assez de pièces (15 🪙 requis). Fais un défi !', 'warning');
+        return;
+      }
+      state.coins -= 15;
+      awardRewards(10, 0, 20, 'Friandise');
+      renderSanctuary();
+      bouncePetNow();
+      spawnFloatingParticle('🍪 +20% énergie', 50, 35);
+    }
 
-          const rightIdx = y * w + (w - 1);
-          const pRight = rightIdx * 4;
-          if (isCheckerboardPixel(data[pRight], data[pRight + 1], data[pRight + 2], data[pRight + 3])) {
-            visited[rightIdx] = 1;
-            queue[tail++] = rightIdx;
-          }
+    // =========================================================================
+    // 7. ONGLET DÉFIS (SPRINT 30s, COURSE 10 OBJETS, CONTRAINTE)
+    // =========================================================================
+    function clearChallengeTimer() {
+      if (challengeTimerInterval) {
+        clearInterval(challengeTimerInterval);
+        challengeTimerInterval = null;
+      }
+    }
+
+    function renderChallenges() {
+      const nav = document.getElementById('bottom-nav');
+      const sub = document.getElementById('header-subtitle');
+      if (nav) nav.classList.remove('hidden');
+      if (sub) sub.textContent = 'Défis de rangement';
+
+      const main = document.getElementById('main-content');
+      if (!main) return;
+
+      if (activeChallenge) {
+        renderActiveChallengeView(main);
+        return;
+      }
+
+      main.innerHTML = `
+        <div class="p-4 space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-base font-extrabold text-white">Défis du moment</h2>
+              <p class="text-xs text-slate-400">Gagne des pièces et de l’XP pour faire grandir ${state.petName}.</p>
+            </div>
+            <span class="px-2.5 py-1 rounded-xl bg-amber-500/15 border border-amber-400/30 text-xs font-bold text-amber-300">
+              🪙 ${state.coins}
+            </span>
+          </div>
+
+          <!-- Sprint 30s -->
+          <div class="rounded-3xl bg-[#151b26] border border-[#232d3f] p-4 space-y-3">
+            <div class="flex items-start justify-between gap-2">
+              <div>
+                <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-300">Chrono 30 secondes</span>
+                <h3 class="text-sm font-bold text-white mt-0.5">Sprint Rangement</h3>
+                <p class="text-xs text-slate-400 mt-0.5">Compte chaque objet rangé avant la fin des 30s.</p>
+              </div>
+              <span class="text-2xl">⏱️</span>
+            </div>
+            <div class="flex items-center justify-between pt-1">
+              <span class="text-[11px] text-slate-400">Record : <strong class="text-slate-200">${state.bestSprint30}</strong></span>
+              <button
+                type="button"
+                onclick="startSprint30()"
+                class="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-xs font-bold text-slate-950 transition"
+              >
+                Démarrer
+              </button>
+            </div>
+          </div>
+
+          <!-- Course 10 objets -->
+          <div class="rounded-3xl bg-[#151b26] border border-[#232d3f] p-4 space-y-3">
+            <div class="flex items-start justify-between gap-2">
+              <div>
+                <span class="text-[11px] font-bold uppercase tracking-wider text-blue-300">Contre la montre</span>
+                <h3 class="text-sm font-bold text-white mt-0.5">Course aux 10 objets</h3>
+                <p class="text-xs text-slate-400 mt-0.5">Range 10 objets le plus vite possible.</p>
+              </div>
+              <span class="text-2xl">🏁</span>
+            </div>
+            <div class="flex items-center justify-between pt-1">
+              <span class="text-[11px] text-slate-400">Meilleur temps : <strong class="text-slate-200">${state.bestRace10 !== null ? state.bestRace10 + 's' : '—'}</strong></span>
+              <button
+                type="button"
+                onclick="startRace10()"
+                class="px-4 py-2 rounded-xl bg-blue-500 hover:bg-blue-400 text-xs font-bold text-white transition"
+              >
+                Démarrer
+              </button>
+            </div>
+          </div>
+
+          <!-- Défi avec contrainte -->
+          <div class="rounded-3xl bg-[#151b26] border border-[#232d3f] p-4 space-y-3">
+            <div class="flex items-start justify-between gap-2">
+              <div>
+                <span class="text-[11px] font-bold uppercase tracking-wider text-purple-300">Mission spéciale</span>
+                <h3 class="text-sm font-bold text-white mt-0.5">Défi à contrainte</h3>
+                <p class="text-xs text-slate-400 mt-0.5">Une règle amusante tirée au sort pour pimenter le rangement.</p>
+              </div>
+              <span class="text-2xl">🎯</span>
+            </div>
+            <div class="flex items-center justify-between pt-1">
+              <span class="text-[11px] text-amber-300 font-semibold">+25 à +35 🪙 · +30 à +40 XP</span>
+              <button
+                type="button"
+                onclick="startConstraintChallenge()"
+                class="px-4 py-2 rounded-xl bg-purple-500 hover:bg-purple-400 text-xs font-bold text-white transition"
+              >
+                Tirer un défi
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderActiveChallengeView(main) {
+      if (!activeChallenge) return;
+
+      if (activeChallenge.type === 'sprint30') {
+        main.innerHTML = `
+          <div class="p-4 space-y-5 flex-1 flex flex-col justify-between">
+            <div class="rounded-3xl bg-[#151b26] border border-emerald-500/30 p-5 text-center space-y-3">
+              <div class="text-xs font-bold uppercase text-emerald-300">Sprint 30 secondes</div>
+              <div id="challenge-timer" class="text-4xl font-extrabold text-white">${activeChallenge.timeLeft}s</div>
+              <p class="text-xs text-slate-400">Appuie à chaque objet rangé !</p>
+              <div id="challenge-counter" class="text-5xl font-extrabold text-emerald-300 py-2">${activeChallenge.count}</div>
+              <button
+                type="button"
+                onclick="incrementChallengeCount()"
+                class="w-full py-4 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-sm shadow-lg transition"
+              >
+                +1 Objet rangé
+              </button>
+            </div>
+            <button
+              type="button"
+              onclick="cancelActiveChallenge()"
+              class="w-full py-2.5 rounded-2xl bg-[#1e2634] text-slate-300 text-xs font-semibold"
+            >
+              Annuler le défi
+            </button>
+          </div>
+        `;
+      } else if (activeChallenge.type === 'race10') {
+        main.innerHTML = `
+          <div class="p-4 space-y-5 flex-1 flex flex-col justify-between">
+            <div class="rounded-3xl bg-[#151b26] border border-blue-500/30 p-5 text-center space-y-3">
+              <div class="text-xs font-bold uppercase text-blue-300">Course aux 10 objets</div>
+              <div id="challenge-timer" class="text-4xl font-extrabold text-white">${activeChallenge.elapsed}s</div>
+              <p class="text-xs text-slate-400">Atteins 10 objets rangés le plus vite possible.</p>
+              <div id="challenge-counter" class="text-5xl font-extrabold text-blue-300 py-2">${activeChallenge.count} / 10</div>
+              <button
+                type="button"
+                onclick="incrementChallengeCount()"
+                class="w-full py-4 rounded-2xl bg-blue-500 hover:bg-blue-400 text-white font-extrabold text-sm shadow-lg transition"
+              >
+                +1 Objet rangé
+              </button>
+            </div>
+            <button
+              type="button"
+              onclick="cancelActiveChallenge()"
+              class="w-full py-2.5 rounded-2xl bg-[#1e2634] text-slate-300 text-xs font-semibold"
+            >
+              Annuler la course
+            </button>
+          </div>
+        `;
+      } else {
+        main.innerHTML = `
+          <div class="p-4 space-y-5 flex-1 flex flex-col justify-between">
+            <div class="rounded-3xl bg-[#151b26] border border-purple-500/30 p-5 space-y-3">
+              <div class="text-xs font-bold uppercase text-purple-300">Mission contrainte</div>
+              <h3 class="text-lg font-extrabold text-white">${activeChallenge.title}</h3>
+              <p class="text-xs text-slate-300 leading-relaxed">${activeChallenge.desc}</p>
+              <div class="pt-2 flex items-center justify-between text-xs font-bold text-amber-300">
+                <span>Récompense : +${activeChallenge.rewardCoins} 🪙 · +${activeChallenge.rewardXp} XP</span>
+              </div>
+              <button
+                type="button"
+                onclick="completeConstraintChallenge()"
+                class="w-full mt-3 py-3.5 rounded-2xl bg-purple-500 hover:bg-purple-400 text-white font-bold text-sm transition"
+              >
+                Mission accomplie !
+              </button>
+            </div>
+            <button
+              type="button"
+              onclick="cancelActiveChallenge()"
+              class="w-full py-2.5 rounded-2xl bg-[#1e2634] text-slate-300 text-xs font-semibold"
+            >
+              Annuler la mission
+            </button>
+          </div>
+        `;
+      }
+    }
+
+    function startSprint30() {
+      clearChallengeTimer();
+      sfxClick();
+      activeChallenge = { type: 'sprint30', timeLeft: 30, count: 0 };
+      renderChallenges();
+      challengeTimerInterval = setInterval(() => {
+        if (!activeChallenge || activeChallenge.type !== 'sprint30') return;
+        activeChallenge.timeLeft -= 1;
+        const timerEl = document.getElementById('challenge-timer');
+        if (timerEl) timerEl.textContent = `${Math.max(0, activeChallenge.timeLeft)}s`;
+        if (activeChallenge.timeLeft <= 0) {
+          finishSprint30();
+        } else if (activeChallenge.timeLeft <= 5) {
+          sfxTick();
         }
+      }, 1000);
+    }
 
-        // Propagation (BFS) sur les cases de damier adjacentes depuis les bords
-        while (head < tail) {
-          const idx = queue[head++];
-          const x = idx % w;
-          const y = (idx - x) / w;
+    function finishSprint30() {
+      clearChallengeTimer();
+      const count = activeChallenge ? activeChallenge.count : 0;
+      activeChallenge = null;
+      if (count > state.bestSprint30) {
+        state.bestSprint30 = count;
+      }
+      state.totalChallenges += 1;
+      const coinsEarned = Math.max(10, count * 3);
+      const xpEarned = Math.max(15, count * 4);
+      awardRewards(xpEarned, coinsEarned, -5, `Sprint (${count} objets)`);
+      renderChallenges();
+    }
 
-          // Rendre le pixel transparent
-          data[idx * 4 + 3] = 0;
+    function startRace10() {
+      clearChallengeTimer();
+      sfxClick();
+      activeChallenge = { type: 'race10', elapsed: 0, count: 0 };
+      renderChallenges();
+      challengeTimerInterval = setInterval(() => {
+        if (!activeChallenge || activeChallenge.type !== 'race10') return;
+        activeChallenge.elapsed += 1;
+        const timerEl = document.getElementById('challenge-timer');
+        if (timerEl) timerEl.textContent = `${activeChallenge.elapsed}s`;
+      }, 1000);
+    }
 
-          const neighbors = [
-            x > 0 ? idx - 1 : -1,
-            x < w - 1 ? idx + 1 : -1,
-            y > 0 ? idx - w : -1,
-            y < h - 1 ? idx + w : -1
-          ];
+    function startConstraintChallenge() {
+      clearChallengeTimer();
+      sfxClick();
+      const pick = CONSTRAINT_CHALLENGES[Math.floor(Math.random() * CONSTRAINT_CHALLENGES.length)];
+      activeChallenge = { type: 'constraint', ...pick };
+      renderChallenges();
+    }
 
-          for (let n = 0; n < 4; n++) {
-            const nIdx = neighbors[n];
-            if (nIdx >= 0 && !visited[nIdx]) {
-              const p = nIdx * 4;
-              if (isCheckerboardPixel(data[p], data[p + 1], data[p + 2], data[p + 3])) {
-                visited[nIdx] = 1;
-                queue[tail++] = nIdx;
+    function incrementChallengeCount() {
+      if (!activeChallenge) return;
+      sfxTick();
+      activeChallenge.count += 1;
+      if (activeChallenge.type === 'sprint30') {
+        const counterEl = document.getElementById('challenge-counter');
+        if (counterEl) counterEl.textContent = String(activeChallenge.count);
+      } else if (activeChallenge.type === 'race10') {
+        const counterEl = document.getElementById('challenge-counter');
+        if (counterEl) counterEl.textContent = `${Math.min(10, activeChallenge.count)} / 10`;
+        if (activeChallenge.count >= 10) {
+          clearChallengeTimer();
+          const timeTaken = activeChallenge.elapsed;
+          activeChallenge = null;
+          if (state.bestRace10 === null || timeTaken < state.bestRace10) {
+            state.bestRace10 = timeTaken;
+          }
+          state.totalChallenges += 1;
+          awardRewards(35, 30, -5, `Course 10 objets en ${timeTaken}s`);
+          renderChallenges();
+        }
+      }
+    }
+
+    function completeConstraintChallenge() {
+      if (!activeChallenge) return;
+      const { rewardCoins, rewardXp, title } = activeChallenge;
+      activeChallenge = null;
+      state.totalChallenges += 1;
+      awardRewards(rewardXp, rewardCoins, -5, title);
+      renderChallenges();
+    }
+
+    function cancelActiveChallenge() {
+      clearChallengeTimer();
+      activeChallenge = null;
+      sfxClick();
+      renderChallenges();
+    }
+
+    // =========================================================================
+    // 8. ONGLET BOUTIQUE
+    // =========================================================================
+    function renderShop() {
+      const nav = document.getElementById('bottom-nav');
+      const sub = document.getElementById('header-subtitle');
+      if (nav) nav.classList.remove('hidden');
+      if (sub) sub.textContent = 'Boutique du compagnon';
+
+      const main = document.getElementById('main-content');
+      if (!main) return;
+
+      const tabs = [
+        { id: 'accessory', label: 'Accessoires' },
+        { id: 'habitat', label: 'Lieux' },
+        { id: 'care', label: 'Friandises' }
+      ];
+
+      const items = SHOP_ITEMS.filter((i) => i.category === shopCategory);
+
+      main.innerHTML = `
+        <div class="p-4 space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-base font-extrabold text-white">Boutique</h2>
+              <p class="text-xs text-slate-400">Personnalise ${state.petName} et son décor.</p>
+            </div>
+            <span class="px-3 py-1 rounded-xl bg-amber-500/15 border border-amber-400/30 text-xs font-bold text-amber-300">
+              🪙 ${state.coins} pièces
+            </span>
+          </div>
+
+          <div class="grid grid-cols-3 gap-2">
+            ${tabs.map((t) => {
+              const active = t.id === shopCategory;
+              return `
+                <button
+                  type="button"
+                  onclick="setShopCategory('${t.id}')"
+                  class="py-2 px-2 rounded-2xl text-xs font-bold border transition ${
+                    active
+                      ? 'bg-blue-500/20 border-blue-400 text-blue-200'
+                      : 'bg-[#151b26] border-[#232d3f] text-slate-400 hover:text-slate-200'
+                  }"
+                >
+                  ${t.label}
+                </button>
+              `;
+            }).join('')}
+          </div>
+
+          <div class="space-y-2.5">
+            ${items.map((item) => {
+              const isOwned = item.category === 'care' ? false : state.ownedItems.includes(item.id);
+              const isEquipped = item.category === 'habitat'
+                ? state.equippedHabitat === item.id
+                : (item.category === 'accessory' ? state.equippedAccessories[item.slot] === item.id : false);
+
+              let actionBtn = '';
+              if (item.category === 'care') {
+                actionBtn = `
+                  <button
+                    type="button"
+                    onclick="buyOrUseItem('${item.id}')"
+                    class="px-3 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold transition"
+                  >
+                    Donner · ${item.price} 🪙
+                  </button>
+                `;
+              } else if (isEquipped) {
+                actionBtn = `
+                  <button
+                    type="button"
+                    onclick="toggleEquipItem('${item.id}')"
+                    class="px-3 py-2 rounded-xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-200 text-xs font-bold transition"
+                  >
+                    Équipé ✓
+                  </button>
+                `;
+              } else if (isOwned) {
+                actionBtn = `
+                  <button
+                    type="button"
+                    onclick="toggleEquipItem('${item.id}')"
+                    class="px-3 py-2 rounded-xl bg-blue-500 hover:bg-blue-400 text-white text-xs font-bold transition"
+                  >
+                    Équiper
+                  </button>
+                `;
+              } else {
+                actionBtn = `
+                  <button
+                    type="button"
+                    onclick="buyOrUseItem('${item.id}')"
+                    class="px-3 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold transition"
+                  >
+                    ${item.price} 🪙
+                  </button>
+                `;
               }
-            }
-          }
-        }
 
-        ctx.putImageData(imgData, 0, 0);
-        const cleanedUrl = canvas.toDataURL('image/png');
-        cleanedDataUrlCache[cacheKey] = cleanedUrl;
-        return cleanedUrl;
-      } catch (err) {
-        // Si le canvas est bloqué (ex: CORS en local file://), on garde l'image brute sans planter
-        return null;
-      }
+              return `
+                <div class="rounded-2xl bg-[#151b26] border border-[#232d3f] p-3.5 flex items-center justify-between gap-3">
+                  <div class="flex items-center gap-3">
+                    <div class="w-11 h-11 rounded-2xl bg-[#0d1117] border border-[#232d3f] flex items-center justify-center text-2xl">
+                      ${item.icon}
+                    </div>
+                    <div>
+                      <div class="text-xs font-bold text-white">${item.name}</div>
+                      <div class="text-[11px] text-slate-400">${item.desc}</div>
+                    </div>
+                  </div>
+                  ${actionBtn}
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `;
     }
 
-    // Appelé quand une image charge avec succès
-    function handleOtterImageLoad() {
-      const img = document.getElementById('otter-img');
-      const fallback = document.getElementById('otter-fallback');
-      const fileHint = document.getElementById('stage-file-hint');
-      const idx = getCurrentStageIndex(state.xp);
-      const stage = OTTER_STAGES[idx] || OTTER_STAGES[0];
-      const currentPath = stage.candidates[activeCandidateIndex] || stage.candidates[0];
+    function setShopCategory(cat) {
+      sfxClick();
+      shopCategory = cat;
+      renderShop();
+    }
 
-      if (fallback) {
-        fallback.classList.add('hidden');
-        fallback.classList.remove('flex');
-      }
-      if (img) {
-        img.classList.remove('hidden');
-      }
-      if (fileHint) {
-        fileHint.innerHTML = `Chargé : <code class="text-slate-300">${currentPath}</code>`;
-      }
-
-      if (isCleaningMosaic) {
-        isCleaningMosaic = false;
+    function buyOrUseItem(itemId) {
+      const item = SHOP_ITEMS.find((i) => i.id === itemId);
+      if (!item) return;
+      if (state.coins < item.price) {
+        showToast('Pas assez de pièces !', 'warning');
         return;
       }
 
-      if (img && img.src && !img.src.startsWith('data:image/png')) {
-        isCleaningMosaic = true;
-        const cleaned = stripCheckerboardBackground(img, currentPath);
-        if (cleaned) {
-          img.src = cleaned;
+      state.coins -= item.price;
+
+      if (item.category === 'care') {
+        const xpBonus = item.effectType === 'feast' ? 30 : 10;
+        awardRewards(xpBonus, 0, item.effectValue, item.name);
+        renderShop();
+        return;
+      }
+
+      if (!state.ownedItems.includes(item.id)) {
+        state.ownedItems.push(item.id);
+      }
+
+      if (item.category === 'habitat') {
+        state.equippedHabitat = item.id;
+      } else if (item.category === 'accessory') {
+        state.equippedAccessories[item.slot] = item.id;
+      }
+
+      saveState();
+      sfxCoin();
+      showToast(`${item.name} débloqué et équipé !`, 'success');
+      renderShop();
+    }
+
+    function toggleEquipItem(itemId) {
+      const item = SHOP_ITEMS.find((i) => i.id === itemId);
+      if (!item) return;
+      sfxClick();
+
+      if (item.category === 'habitat') {
+        state.equippedHabitat = item.id;
+        showToast(`${item.name} activé`, 'info');
+      } else if (item.category === 'accessory') {
+        if (state.equippedAccessories[item.slot] === item.id) {
+          state.equippedAccessories[item.slot] = null;
+          showToast(`${item.name} retiré`, 'info');
         } else {
-          isCleaningMosaic = false;
+          state.equippedAccessories[item.slot] = item.id;
+          showToast(`${item.name} équipé`, 'success');
         }
       }
+
+      saveState();
+      renderShop();
     }
 
-    // Essaie le chemin suivant si l'image n'est pas trouvée à cet emplacement
-    function handleOtterImageError() {
-      const idx = getCurrentStageIndex(state.xp);
-      const stage = OTTER_STAGES[idx] || OTTER_STAGES[0];
-      const img = document.getElementById('otter-img');
-      const fallback = document.getElementById('otter-fallback');
-      const pathLabel = document.getElementById('otter-fallback-path');
-
-      if (isCleaningMosaic) {
-        isCleaningMosaic = false;
-        if (img && stage.candidates[activeCandidateIndex]) {
-          img.src = stage.candidates[activeCandidateIndex];
-        }
-        return;
-      }
-
-      if (activeCandidateIndex + 1 < stage.candidates.length) {
-        activeCandidateIndex += 1;
-        if (img) {
-          img.classList.remove('hidden');
-          img.src = stage.candidates[activeCandidateIndex];
-        }
-        return;
-      }
-
-      if (img) img.classList.add('hidden');
-      if (fallback) {
-        fallback.classList.remove('hidden');
-        fallback.classList.add('flex');
-      }
-      if (pathLabel) {
-        pathLabel.textContent = `Testé : ${stage.candidates.join(' ou ')}`;
-      }
+    // =========================================================================
+    // 9. MENU DÉMO & RÉINITIALISATION
+    // =========================================================================
+    function openModal(htmlContent) {
+      const overlay = document.getElementById('modal-overlay');
+      const box = document.getElementById('modal-box');
+      if (!overlay || !box) return;
+      box.innerHTML = htmlContent;
+      overlay.classList.remove('hidden');
+      overlay.classList.add('flex');
     }
 
-    window.handleOtterImageLoad = handleOtterImageLoad;
-    window.handleOtterImageError = handleOtterImageError;
+    function closeModal() {
+      const overlay = document.getElementById('modal-overlay');
+      if (!overlay) return;
+      overlay.classList.add('hidden');
+      overlay.classList.remove('flex');
+    }
 
-    // Met à jour toute l'interface selon l'état courant
-    function renderUI() {
-      const idx = getCurrentStageIndex(state.xp);
-      const stage = OTTER_STAGES[idx];
-      const nextStage = OTTER_STAGES[idx + 1] || null;
-      const pct = getStageProgressPercent(state.xp, idx);
+    function openDemoModal() {
+      sfxClick();
+      openModal(`
+        <div class="flex items-center justify-between">
+          <h3 class="text-sm font-extrabold text-white">Outils de test (Démo)</h3>
+          <button type="button" onclick="closeModal()" class="text-slate-400 hover:text-white text-sm">✕</button>
+        </div>
+        <p class="text-xs text-slate-400">
+          Teste rapidement l’évolution des 4 stades, les pièces ou la réinitialisation complète.
+        </p>
+        <div class="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onclick="demoAddCoins(100)"
+            class="py-2.5 px-3 rounded-2xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/35 text-xs font-bold text-amber-200"
+          >
+            +100 Pièces
+          </button>
+          <button
+            type="button"
+            onclick="demoAddXp(90)"
+            class="py-2.5 px-3 rounded-2xl bg-blue-500/20 hover:bg-blue-500/30 border border-blue-400/35 text-xs font-bold text-blue-200"
+          >
+            +90 XP (Stade +)
+          </button>
+        </div>
+        <div class="space-y-1.5">
+          <div class="text-[11px] font-semibold text-slate-400">Forcer un stade :</div>
+          <div class="grid grid-cols-4 gap-1.5">
+            ${EVOLUTION_STAGES.map((st, idx) => `
+              <button
+                type="button"
+                onclick="demoSetStage(${idx})"
+                class="py-1.5 px-1 rounded-xl bg-[#1e2634] hover:bg-[#2a3548] text-[11px] font-bold text-slate-200 truncate"
+              >
+                ${st.label}
+              </button>
+            `).join('')}
+          </div>
+        </div>
+        <div class="pt-2 border-t border-[#232d3f] flex items-center justify-between gap-2">
+          <button
+            type="button"
+            onclick="demoResetAll()"
+            class="py-2 px-3 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/35 text-xs font-bold text-rose-300"
+          >
+            Réinitialiser tout
+          </button>
+          <button
+            type="button"
+            onclick="closeModal()"
+            class="py-2 px-4 rounded-xl bg-blue-500 text-xs font-bold text-white"
+          >
+            Fermer
+          </button>
+        </div>
+      `);
+    }
 
-      const badge = document.getElementById('stage-badge');
-      const fileHint = document.getElementById('stage-file-hint');
-      const xpDisplay = document.getElementById('xp-display');
-      const nextHint = document.getElementById('next-stage-hint');
-      const xpBar = document.getElementById('xp-bar');
-      const coinsDisplay = document.getElementById('coins-display');
-      const img = document.getElementById('otter-img');
-      const fallback = document.getElementById('otter-fallback');
+    function demoAddCoins(amount) {
+      awardRewards(0, amount, 0, 'Bonus Démo');
+      refreshCurrentView();
+    }
 
-      if (badge) {
-        badge.textContent = `Stade ${idx + 1}/4 · ${stage.label}`;
+    function demoAddXp(amount) {
+      if (!state.adopted) {
+        state.adopted = true;
       }
-      if (fileHint) {
-        fileHint.innerHTML = `Fichier : <code class="text-slate-300">${stage.candidates[0]}</code>`;
-      }
-      if (xpDisplay) {
-        xpDisplay.textContent = `${state.xp} XP`;
-      }
-      if (nextHint) {
-        nextHint.textContent = nextStage
-          ? `Prochain stade (${nextStage.label}) : ${nextStage.minXp} XP`
-          : 'Stade maximum atteint !';
-      }
-      if (xpBar) {
-        xpBar.style.width = `${pct}%`;
-      }
-      if (coinsDisplay) {
-        coinsDisplay.textContent = `🪙 ${state.coins} pièces`;
-      }
+      awardRewards(amount, 0, 0, 'Bonus Démo');
+      refreshCurrentView();
+    }
 
-      if (img) {
-        // Retire les anciennes classes de taille avant d'appliquer celle du stade
-        OTTER_STAGES.forEach((s) => img.classList.remove(...s.scaleClass.split(' ')));
-        img.classList.add(...stage.scaleClass.split(' '));
-        img.alt = `Loutre ${stage.label}`;
-        img.classList.remove('hidden');
-
-        if (activeStageIndex !== idx) {
-          activeStageIndex = idx;
-          activeCandidateIndex = 0;
-          const primaryCandidate = stage.candidates[0];
-          img.src = cleanedDataUrlCache[primaryCandidate] || primaryCandidate;
-        }
+    function demoSetStage(stageIdx) {
+      const target = EVOLUTION_STAGES[stageIdx] || EVOLUTION_STAGES[0];
+      if (!state.adopted) {
+        state.adopted = true;
       }
+      state.xp = target.minXp;
+      saveState();
+      sfxCoin();
+      showToast(`Stade : ${target.label}`, 'info');
+      refreshCurrentView();
+    }
 
-      if (fallback) {
-        fallback.classList.add('hidden');
-        fallback.classList.remove('flex');
-      }
+    function demoResetAll() {
+      clearChallengeTimer();
+      activeChallenge = null;
+      state = getDefaultState();
+      saveState();
+      closeModal();
+      sfxClick();
+      showToast('Sauvegarde réinitialisée', 'info');
+      render();
+    }
 
-      // Met en surbrillance le bouton du stade actif
-      document.querySelectorAll('.stage-btn').forEach((btn, i) => {
-        if (i === idx) {
-          btn.classList.remove('border-[#283346]', 'bg-[#0d1117]/70');
-          btn.classList.add('border-amber-400/60', 'bg-amber-500/15');
+    // =========================================================================
+    // 10. NAVIGATION & DÉMARRAGE
+    // =========================================================================
+    function updateNavHighlight() {
+      ['sanctuary', 'challenges', 'shop'].forEach((tab) => {
+        const btn = document.getElementById(`nav-${tab}`);
+        if (!btn) return;
+        if (tab === currentTab) {
+          btn.classList.remove('text-slate-400');
+          btn.classList.add('text-blue-400', 'bg-blue-500/10');
         } else {
-          btn.classList.remove('border-amber-400/60', 'bg-amber-500/15');
-          btn.classList.add('border-[#283346]', 'bg-[#0d1117]/70');
+          btn.classList.remove('text-blue-400', 'bg-blue-500/10');
+          btn.classList.add('text-slate-400');
         }
       });
     }
 
-    // Sélectionne directement un des 4 stades pour le tester
-    function setStageByIndex(stageIndex) {
-      const target = OTTER_STAGES[stageIndex];
-      if (!target) return;
-      state.xp = target.minXp;
-      saveState();
-      renderUI();
-      triggerOtterHop();
-      playSoftTone(680, 0.12);
-      spawnFloatingFx(`Stade : ${target.label}`, 50, 35);
-      const status = document.getElementById('status-message');
-      if (status) {
-        status.textContent = `Aperçu du stade ${stageIndex + 1}/4 (${target.label}) avec ${target.image}.`;
-      }
+    function switchTab(tab) {
+      clearChallengeTimer();
+      activeChallenge = null;
+      currentTab = tab;
+      sfxClick();
+      render();
     }
 
-    // Ajoute de l'XP et des pièces et signale si la loutre évolue
-    function addXpAndCoins(xpGain, coinGain, reason) {
-      const oldIdx = getCurrentStageIndex(state.xp);
-      state.xp += xpGain;
-      state.coins += coinGain;
-      const newIdx = getCurrentStageIndex(state.xp);
-      saveState();
-      renderUI();
-      triggerOtterHop();
-
-      const status = document.getElementById('status-message');
-      if (newIdx > oldIdx) {
-        playSoftTone(920, 0.22);
-        spawnFloatingFx(`Évolution : ${OTTER_STAGES[newIdx].label} !`, 50, 30);
-        if (status) {
-          status.textContent = `${reason} Ta loutre est passée au stade ${OTTER_STAGES[newIdx].label} !`;
-        }
-      } else {
-        playSoftTone(740, 0.12);
-        spawnFloatingFx(`+${xpGain} XP · +${coinGain} 🪙`, 50, 38);
-        if (status) {
-          status.textContent = `${reason} (+${xpGain} XP, +${coinGain} pièces).`;
-        }
-      }
-    }
-
-    // Donne une friandise à la loutre
-    function feedSnack() {
-      if (state.coins < 10) {
-        const status = document.getElementById('status-message');
-        if (status) status.textContent = 'Pas assez de pièces (10 🪙 requis) : gagne de l’XP avec les boutons +15 XP ou +40 XP.';
+    function refreshCurrentView() {
+      if (!state.adopted) {
+        renderOnboarding();
         return;
       }
-      state.coins -= 10;
-      addXpAndCoins(10, 0, 'Friandise partagée (-10 🪙)');
+      if (currentTab === 'challenges') renderChallenges();
+      else if (currentTab === 'shop') renderShop();
+      else renderSanctuary();
+      updateNavHighlight();
     }
 
-    // Câlin au clic ou au toucher sur la zone de la loutre
-    function petOtter(event) {
-      const zone = document.getElementById('otter-stage-zone');
-      let xPct = 50;
-      let yPct = 42;
-      if (zone && event && typeof event.clientX === 'number') {
-        const rect = zone.getBoundingClientRect();
-        if (rect.width > 0 && rect.height > 0) {
-          xPct = Math.max(18, Math.min(82, ((event.clientX - rect.left) / rect.width) * 100));
-          yPct = Math.max(20, Math.min(75, ((event.clientY - rect.top) / rect.height) * 100));
+    function render() {
+      updateSoundIcon();
+      refreshCurrentView();
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      try {
+        render();
+      } catch (err) {
+        const main = document.getElementById('main-content');
+        if (main) {
+          main.innerHTML = `<div class="p-4 text-xs text-rose-300">Erreur d'affichage : ${err && err.message ? err.message : err}</div>`;
         }
       }
-      triggerOtterHop();
-      playSoftTone(820, 0.11);
-      const reactions = ['💛 Câlin !', '✨ Trop mignon !', '🦦 *ronron-loutre*'];
-      const text = reactions[Math.floor(Math.random() * reactions.length)];
-      spawnFloatingFx(text, xPct, yPct);
-    }
-
-    // Réinitialise l'XP et les pièces
-    function resetProgress() {
-      state = getDefaultState();
-      saveState();
-      renderUI();
-      triggerOtterHop();
-      playSoftTone(520, 0.12);
-      const status = document.getElementById('status-message');
-      if (status) {
-        status.textContent = 'Progression réinitialisée au stade 1/4 (Nouveau-né, 0 XP).';
-      }
-    }
-
-    // Initialisation au chargement de la page
-    window.addEventListener('DOMContentLoaded', () => {
-      renderUI();
     });
   </script>
 </body>
