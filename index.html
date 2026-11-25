@@ -226,9 +226,9 @@
 
     const EVOLUTION_STAGES = [
       { level: 1, label: 'Nouveau-né', minXp: 0 },
-      { level: 2, label: 'Bébé', minXp: 80 },
-      { level: 3, label: 'Junior', minXp: 200 },
-      { level: 4, label: 'Adulte', minXp: 360 }
+      { level: 2, label: 'Bébé', minXp: 250 },
+      { level: 3, label: 'Junior', minXp: 650 },
+      { level: 4, label: 'Adulte', minXp: 1200 }
     ];
 
     const SHOP_ITEMS = [
@@ -244,16 +244,16 @@
       { id: 'hab_space', category: 'habitat', name: 'Observatoire Spatial', desc: 'Un dôme vitré face aux étoiles et planètes.', icon: '🪐', price: 150 },
 
       { id: 'food_treat', category: 'care', effectType: 'treat', effectValue: 20, name: 'Friandise Dorée', desc: 'Redonne +20% d’énergie immédiatement.', icon: '🍪', price: 15 },
-      { id: 'food_feast', category: 'care', effectType: 'feast', effectValue: 40, name: 'Grand Festin', desc: 'Redonne +40% d’énergie et +30 XP.', icon: '🍲', price: 35 }
+      { id: 'food_feast', category: 'care', effectType: 'feast', effectValue: 40, name: 'Grand Festin', desc: 'Redonne +40% d’énergie et +20 XP.', icon: '🍲', price: 35 }
     ];
 
     const CONSTRAINT_CHALLENGES = [
-      { title: 'Chasse à la lettre E', desc: 'Range 5 objets dont le nom contient ou commence par la lettre E.', rewardCoins: 25, rewardXp: 30 },
-      { title: 'Opération Sol Net', desc: 'Libère entièrement le sol de la chambre pendant 2 minutes.', rewardCoins: 30, rewardXp: 35 },
-      { title: 'Duo de Couleur', desc: 'Range 6 objets de la même couleur (ex. bleu, rouge ou bois).', rewardCoins: 25, rewardXp: 30 },
-      { title: 'Mission Livres & BD', desc: 'Remets tous les livres et magazines qui traînent sur l’étagère.', rewardCoins: 25, rewardXp: 30 },
-      { title: 'Zéro Objet sur le Lit', desc: 'Débarrasse le lit et range chaque affaire à sa place.', rewardCoins: 30, rewardXp: 35 },
-      { title: 'Trio du Bureau', desc: 'Range 8 petits objets (crayons, papiers, gommes) autour du bureau.', rewardCoins: 35, rewardXp: 40 }
+      { title: 'Chasse à la lettre E', desc: 'Range 5 objets dont le nom contient ou commence par la lettre E.', rewardCoins: 25, rewardXp: 25 },
+      { title: 'Opération Sol Net', desc: 'Libère entièrement le sol de la chambre pendant 2 minutes.', rewardCoins: 30, rewardXp: 30 },
+      { title: 'Duo de Couleur', desc: 'Range 6 objets de la même couleur (ex. bleu, rouge ou bois).', rewardCoins: 25, rewardXp: 25 },
+      { title: 'Mission Livres & BD', desc: 'Remets tous les livres et magazines qui traînent sur l’étagère.', rewardCoins: 25, rewardXp: 25 },
+      { title: 'Zéro Objet sur le Lit', desc: 'Débarrasse le lit et range chaque affaire à sa place.', rewardCoins: 30, rewardXp: 30 },
+      { title: 'Trio du Bureau', desc: 'Range 8 petits objets (crayons, papiers, gommes) autour du bureau.', rewardCoins: 35, rewardXp: 35 }
     ];
 
     // =========================================================================
@@ -266,6 +266,7 @@
     let challengeTimerInterval = null;
     let currentEatingItem = null;
     let eatingTimeout = null;
+    let previewStageIndex = 0;
 
     function getDefaultState() {
       return {
@@ -383,24 +384,20 @@
 
     const HABITAT_THEMES = {
       hab_clearing: {
-        name: 'Base neutre',
-        localBg: 'images/clairiere.jpg',
-        gradient: 'linear-gradient(180deg, #161E2B 0%, #0D1117 100%)'
+        name: 'Clairière Enchantée',
+        gradient: 'linear-gradient(180deg, #122620 0%, #0D1117 100%)'
       },
       hab_cozy: {
         name: 'Salon Cosy',
-        localBg: 'images/salon.jpg',
-        gradient: 'linear-gradient(180deg, #2A1E17 0%, #0D1117 100%)'
+        gradient: 'linear-gradient(180deg, #2B1A12 0%, #0D1117 100%)'
       },
       hab_crystal: {
         name: 'Grotte aux Cristaux',
-        localBg: 'images/grotte.jpg',
-        gradient: 'linear-gradient(180deg, #13293D 0%, #0D1117 100%)'
+        gradient: 'linear-gradient(180deg, #102A43 0%, #0D1117 100%)'
       },
       hab_space: {
         name: 'Observatoire Spatial',
-        localBg: 'images/observatoire.jpg',
-        gradient: 'linear-gradient(180deg, #1E1633 0%, #0D1117 100%)'
+        gradient: 'linear-gradient(180deg, #1C1333 0%, #0D1117 100%)'
       }
     };
 
@@ -431,15 +428,9 @@
       const stageIndex = getStageIndexFromXp(xp);
       const candidates = [];
 
+      // On tente uniquement l'image exacte du stade courant puis le repli de l'espèce
       if (Array.isArray(cfg.localStageImages) && cfg.localStageImages[stageIndex]) {
         candidates.push(cfg.localStageImages[stageIndex]);
-      }
-      if (Array.isArray(cfg.localStageImages)) {
-        cfg.localStageImages.forEach((imgPath) => {
-          if (imgPath && !candidates.includes(imgPath)) {
-            candidates.push(imgPath);
-          }
-        });
       }
       if (cfg.localFallback && !candidates.includes(cfg.localFallback)) {
         candidates.push(cfg.localFallback);
@@ -559,25 +550,9 @@
 
     function buildHabitatBackdropHTML(habitatId) {
       const hab = HABITAT_THEMES[habitatId] || HABITAT_THEMES.hab_clearing;
-      const hasCustomHabitat = state.ownedItems.includes(habitatId) && habitatId !== 'hab_clearing';
-      const fallbackBg = `
-        <div class="w-full h-full" style="background: ${hab.gradient};"></div>
-      `;
-
-      if (!hasCustomHabitat || !hab.localBg) {
-        return `<div class="absolute inset-0 overflow-hidden pointer-events-none">${fallbackBg}</div>`;
-      }
-
       return `
-        <div class="absolute inset-0 overflow-hidden pointer-events-none">
-          ${renderLocalImageWithFallback(
-            [hab.localBg],
-            hab.name,
-            'w-full h-full object-cover opacity-75',
-            '',
-            fallbackBg
-          )}
-          <div class="absolute inset-0 bg-gradient-to-t from-[#0D1117] via-[#0D1117]/40 to-transparent"></div>
+        <div class="absolute inset-0 overflow-hidden pointer-events-none" style="background: ${hab.gradient};">
+          <div class="w-full h-full opacity-45" style="background: radial-gradient(circle at 50% 35%, rgba(255,255,255,0.08) 0%, transparent 70%);"></div>
         </div>
       `;
     }
@@ -630,7 +605,7 @@
         <p class="text-xs text-slate-400">Teste rapidement les pièces, l'évolution et la réinitialisation.</p>
         <div class="grid grid-cols-2 gap-2">
           <button onclick="demoAddCoins(100)" class="py-2.5 px-3 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-semibold hover:bg-amber-500/25">+100 Pièces</button>
-          <button onclick="demoAddXp(80)" class="py-2.5 px-3 rounded-xl bg-blue-500/15 border border-blue-500/30 text-blue-300 text-xs font-semibold hover:bg-blue-500/25">+80 XP (Évolution)</button>
+          <button onclick="demoAddXp(250)" class="py-2.5 px-3 rounded-xl bg-blue-500/15 border border-blue-500/30 text-blue-300 text-xs font-semibold hover:bg-blue-500/25">+250 XP (Évolution)</button>
           <button onclick="demoRefillEnergy()" class="py-2.5 px-3 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-semibold hover:bg-emerald-500/25">Énergie 100%</button>
           <button onclick="demoResetAll()" class="py-2.5 px-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs font-semibold hover:bg-rose-500/25">Réinitialiser</button>
         </div>
@@ -672,6 +647,7 @@
       stopChallengeTimer();
       activeChallenge = null;
       currentEatingItem = null;
+      previewStageIndex = 0;
       state = getDefaultState();
       saveState();
       closeModal();
@@ -685,6 +661,8 @@
     // =========================================================================
     function renderAdoptionScreen(container) {
       const selectedSpecies = SPECIES_DATA[state.species] || SPECIES_DATA.loutre;
+      const safeStageIdx = Math.max(0, Math.min(EVOLUTION_STAGES.length - 1, previewStageIndex));
+      const previewXp = EVOLUTION_STAGES[safeStageIdx].minXp;
 
       const speciesCards = Object.values(SPECIES_DATA).map((sp) => {
         const isSelected = sp.id === state.species;
@@ -704,19 +682,39 @@
         `;
       }).join('');
 
+      const stageButtons = EVOLUTION_STAGES.map((st, idx) => {
+        const active = idx === safeStageIdx;
+        return `
+          <button
+            type="button"
+            onclick="selectPreviewStage(${idx})"
+            class="px-2.5 py-1.5 rounded-xl text-[11px] font-bold border transition ${
+              active
+                ? 'bg-amber-500/20 border-amber-400 text-amber-200'
+                : 'bg-[#151B26] border-[#232D3F] text-slate-400 hover:text-slate-200'
+            }"
+          >
+            ${st.label}
+          </button>
+        `;
+      }).join('');
+
       container.innerHTML = `
-        <div class="p-5 space-y-5 flex-1 flex flex-col justify-between">
-          <div class="space-y-4">
+        <div class="p-5 space-y-4 flex-1 flex flex-col justify-between">
+          <div class="space-y-3.5">
             <div class="text-center space-y-1">
               <h2 class="text-xl font-extrabold text-white">Choisis ton compagnon</h2>
-              <p class="text-xs text-slate-400">Il démarre tout petit et grandira au fil de tes rangements.</p>
+              <p class="text-xs text-slate-400">Il démarre en stade Nouveau-né et grandit au fil de tes rangements.</p>
             </div>
 
-            <div class="flex justify-center py-2">
-              ${buildPetArtHTML(state.species, { size: 'lg', xp: 0, energy: 80 })}
+            <div class="flex flex-col items-center justify-center py-1 gap-2">
+              ${buildPetArtHTML(state.species, { size: 'lg', xp: previewXp, energy: 80 })}
+              <div class="flex items-center gap-1.5 flex-wrap justify-center">
+                ${stageButtons}
+              </div>
             </div>
 
-            <div class="grid grid-cols-3 gap-2.5">
+            <div class="grid grid-cols-3 gap-2">
               ${speciesCards}
             </div>
 
@@ -742,6 +740,12 @@
           </button>
         </div>
       `;
+    }
+
+    function selectPreviewStage(idx) {
+      sfxClick();
+      previewStageIndex = idx;
+      renderApp();
     }
 
     function selectSpecies(speciesId) {
@@ -884,7 +888,7 @@
 
     function petCompanion() {
       const beforeStage = getStageIndexFromXp(state.xp);
-      state.xp += 5;
+      state.xp += 3;
       state.energy = Math.min(100, state.energy + 2);
       const afterStage = getStageIndexFromXp(state.xp);
       saveState();
@@ -894,7 +898,7 @@
         showToast(`${state.petName} passe au stade ${EVOLUTION_STAGES[afterStage].label} !`, 'success');
       } else {
         sfxPet();
-        showToast(`${state.petName} ronronne de plaisir (+5 XP) !`, 'info');
+        showToast(`${state.petName} ronronne de plaisir (+3 XP) !`, 'info');
       }
       renderApp();
     }
@@ -978,22 +982,22 @@
           <div class="grid grid-cols-2 gap-2.5">
             <button
               type="button"
-              onclick="startTimedChallenge('Sprint 30s', 'Range un maximum d’affaires en 30 secondes.', 30, 20, 25)"
+              onclick="startTimedChallenge('Sprint 30s', 'Range un maximum d’affaires en 30 secondes.', 30, 20, 15)"
               class="p-3.5 rounded-2xl bg-[#151B26] hover:bg-[#1B2332] border border-[#232D3F] text-left space-y-1 transition"
             >
               <div class="text-xs font-extrabold text-amber-300">⚡ Sprint 30s</div>
               <div class="text-[11px] text-slate-400">Défi éclair de rangement.</div>
-              <div class="text-[11px] text-slate-300 font-semibold">+20 pièces • +25 XP</div>
+              <div class="text-[11px] text-slate-300 font-semibold">+20 pièces • +15 XP</div>
             </button>
 
             <button
               type="button"
-              onclick="startTimedChallenge('Mission 2 min', 'Range une zone complète en 2 minutes.', 120, 40, 45)"
+              onclick="startTimedChallenge('Mission 2 min', 'Range une zone complète en 2 minutes.', 120, 40, 35)"
               class="p-3.5 rounded-2xl bg-[#151B26] hover:bg-[#1B2332] border border-[#232D3F] text-left space-y-1 transition"
             >
               <div class="text-xs font-extrabold text-blue-300">⏱️ Mission 2 min</div>
               <div class="text-[11px] text-slate-400">Défi concentré sur une zone.</div>
-              <div class="text-[11px] text-slate-300 font-semibold">+40 pièces • +45 XP</div>
+              <div class="text-[11px] text-slate-300 font-semibold">+40 pièces • +35 XP</div>
             </button>
           </div>
 
@@ -1251,7 +1255,7 @@
       state.coins -= item.price;
       state.energy = Math.min(100, state.energy + (item.effectValue || 20));
       if (item.effectType === 'feast') {
-        state.xp += 30;
+        state.xp += 20;
       }
       const afterStage = getStageIndexFromXp(state.xp);
       saveState();
