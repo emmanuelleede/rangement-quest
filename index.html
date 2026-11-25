@@ -438,9 +438,9 @@
 
     const EVOLUTION_STAGES = [
       { level: 1, era: 'newborn', label: 'Nouveau-né', minXp: 0 },
-      { level: 2, era: 'baby', label: 'Bébé', minXp: 100 },
-      { level: 3, era: 'junior', label: 'Junior', minXp: 250 },
-      { level: 4, era: 'adult', label: 'Adulte', minXp: 450 }
+      { level: 2, era: 'baby', label: 'Bébé', minXp: 900 },
+      { level: 3, era: 'junior', label: 'Junior', minXp: 2200 },
+      { level: 4, era: 'adult', label: 'Adulte', minXp: 4000 }
     ];
 
     const HABITAT_THEMES = {
@@ -651,6 +651,7 @@
         xp: 0,
         energy: 85,
         totalChallenges: 0,
+        challengeRecords: {},
         bestSprint30: 0,
         bestRace10: null,
         ownedItems: [],
@@ -669,6 +670,9 @@
         const merged = {
           ...getDefaultState(),
           ...parsed,
+          challengeRecords: parsed && typeof parsed.challengeRecords === 'object' && parsed.challengeRecords !== null
+            ? parsed.challengeRecords
+            : {},
           equippedSlots: Array.isArray(parsed.equippedSlots) && parsed.equippedSlots.length === 4
             ? parsed.equippedSlots
             : [null, null, null, null]
@@ -1175,6 +1179,33 @@
             </div>
           </div>
 
+          <!-- Progression de vie & Bien-être -->
+          <div class="bg-[#151B26] border border-[#232D3F] rounded-3xl p-4 space-y-3.5">
+            <div class="space-y-1.5">
+              <div class="flex justify-between items-center text-xs">
+                <span class="font-semibold text-slate-200 flex items-center gap-1.5"><span>🌱</span> Progression de vie (${stageInfo.current.label})</span>
+                <span class="font-bold text-blue-300">${xpProgressText}</span>
+              </div>
+              <div class="w-full h-2.5 bg-[#0D1117] rounded-full overflow-hidden border border-white/5">
+                <div class="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full transition-all duration-500" style="width: ${xpProgressPct}%"></div>
+              </div>
+              <p class="text-[11px] text-slate-400">
+                ${stageInfo.isMax ? `${state.petName} a atteint son stade Adulte.` : `Prochaine étape : ${stageInfo.next.label} à ${stageInfo.next.minXp} XP.`}
+              </p>
+            </div>
+
+            <div class="space-y-1.5 pt-1 border-t border-white/5">
+              <div class="flex justify-between items-center text-xs">
+                <span class="font-semibold text-slate-200 flex items-center gap-1.5"><span>💛</span> Bien-être</span>
+                <span class="font-bold text-white">${state.energy}%</span>
+              </div>
+              <div class="w-full h-2.5 bg-[#0D1117] rounded-full overflow-hidden border border-white/5">
+                <div class="h-full ${energyColor} rounded-full transition-all duration-500" style="width: ${state.energy}%"></div>
+              </div>
+              <p class="text-[11px] text-slate-400">Caresse-le, donne-lui une friandise ou réussis des défis pour garder son bien-être au top.</p>
+            </div>
+          </div>
+
           <!-- Réinitialisation / Nouvel animal -->
           <div class="pt-1 flex flex-wrap justify-center gap-2">
             <button onclick="openRenamePetModal()" class="px-3.5 py-2 rounded-xl bg-[#151B26] hover:bg-[#1E2634] border border-[#232D3F] text-slate-300 hover:text-white text-xs font-semibold transition flex items-center gap-1.5">
@@ -1289,7 +1320,11 @@
 
       if (activeChallenge) {
         const isDone = activeChallenge.remaining <= 0;
-        const pct = Math.min(100, Math.max(0, Math.round(((activeChallenge.total - activeChallenge.remaining) / activeChallenge.total) * 100)));
+        const elapsedSeconds = Math.max(1, activeChallenge.total - activeChallenge.remaining);
+        const pct = Math.min(100, Math.max(0, Math.round((elapsedSeconds / activeChallenge.total) * 100)));
+        const currentBest = state.challengeRecords && typeof state.challengeRecords[activeChallenge.id] === 'number'
+          ? state.challengeRecords[activeChallenge.id]
+          : null;
 
         main.innerHTML = `
           <div class="p-4 space-y-4 flex-1 flex flex-col justify-between">
@@ -1304,7 +1339,10 @@
                 <div class="text-5xl font-extrabold tracking-tight ${isDone ? 'text-emerald-400' : 'text-white'}">
                   ${activeChallenge.remaining}s
                 </div>
-                <div class="w-full h-3 bg-[#0D1117] rounded-full overflow-hidden border border-white/10 mt-4">
+                <div class="text-[11px] font-semibold text-slate-400 mt-1.5">
+                  Temps écoulé : <span class="text-slate-200">${elapsedSeconds}s</span> / ${activeChallenge.total}s${currentBest !== null ? ` · Record : <span class="text-amber-300">${currentBest}s</span>` : ''}
+                </div>
+                <div class="w-full h-3 bg-[#0D1117] rounded-full overflow-hidden border border-white/10 mt-3">
                   <div class="h-full ${isDone ? 'bg-emerald-500' : 'bg-blue-500'} transition-all duration-300" style="width: ${pct}%"></div>
                 </div>
               </div>
@@ -1315,15 +1353,9 @@
             </div>
 
             <div class="space-y-2.5">
-              ${isDone ? `
-                <button onclick="completeActiveChallenge()" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-extrabold text-sm shadow-lg shadow-emerald-500/25 transition active:scale-95">
-                  Valider et récupérer les récompenses 🎉
-                </button>
-              ` : `
-                <button disabled class="w-full py-3.5 rounded-2xl bg-[#1E2634] text-slate-500 font-bold text-sm cursor-not-allowed">
-                  Range vite pendant le chrono... ⏳
-                </button>
-              `}
+              <button onclick="completeActiveChallenge()" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-extrabold text-sm shadow-lg shadow-emerald-500/25 transition active:scale-95">
+                ${isDone ? 'Valider et récupérer les récompenses 🎉' : `J'ai fini ! Valider en ${elapsedSeconds}s ⚡`}
+              </button>
               <button onclick="cancelActiveChallenge()" class="w-full py-2.5 rounded-2xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-300 text-xs font-bold transition">
                 Abandonner le défi
               </button>
@@ -1340,7 +1372,7 @@
           <div class="flex items-center justify-between">
             <div>
               <h2 class="text-lg font-extrabold text-white">Défis de Rangement</h2>
-              <p class="text-[11px] text-slate-400">Choisis un défi et range avant la fin du chrono</p>
+              <p class="text-[11px] text-slate-400">Valide dès que tu as fini pour battre ton record</p>
             </div>
             <div class="px-3 py-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-extrabold">
               🏆 ${state.totalChallenges}
@@ -1362,13 +1394,23 @@
           <div class="space-y-2.5">
             ${filteredChallenges.map((ch) => {
               const meta = DIFFICULTY_META[ch.difficulty];
+              const bestSec = state.challengeRecords && typeof state.challengeRecords[ch.id] === 'number'
+                ? state.challengeRecords[ch.id]
+                : null;
               return `
                 <div class="bg-[#151B26] border border-[#232D3F] rounded-2xl p-4 space-y-3">
                   <div class="flex items-start justify-between gap-2">
                     <div>
-                      <span class="inline-block px-2 py-0.5 rounded-full border text-[10px] font-bold ${meta.badgeClass}">
-                        ${meta.icon} ${meta.label} · ${ch.minSeconds}s
-                      </span>
+                      <div class="flex flex-wrap items-center gap-1.5">
+                        <span class="inline-block px-2 py-0.5 rounded-full border text-[10px] font-bold ${meta.badgeClass}">
+                          ${meta.icon} ${meta.label} · ${ch.minSeconds}s max
+                        </span>
+                        ${bestSec !== null ? `
+                          <span class="inline-block px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[10px] font-bold">
+                            🏅 Record : ${bestSec}s
+                          </span>
+                        ` : ''}
+                      </div>
                       <h3 class="text-sm font-bold text-white mt-1.5">${ch.title}</h3>
                       <p class="text-xs text-slate-400 mt-0.5">${ch.desc}</p>
                     </div>
@@ -1435,8 +1477,18 @@
     function completeActiveChallenge() {
       if (!activeChallenge) return;
       const ch = activeChallenge;
+      const elapsedSeconds = Math.max(1, ch.total - ch.remaining);
       stopChallengeTimer();
       activeChallenge = null;
+
+      if (!state.challengeRecords || typeof state.challengeRecords !== 'object') {
+        state.challengeRecords = {};
+      }
+      const prevRecord = typeof state.challengeRecords[ch.id] === 'number' ? state.challengeRecords[ch.id] : null;
+      const isNewRecord = prevRecord === null || elapsedSeconds < prevRecord;
+      if (isNewRecord) {
+        state.challengeRecords[ch.id] = elapsedSeconds;
+      }
 
       sfxVictory();
       state.coins += ch.rewardCoins;
@@ -1446,7 +1498,8 @@
       grantXp(ch.rewardXp);
       saveState();
 
-      showToast(`🏆 Défi réussi ! +${ch.rewardCoins} 🪙 et +${ch.rewardXp} XP`, 'success');
+      const recordMsg = isNewRecord ? ` · 🏅 Nouveau record : ${elapsedSeconds}s !` : ` (${elapsedSeconds}s)`;
+      showToast(`🏆 Défi réussi ! +${ch.rewardCoins} 🪙 et +${ch.rewardXp} XP${recordMsg}`, 'success');
       switchTab('sanctuary');
       spawnJoyParticles();
     }
@@ -1683,7 +1736,7 @@
             🪙 Ajouter +100 pièces
           </button>
           <button onclick="demoAddXp()" class="w-full py-2.5 px-3 rounded-xl bg-blue-500/15 hover:bg-blue-500/25 border border-blue-500/30 text-blue-200 text-xs font-bold text-left">
-            🌱 Ajouter +130 XP (faire grandir)
+            🌱 Ajouter +900 XP (faire grandir)
           </button>
           <button onclick="demoSimulate48h()" class="w-full py-2.5 px-3 rounded-xl bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/30 text-purple-200 text-xs font-bold text-left">
             😴 Simuler 48h sans visite (-20% énergie)
@@ -1706,7 +1759,7 @@
 
     function demoAddXp() {
       sfxVictory();
-      grantXp(130);
+      grantXp(900);
       saveState();
       closeModal();
       renderCurrentView();
