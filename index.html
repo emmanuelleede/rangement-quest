@@ -4,6 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Rangement Quest - Compagnon & Défis</title>
+  <meta name="theme-color" content="#0D1117" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Rangement Quest" />
+  <link rel="manifest" href="https://emmanuelleede.github.io/rangement-quest/manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="https://emmanuelleede.github.io/rangement-quest/icons/icon-192.png" />
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -1779,6 +1786,15 @@
       if (currentTab === 'sanctuary') renderSanctuary();
       else if (currentTab === 'challenges') renderChallenges();
       else if (currentTab === 'shop') renderShop();
+    }
+
+    // Enregistrement du Service Worker PWA pour emmanuelleede.github.io/rangement-quest/
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('https://emmanuelleede.github.io/rangement-quest/sw.js', {
+          scope: '/rangement-quest/'
+        }).catch(() => {});
+      });
     }
 
     // Initialisation au chargement
