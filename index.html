@@ -2,17 +2,15 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Rangement Quest • Aperçu Interactif</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rangement Quest</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <style>
     body {
-      font-family: 'Inter', sans-serif;
-      background-color: #0D1117;
+      background-color: #090C10;
       color: #F8FAFC;
-      -webkit-tap-highlight-color: transparent;
-      user-select: none;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      margin: 0;
     }
 
     @keyframes petBreathe {
@@ -46,15 +44,6 @@
     }
     .sparkle-dot {
       animation: sparkleFloat 2.8s ease-in-out infinite;
-    }
-
-    @keyframes floatUpFade {
-      0% { opacity: 1; transform: translateY(0) scale(0.8); }
-      100% { opacity: 0; transform: translateY(-48px) scale(1.35); }
-    }
-    .floating-particle {
-      animation: floatUpFade 0.9s ease-out forwards;
-      pointer-events: none;
     }
 
     ::-webkit-scrollbar { width: 4px; }
@@ -275,6 +264,8 @@
     let shopCategory = 'accessory';
     let activeChallenge = null;
     let challengeTimerInterval = null;
+    let currentEatingItem = null;
+    let eatingTimeout = null;
 
     function getDefaultState() {
       return {
@@ -325,20 +316,13 @@
     let state = loadState();
 
     // =========================================================================
-    // 4. RENDU VISUEL STUDIO (IMAGES LOCALES GITHUB + REPLI STUDIO)
+    // 4. RENDU VISUEL (IMAGES DANS images/ AVEC REPLI PROPRE)
     // =========================================================================
-    const IMAGE_CACHE_PREFIX = 'rq_studio_img_v1_';
-    const imageMemoryCache = {};
-    const pendingGenerations = {};
-
     const SPECIES_VISUAL_CONFIG = {
       loutre: {
-        promptDesc: 'adorable baby sea otter with big glossy dark eyes, soft fluffy brown fur, tiny paws, sitting cutely, warm magical sparkles floating around',
         fallbackEmoji: '🦦',
-        glow: 'rgba(251, 191, 36, 0.35)',
-        accent: '#f59e0b',
-        label: 'Bébé Loutre',
-        // Chemins locaux prêts pour le dossier images/ sur GitHub
+        glow: 'rgba(251, 191, 36, 0.25)',
+        label: 'Loutre',
         localStageImages: [
           'images/loutre_nouveau_ne.png',
           'images/loutre_bebe.png',
@@ -348,11 +332,9 @@
         localFallback: 'images/loutre.png'
       },
       chat: {
-        promptDesc: 'adorable baby tabby kitten with huge expressive blue eyes, ultra soft fluffy striped fur, tiny pink nose, sitting cutely, golden sparkles around',
         fallbackEmoji: '🐱',
-        glow: 'rgba(96, 165, 250, 0.35)',
-        accent: '#3b82f6',
-        label: 'Chaton Cosmique',
+        glow: 'rgba(96, 165, 250, 0.25)',
+        label: 'Chaton',
         localStageImages: [
           'images/chat_nouveau_ne.png',
           'images/chat_bebe.png',
@@ -362,11 +344,9 @@
         localFallback: 'images/chat.png'
       },
       dragon: {
-        promptDesc: 'adorable tiny baby pastel purple and turquoise dragon with golden little horns, tiny orange-lined wings, big warm eyes, sitting cutely, magical sparkles',
         fallbackEmoji: '🐉',
-        glow: 'rgba(168, 85, 247, 0.38)',
-        accent: '#a855f7',
-        label: 'Bébé Dragonnet',
+        glow: 'rgba(168, 85, 247, 0.25)',
+        label: 'Dragonnet',
         localStageImages: [
           'images/dragon_nouveau_ne.png',
           'images/dragon_bebe.png',
@@ -376,11 +356,9 @@
         localFallback: 'images/dragon.png'
       },
       corbeau: {
-        promptDesc: 'adorable fluffy baby raven chick with glossy midnight-blue feathers, spiky cute head tufts, big shiny dark eyes, sitting cutely, golden sparkles',
         fallbackEmoji: '🐦‍⬛',
-        glow: 'rgba(99, 102, 241, 0.38)',
-        accent: '#6366f1',
-        label: 'Corbeau Mystique',
+        glow: 'rgba(99, 102, 241, 0.25)',
+        label: 'Corbeau',
         localStageImages: [
           'images/corbeau_nouveau_ne.png',
           'images/corbeau_bebe.png',
@@ -390,11 +368,9 @@
         localFallback: 'images/corbeau.png'
       },
       renard: {
-        promptDesc: 'adorable baby red fox kit with oversized fluffy ears, soft orange and white fur, big warm brown eyes, bushy tail, sitting cutely, sparkles',
         fallbackEmoji: '🦊',
-        glow: 'rgba(249, 115, 22, 0.35)',
-        accent: '#f97316',
-        label: 'Bébé Renard',
+        glow: 'rgba(249, 115, 22, 0.25)',
+        label: 'Renard',
         localStageImages: [
           'images/renard_nouveau_ne.png',
           'images/renard_bebe.png',
@@ -407,356 +383,362 @@
 
     const HABITAT_THEMES = {
       hab_clearing: {
-        name: 'Clairière Forestière Enchantée',
+        name: 'Base neutre',
         localBg: 'images/clairiere.jpg',
-        promptScene: 'in a cozy enchanted forest clearing diorama with soft green moss, tiny mushrooms, a miniature wooden branch teepee, a gentle sparkling stream, warm fairy string lights hanging from tree branches',
-        bgGradient: 'radial-gradient(circle at 50% 35%, #1d4d3e 0%, #0d2620 65%, #071512 100%)',
-        decorIcons: ['🌿', '🍄', '✨', '🪵']
+        gradient: 'linear-gradient(180deg, #161E2B 0%, #0D1117 100%)'
       },
       hab_cozy: {
-        name: 'Salon Cosy & Poêle à Bois',
+        name: 'Salon Cosy',
         localBg: 'images/salon.jpg',
-        promptScene: 'in a warm miniature attic cozy living room with wooden beams, warm fairy lights, a cream knit armchair, a fluffy round rug, a tiny glowing wood-burning stove, plants on wooden shelves',
-        bgGradient: 'radial-gradient(circle at 50% 35%, #6b3e26 0%, #361d12 65%, #1c0e08 100%)',
-        decorIcons: ['🕯️', '🧶', '🪴', '🔥']
+        gradient: 'linear-gradient(180deg, #2A1E17 0%, #0D1117 100%)'
       },
       hab_crystal: {
         name: 'Grotte aux Cristaux',
         localBg: 'images/grotte.jpg',
-        promptScene: 'inside a magical glowing crystal cave with luminous blue and violet crystals, warm hanging lanterns, a soft mossy nest, and a glowing turquoise subterranean pool',
-        bgGradient: 'radial-gradient(circle at 50% 35%, #3b2673 0%, #1c123d 65%, #0d0821 100%)',
-        decorIcons: ['💎', '🔮', '✨', '💠']
+        gradient: 'linear-gradient(180deg, #13293D 0%, #0D1117 100%)'
       },
       hab_space: {
         name: 'Observatoire Spatial',
         localBg: 'images/observatoire.jpg',
-        promptScene: 'inside a cozy wooden space observatory room with a large glass dome roof showing starry night sky, crescent moon, hanging pastel planets, brass telescope, and starlight',
-        bgGradient: 'radial-gradient(circle at 50% 35%, #1e3a6e 0%, #0d1936 65%, #050a17 100%)',
-        decorIcons: ['🪐', '🌙', '⭐', '🔭']
+        gradient: 'linear-gradient(180deg, #1E1633 0%, #0D1117 100%)'
       }
     };
 
-    const ACCESSORY_PROMPT_PARTS = {
-      acc_scarf: 'wearing a cute cozy knitted striped scarf around its neck',
-      acc_glasses: 'wearing cute round tortoiseshell glasses',
-      acc_wizard: 'wearing a cute miniature starry blue wizard hat',
-      acc_crown: 'wearing a cute tiny golden royal crown',
-      acc_orb: 'with a small glowing magical crystal orb floating beside it'
-    };
-
-    function getLocalPetImagePath(speciesId, level = 1) {
-      const sp = SPECIES_VISUAL_CONFIG[speciesId] || SPECIES_VISUAL_CONFIG.loutre;
-      const idx = Math.max(0, Math.min((sp.localStageImages?.length || 1) - 1, level - 1));
-      return (sp.localStageImages && sp.localStageImages[idx]) || sp.localFallback;
-    }
-
-    function handleLocalImageError(imgEl, speciesId, level, cacheKey) {
-      const sp = SPECIES_VISUAL_CONFIG[speciesId] || SPECIES_VISUAL_CONFIG.loutre;
-      const stagePath = getLocalPetImagePath(speciesId, level);
-
-      // Si l'image spécifique au stade n'existe pas encore, tente l'image générique de l'espèce
-      if (imgEl.dataset.fallbackStep !== 'species' && sp.localFallback && imgEl.getAttribute('src') !== sp.localFallback) {
-        imgEl.dataset.fallbackStep = 'species';
-        imgEl.src = sp.localFallback;
-        return;
-      }
-
-      // Sinon vérifie le cache studio éventuel ou affiche l'émoticône de secours proprement
-      const cachedUrl = getCachedStudioImage(cacheKey);
-      if (cachedUrl) {
-        imgEl.src = cachedUrl;
-        imgEl.classList.remove('opacity-0');
-        imgEl.classList.add('opacity-100');
-        return;
-      }
-
-      imgEl.classList.add('hidden');
-      const fallbackEl = document.getElementById(`fallback-badge-${cacheKey}`);
-      if (fallbackEl) fallbackEl.classList.remove('hidden');
-      void stagePath;
-    }
-
-    function getVisualCacheKey(speciesId, habitatId, equipped = {}) {
-      const accKeys = [equipped?.head, equipped?.eyes, equipped?.neck, equipped?.companion]
-        .filter(Boolean)
-        .sort()
-        .join('_');
-      return `${speciesId}__${habitatId}__${accKeys || 'none'}`;
-    }
-
-    function getCachedStudioImage(cacheKey) {
-      if (imageMemoryCache[cacheKey]) return imageMemoryCache[cacheKey];
-      try {
-        const stored = localStorage.getItem(IMAGE_CACHE_PREFIX + cacheKey);
-        if (stored) {
-          imageMemoryCache[cacheKey] = stored;
-          return stored;
+    function getStageIndexFromXp(xp) {
+      let idx = 0;
+      for (let i = 0; i < EVOLUTION_STAGES.length; i++) {
+        if (xp >= EVOLUTION_STAGES[i].minXp) {
+          idx = i;
         }
-      } catch (e) {}
-      return null;
+      }
+      return idx;
     }
 
-    async function requestStudioImage(speciesId, habitatId, equipped = {}) {
-      const cacheKey = getVisualCacheKey(speciesId, habitatId, equipped);
-      if (getCachedStudioImage(cacheKey) || pendingGenerations[cacheKey]) return;
+    function getStageInfoFromXp(xp) {
+      const idx = getStageIndexFromXp(xp);
+      const current = EVOLUTION_STAGES[idx] || EVOLUTION_STAGES[0];
+      const next = EVOLUTION_STAGES[idx + 1] || null;
+      return {
+        index: idx,
+        current,
+        next,
+        isMax: !next
+      };
+    }
 
-      pendingGenerations[cacheKey] = true;
-      const spCfg = SPECIES_VISUAL_CONFIG[speciesId] || SPECIES_VISUAL_CONFIG.loutre;
-      const habCfg = HABITAT_THEMES[habitatId] || HABITAT_THEMES.hab_clearing;
+    function getLocalPetImageCandidates(speciesId, xp = 0) {
+      const cfg = SPECIES_VISUAL_CONFIG[speciesId] || SPECIES_VISUAL_CONFIG.loutre;
+      const stageIndex = getStageIndexFromXp(xp);
+      const candidates = [];
 
-      const accDescriptions = [equipped?.head, equipped?.eyes, equipped?.neck, equipped?.companion]
-        .filter(Boolean)
-        .map(id => ACCESSORY_PROMPT_PARTS[id])
-        .filter(Boolean);
-
-      const accText = accDescriptions.length > 0 ? `, ${accDescriptions.join(', ')}` : ', no glasses, no hat, natural cute look';
-
-      const prompt = `High-end stylized 3D animated movie character illustration, ultra cute and tactile fur/scales/feathers, cinematic warm lighting, shallow depth of field, centered portrait of ${spCfg.promptDesc}${accText}, ${habCfg.promptScene}. No text, no watermark, vibrant heartwarming colors, Pixar and DreamWorks quality.`;
-
-      const apiKey = "";
-      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-image:generateContent?key=${apiKey}`;
-
-      try {
-        let attempt = 0;
-        let result = null;
-        while (attempt < 3) {
-          const response = await fetch(apiUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contents: [{ parts: [{ text: prompt }] }],
-              generationConfig: { responseModalities: ['TEXT', 'IMAGE'] }
-            })
-          });
-          if (response.ok) {
-            result = await response.json();
-            break;
+      if (Array.isArray(cfg.localStageImages) && cfg.localStageImages[stageIndex]) {
+        candidates.push(cfg.localStageImages[stageIndex]);
+      }
+      if (Array.isArray(cfg.localStageImages)) {
+        cfg.localStageImages.forEach((imgPath) => {
+          if (imgPath && !candidates.includes(imgPath)) {
+            candidates.push(imgPath);
           }
-          attempt++;
-          await new Promise(r => setTimeout(r, 1000 * Math.pow(2, attempt - 1)));
-        }
-
-        const base64Data = result?.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
-        if (base64Data) {
-          const dataUrl = `data:image/png;base64,${base64Data}`;
-          imageMemoryCache[cacheKey] = dataUrl;
-          try {
-            localStorage.setItem(IMAGE_CACHE_PREFIX + cacheKey, dataUrl);
-          } catch (storageErr) {}
-          const imgEl = document.getElementById(`studio-img-${cacheKey}`);
-          if (imgEl && imgEl.classList.contains('hidden')) {
-            imgEl.src = dataUrl;
-            imgEl.classList.remove('hidden', 'opacity-0');
-            imgEl.classList.add('opacity-100');
-          }
-        }
-      } catch (err) {
-      } finally {
-        delete pendingGenerations[cacheKey];
+        });
       }
+      if (cfg.localFallback && !candidates.includes(cfg.localFallback)) {
+        candidates.push(cfg.localFallback);
+      }
+      return candidates;
     }
 
-    function renderRealisticScene({ speciesId, habitatId = 'hab_clearing', equipped = {}, isTired = false, containerClass = 'w-full h-64' }) {
-      const visual = SPECIES_VISUAL_CONFIG[speciesId] || SPECIES_VISUAL_CONFIG.loutre;
-      const habitat = HABITAT_THEMES[habitatId] || HABITAT_THEMES.hab_clearing;
-      const evo = getEvolutionInfo(state.xp || 0);
-      const cacheKey = getVisualCacheKey(speciesId, habitatId, equipped) + `__lvl${evo.current.level}`;
-      const localPetSrc = getLocalPetImagePath(speciesId, evo.current.level);
-
-      const equippedList = [
-        equipped?.head && SHOP_ITEMS.find(i => i.id === equipped.head),
-        equipped?.eyes && SHOP_ITEMS.find(i => i.id === equipped.eyes),
-        equipped?.neck && SHOP_ITEMS.find(i => i.id === equipped.neck),
-        equipped?.companion && SHOP_ITEMS.find(i => i.id === equipped.companion)
-      ].filter(Boolean);
-
-      const badgesHtml = equippedList.length > 0 ? `
-        <div class="absolute bottom-3 right-3 z-20 flex items-center gap-1.5 pointer-events-none">
-          ${equippedList.map(item => `
-            <span class="px-2 py-1 rounded-full bg-black/65 backdrop-blur-md border border-white/15 text-xs shadow-lg" title="${item.name}">
-              ${item.icon}
-            </span>
-          `).join('')}
-        </div>
-      ` : '';
+    function renderLocalImageWithFallback(candidates, altText, extraClasses, styleAttr, fallbackHtml) {
+      const cleanList = (Array.isArray(candidates) ? candidates : [candidates]).filter(Boolean);
+      if (!cleanList.length) {
+        return fallbackHtml;
+      }
+      const encodedList = encodeURIComponent(JSON.stringify(cleanList));
+      const firstSrc = cleanList[0];
 
       return `
-        <div class="relative ${containerClass} overflow-hidden flex items-center justify-center" style="background: ${habitat.bgGradient};">
-          <!-- Décor local du lieu de vie (si présent dans images/) -->
-          <img
-            src="${habitat.localBg || ''}"
-            alt="${habitat.name}"
-            onerror="this.classList.add('hidden')"
-            class="absolute inset-0 w-full h-full object-cover opacity-80 pointer-events-none"
-          />
+        <img
+          src="${firstSrc}"
+          alt="${altText}"
+          data-candidates="${encodedList}"
+          data-candidate-index="0"
+          class="${extraClasses || ''}"
+          style="${styleAttr || ''}"
+          onerror="handleLocalImageError(this)"
+        />
+        <div class="local-img-fallback hidden w-full h-full">${fallbackHtml}</div>
+      `;
+    }
 
-          <!-- Illustration locale du compagnon (dossier images/ sur GitHub) -->
-          <img
-            id="studio-img-${cacheKey}"
-            src="${localPetSrc}"
-            alt="${visual.label}"
-            onerror="handleLocalImageError(this, '${speciesId}', ${evo.current.level}, '${cacheKey}')"
-            class="relative z-10 max-h-[82%] max-w-[82%] object-contain drop-shadow-[0_14px_20px_rgba(0,0,0,0.55)] transition-all duration-300 ${isTired ? 'anim-tired' : 'anim-breathe'}"
-          />
+    window.handleLocalImageError = function (imgEl) {
+      try {
+        const rawList = imgEl.getAttribute('data-candidates');
+        const currentIdx = parseInt(imgEl.getAttribute('data-candidate-index') || '0', 10);
+        const candidates = rawList ? JSON.parse(decodeURIComponent(rawList)) : [];
+        const nextIdx = currentIdx + 1;
 
-          <!-- Secours discret si le fichier image n'est pas encore déposé dans images/ -->
-          <div id="fallback-badge-${cacheKey}" class="hidden relative z-10 flex flex-col items-center justify-center gap-1.5 text-center px-4">
-            <div class="w-20 h-20 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-4xl shadow-xl ${isTired ? 'anim-tired' : 'anim-breathe'}">
-              ${visual.fallbackEmoji}
-            </div>
-            <span class="px-2.5 py-0.5 rounded-full bg-black/55 text-[10px] text-slate-300 border border-white/10">
-              ${localPetSrc}
-            </span>
+        if (nextIdx < candidates.length) {
+          imgEl.setAttribute('data-candidate-index', String(nextIdx));
+          imgEl.src = candidates[nextIdx];
+          return;
+        }
+      } catch (e) {}
+
+      imgEl.classList.add('hidden');
+      const fallbackEl = imgEl.parentElement && imgEl.parentElement.querySelector('.local-img-fallback');
+      if (fallbackEl) {
+        fallbackEl.classList.remove('hidden');
+      }
+    };
+
+    function buildPetArtHTML(speciesId, options = {}) {
+      const {
+        size = 'lg',
+        xp = state.xp,
+        energy = state.energy,
+        accessories = state.equippedAccessories,
+        showSparkles = false,
+        eatingItem = currentEatingItem
+      } = options;
+
+      const cfg = SPECIES_VISUAL_CONFIG[speciesId] || SPECIES_VISUAL_CONFIG.loutre;
+      const stageInfo = getStageInfoFromXp(xp);
+      const isTired = energy < 25;
+      const animClass = eatingItem
+        ? 'anim-bounce'
+        : (isTired ? 'anim-tired' : 'anim-breathe');
+
+      const sizeMap = {
+        sm: { box: 'w-20 h-20', img: 'w-20 h-20 object-contain', emoji: 'text-4xl' },
+        md: { box: 'w-28 h-28', img: 'w-28 h-28 object-contain', emoji: 'text-5xl' },
+        lg: { box: 'w-52 h-52 sm:w-56 sm:h-56', img: 'w-48 h-48 sm:w-52 sm:h-52 object-contain', emoji: 'text-7xl' }
+      };
+      const sz = sizeMap[size] || sizeMap.lg;
+      const candidates = getLocalPetImageCandidates(speciesId, xp);
+      const fallbackVisual = `<div class="w-full h-full flex items-center justify-center ${sz.emoji}">${cfg.fallbackEmoji}</div>`;
+
+      const accBadges = [];
+      ['head', 'eyes', 'neck', 'companion'].forEach((slot) => {
+        const itemId = accessories && accessories[slot];
+        if (itemId) {
+          const item = SHOP_ITEMS.find((i) => i.id === itemId);
+          if (item) {
+            accBadges.push(`<span title="${item.name}" class="px-1.5 py-0.5 rounded-full bg-slate-900/80 border border-white/15 text-xs shadow">${item.icon}</span>`);
+          }
+        }
+      });
+
+      const sparklesHtml = showSparkles ? `
+        <span class="sparkle-dot absolute top-2 left-3 w-2 h-2 rounded-full bg-amber-300/80 pointer-events-none"></span>
+        <span class="sparkle-dot absolute top-6 right-4 w-1.5 h-1.5 rounded-full bg-yellow-200/80 pointer-events-none" style="animation-delay: 0.9s;"></span>
+      ` : '';
+
+      const eatingBadge = eatingItem
+        ? `<div class="mt-1 px-2.5 py-1 rounded-full bg-amber-500/20 border border-amber-400/40 text-amber-200 text-xs font-semibold flex items-center gap-1.5 animate-bounce">
+             <span>${eatingItem.icon}</span>
+             <span>Miam ! (${eatingItem.name})</span>
+           </div>`
+        : '';
+
+      return `
+        <div class="relative flex flex-col items-center justify-center ${sz.box} ${animClass} select-none">
+          <div class="relative z-10 w-full h-full flex items-center justify-center">
+            ${renderLocalImageWithFallback(
+              candidates,
+              `${cfg.label} - ${stageInfo.current.label}`,
+              sz.img,
+              'filter: drop-shadow(0 12px 20px rgba(0,0,0,0.45));',
+              fallbackVisual
+            )}
           </div>
+          ${sparklesHtml}
+          ${accBadges.length ? `<div class="relative z-20 -mt-2 flex items-center gap-1 flex-wrap justify-center">${accBadges.join('')}</div>` : ''}
+          ${eatingBadge}
+        </div>
+      `;
+    }
 
-          <!-- Dégradé subtil en bas pour la lisibilité des badges -->
-          <div class="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/75 via-black/25 to-transparent pointer-events-none z-10"></div>
+    function buildHabitatBackdropHTML(habitatId) {
+      const hab = HABITAT_THEMES[habitatId] || HABITAT_THEMES.hab_clearing;
+      const hasCustomHabitat = state.ownedItems.includes(habitatId) && habitatId !== 'hab_clearing';
+      const fallbackBg = `
+        <div class="w-full h-full" style="background: ${hab.gradient};"></div>
+      `;
 
-          <!-- Particules d'étoiles flottantes -->
-          <span class="sparkle-dot absolute top-8 left-12 text-amber-300 text-xs pointer-events-none z-20" style="animation-delay: 0s;">✦</span>
-          <span class="sparkle-dot absolute top-12 right-14 text-amber-200 text-sm pointer-events-none z-20" style="animation-delay: 0.9s;">✨</span>
-          <span class="sparkle-dot absolute bottom-14 left-16 text-blue-200 text-xs pointer-events-none z-20" style="animation-delay: 1.7s;">✦</span>
+      if (!hasCustomHabitat || !hab.localBg) {
+        return `<div class="absolute inset-0 overflow-hidden pointer-events-none">${fallbackBg}</div>`;
+      }
 
-          <!-- Stade de croissance & lieu de vie en bas à gauche -->
-          <div class="absolute bottom-3 left-3 z-20 flex items-center gap-1.5 pointer-events-none">
-            <span class="px-2.5 py-1 rounded-full bg-blue-600/85 backdrop-blur-md text-[10px] font-bold text-white border border-white/15">
-              ${evo.current.label}
-            </span>
-            <span class="px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-[10px] font-semibold text-slate-200 border border-white/15">
-              ${habitat.name}
-            </span>
-          </div>
-
-          ${badgesHtml}
+      return `
+        <div class="absolute inset-0 overflow-hidden pointer-events-none">
+          ${renderLocalImageWithFallback(
+            [hab.localBg],
+            hab.name,
+            'w-full h-full object-cover opacity-75',
+            '',
+            fallbackBg
+          )}
+          <div class="absolute inset-0 bg-gradient-to-t from-[#0D1117] via-[#0D1117]/40 to-transparent"></div>
         </div>
       `;
     }
 
     // =========================================================================
-    // 5. LOGIQUE DE PROGRESSION & NIVEAUX
+    // 5. TOASTS & MODALES
     // =========================================================================
-    function getEvolutionInfo(xp) {
-      let current = EVOLUTION_STAGES[0];
-      let next = null;
-      for (let i = 0; i < EVOLUTION_STAGES.length; i++) {
-        if (xp >= EVOLUTION_STAGES[i].minXp) {
-          current = EVOLUTION_STAGES[i];
-          next = EVOLUTION_STAGES[i + 1] || null;
-        }
-      }
-      const progressPct = next
-        ? Math.min(100, Math.round(((xp - current.minXp) / (next.minXp - current.minXp)) * 100))
-        : 100;
-      return { current, next, progressPct };
-    }
-
-    function showToast(text, icon = '✨') {
+    function showToast(message, type = 'info') {
       const container = document.getElementById('toast-container');
+      if (!container) return;
+      const styles = {
+        success: 'bg-emerald-950/95 border-emerald-500/40 text-emerald-200',
+        warning: 'bg-amber-950/95 border-amber-500/40 text-amber-200',
+        info: 'bg-[#151B26]/95 border-blue-500/40 text-slate-100'
+      };
       const el = document.createElement('div');
-      el.className = 'bg-[#151B26]/95 border border-blue-500/40 text-white px-4 py-2.5 rounded-2xl shadow-xl flex items-center gap-2.5 text-xs font-semibold backdrop-blur-md transition-all duration-300 transform translate-y-0 opacity-100';
-      el.innerHTML = `<span class="text-base">${icon}</span><span>${text}</span>`;
+      el.className = `px-4 py-2.5 rounded-2xl border text-xs font-semibold shadow-xl transition ${styles[type] || styles.info}`;
+      el.textContent = message;
       container.appendChild(el);
       setTimeout(() => {
-        el.classList.add('opacity-0', '-translate-y-2');
-        setTimeout(() => el.remove(), 300);
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(-6px)';
+        setTimeout(() => el.remove(), 220);
       }, 2400);
     }
 
-    // =========================================================================
-    // 6. RENDU DES ÉCRANS PRINCIPAUX
-    // =========================================================================
-    function renderApp() {
-      updateSoundIcon();
-      const main = document.getElementById('main-content');
-      const nav = document.getElementById('bottom-nav');
-
-      if (!state.adopted) {
-        nav.classList.add('hidden');
-        main.innerHTML = renderAdoptionScreen();
-        return;
-      }
-
-      nav.classList.remove('hidden');
-      updateNavHighlight();
-
-      if (currentTab === 'sanctuary') {
-        main.innerHTML = renderSanctuaryScreen();
-      } else if (currentTab === 'challenges') {
-        main.innerHTML = renderChallengesScreen();
-      } else if (currentTab === 'shop') {
-        main.innerHTML = renderShopScreen();
-      }
+    function openModal(htmlContent) {
+      const overlay = document.getElementById('modal-overlay');
+      const box = document.getElementById('modal-box');
+      if (!overlay || !box) return;
+      box.innerHTML = htmlContent;
+      overlay.classList.remove('hidden');
+      overlay.classList.add('flex');
     }
 
-    function updateNavHighlight() {
-      ['sanctuary', 'challenges', 'shop'].forEach(tab => {
-        const btn = document.getElementById(`nav-${tab}`);
-        if (!btn) return;
-        if (tab === currentTab) {
-          btn.classList.add('text-blue-400', 'bg-blue-500/10');
-          btn.classList.remove('text-slate-400');
-        } else {
-          btn.classList.remove('text-blue-400', 'bg-blue-500/10');
-          btn.classList.add('text-slate-400');
-        }
-      });
+    function closeModal() {
+      const overlay = document.getElementById('modal-overlay');
+      if (!overlay) return;
+      overlay.classList.add('hidden');
+      overlay.classList.remove('flex');
     }
 
-    function switchTab(tab) {
-      if (challengeTimerInterval) {
-        clearInterval(challengeTimerInterval);
-        challengeTimerInterval = null;
-      }
-      activeChallenge = null;
+    function openDemoModal() {
       sfxClick();
-      currentTab = tab;
+      openModal(`
+        <div class="flex items-center justify-between">
+          <h3 class="text-base font-bold text-white">⚙️ Contrôles Démo</h3>
+          <button onclick="closeModal()" class="text-slate-400 hover:text-white text-sm">✕</button>
+        </div>
+        <p class="text-xs text-slate-400">Teste rapidement les pièces, l'évolution et la réinitialisation.</p>
+        <div class="grid grid-cols-2 gap-2">
+          <button onclick="demoAddCoins(100)" class="py-2.5 px-3 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-semibold hover:bg-amber-500/25">+100 Pièces</button>
+          <button onclick="demoAddXp(80)" class="py-2.5 px-3 rounded-xl bg-blue-500/15 border border-blue-500/30 text-blue-300 text-xs font-semibold hover:bg-blue-500/25">+80 XP (Évolution)</button>
+          <button onclick="demoRefillEnergy()" class="py-2.5 px-3 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-semibold hover:bg-emerald-500/25">Énergie 100%</button>
+          <button onclick="demoResetAll()" class="py-2.5 px-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs font-semibold hover:bg-rose-500/25">Réinitialiser</button>
+        </div>
+      `);
+    }
+
+    function demoAddCoins(amount) {
+      state.coins += amount;
+      saveState();
+      sfxCoin();
+      showToast(`+${amount} pièces ajoutées !`, 'success');
       renderApp();
     }
 
-    // --- ÉCRAN 1 : ADOPTION / CHOIX DE L'ANIMAL ---
-    function renderAdoptionScreen() {
-      const selected = SPECIES_DATA[state.species] || SPECIES_DATA.loutre;
+    function demoAddXp(amount) {
+      const beforeStage = getStageIndexFromXp(state.xp);
+      state.xp += amount;
+      const afterStage = getStageIndexFromXp(state.xp);
+      saveState();
+      if (afterStage > beforeStage) {
+        sfxVictory();
+        showToast(`Stade atteint : ${EVOLUTION_STAGES[afterStage].label} !`, 'success');
+      } else {
+        sfxCoin();
+        showToast(`+${amount} XP ajoutés !`, 'info');
+      }
+      renderApp();
+    }
 
-      const cardsHtml = Object.values(SPECIES_DATA).map(sp => {
-        const isSel = sp.id === state.species;
+    function demoRefillEnergy() {
+      state.energy = 100;
+      saveState();
+      sfxPet();
+      showToast('Énergie rechargée à 100% !', 'success');
+      renderApp();
+    }
+
+    function demoResetAll() {
+      stopChallengeTimer();
+      activeChallenge = null;
+      currentEatingItem = null;
+      state = getDefaultState();
+      saveState();
+      closeModal();
+      currentTab = 'sanctuary';
+      showToast('Progression réinitialisée.', 'info');
+      renderApp();
+    }
+
+    // =========================================================================
+    // 6. ÉCRAN D'ADOPTION & ONGLETS
+    // =========================================================================
+    function renderAdoptionScreen(container) {
+      const selectedSpecies = SPECIES_DATA[state.species] || SPECIES_DATA.loutre;
+
+      const speciesCards = Object.values(SPECIES_DATA).map((sp) => {
+        const isSelected = sp.id === state.species;
         return `
-          <button onclick="selectSpecies('${sp.id}')" class="p-2.5 rounded-2xl border text-center transition flex flex-col items-center gap-1 ${isSel ? 'bg-blue-500/15 border-blue-500 shadow-lg shadow-blue-500/10' : 'bg-[#151B26] border-[#232D3F] hover:border-slate-600'}">
+          <button
+            type="button"
+            onclick="selectSpecies('${sp.id}')"
+            class="p-3 rounded-2xl border text-left transition flex flex-col items-center gap-1.5 ${
+              isSelected
+                ? 'bg-blue-500/15 border-blue-400 text-white shadow-lg'
+                : 'bg-[#151B26] border-[#232D3F] text-slate-300 hover:border-slate-500'
+            }"
+          >
             <span class="text-2xl">${sp.emoji}</span>
-            <span class="text-xs font-bold ${isSel ? 'text-blue-400' : 'text-slate-200'}">${sp.name}</span>
+            <span class="text-xs font-bold">${sp.name}</span>
           </button>
         `;
       }).join('');
 
-      return `
-        <div class="p-5 flex flex-col gap-5">
-          <div class="text-center space-y-1.5 mt-2">
-            <span class="inline-block px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/25 text-blue-400 text-xs font-semibold">
-              Nouveau Compagnon
-            </span>
-            <h2 class="text-xl font-extrabold text-white">Choisis ton animal</h2>
-            <p class="text-xs text-slate-400">Il grandira et gagnera des objets à chaque défi de rangement relevé.</p>
-          </div>
-
-          <div class="relative rounded-3xl overflow-hidden border border-[#232D3F] bg-[#151B26] h-56 flex flex-col justify-end">
-            <div class="absolute inset-0">
-              ${renderRealisticScene({ speciesId: selected.id, habitatId: 'hab_clearing', containerClass: 'w-full h-full' })}
+      container.innerHTML = `
+        <div class="p-5 space-y-5 flex-1 flex flex-col justify-between">
+          <div class="space-y-4">
+            <div class="text-center space-y-1">
+              <h2 class="text-xl font-extrabold text-white">Choisis ton compagnon</h2>
+              <p class="text-xs text-slate-400">Il démarre tout petit et grandira au fil de tes rangements.</p>
             </div>
-            <div class="relative z-20 m-3 px-3 py-1.5 rounded-xl bg-black/60 backdrop-blur-md text-[11px] text-slate-200 text-center border border-white/10">
-              ${selected.tagline}
+
+            <div class="flex justify-center py-2">
+              ${buildPetArtHTML(state.species, { size: 'lg', xp: 0, energy: 80 })}
+            </div>
+
+            <div class="grid grid-cols-3 gap-2.5">
+              ${speciesCards}
+            </div>
+
+            <div class="space-y-1.5">
+              <label for="pet-name-input" class="block text-xs font-semibold text-slate-300">Prénom de ton compagnon</label>
+              <input
+                id="pet-name-input"
+                type="text"
+                maxlength="18"
+                value="${state.petName || selectedSpecies.defaultPetName}"
+                oninput="updatePetNameDraft(this.value)"
+                class="w-full px-3.5 py-2.5 rounded-xl bg-[#151B26] border border-[#2A3548] text-sm text-white focus:outline-none focus:border-blue-400"
+              />
             </div>
           </div>
 
-          <div class="grid grid-cols-3 gap-2.5">
-            ${cardsHtml}
-          </div>
-
-          <div class="bg-[#151B26] border border-[#232D3F] rounded-2xl p-4 space-y-2">
-            <label class="block text-xs font-semibold text-slate-300">Donne-lui un prénom :</label>
-            <input id="input-pet-name" type="text" maxlength="16" value="${state.petName}" placeholder="Ex: Moka, Nova..." class="w-full px-3.5 py-2.5 rounded-xl bg-[#0D1117] border border-[#2A3548] text-white text-sm font-semibold focus:outline-none focus:border-blue-500" />
-          </div>
-
-          <button onclick="confirmAdoption()" class="w-full py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-500 active:scale-[0.99] text-white font-bold text-sm shadow-lg shadow-blue-600/25 transition">
-            Adopter ce compagnon ✨
+          <button
+            type="button"
+            onclick="confirmAdoption()"
+            class="w-full py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm shadow-lg transition"
+          >
+            Adopter ${state.petName || selectedSpecies.defaultPetName}
           </button>
         </div>
       `;
@@ -764,231 +746,135 @@
 
     function selectSpecies(speciesId) {
       sfxClick();
+      const sp = SPECIES_DATA[speciesId];
+      if (!sp) return;
+      const previousDefault = (SPECIES_DATA[state.species] && SPECIES_DATA[state.species].defaultPetName) || '';
+      if (!state.petName || state.petName === previousDefault) {
+        state.petName = sp.defaultPetName;
+      }
       state.species = speciesId;
-      state.petName = SPECIES_DATA[speciesId].defaultPetName;
+      saveState();
       renderApp();
+    }
+
+    function updatePetNameDraft(val) {
+      state.petName = val;
+      saveState();
     }
 
     function confirmAdoption() {
-      const input = document.getElementById('input-pet-name');
-      const name = (input?.value || '').trim() || SPECIES_DATA[state.species].defaultPetName;
-      state.petName = name;
+      const cleanedName = (state.petName || '').trim() || (SPECIES_DATA[state.species]?.defaultPetName || 'Compagnon');
+      state.petName = cleanedName;
       state.adopted = true;
       saveState();
       sfxVictory();
-      showToast(`${name} rejoint ton équipe !`, '🎉');
+      showToast(`${cleanedName} est prêt pour l'aventure !`, 'success');
       renderApp();
     }
 
-    // --- ÉCRAN 2 : SANCTUAIRE DU COMPAGNON ---
-    function renderSanctuaryScreen() {
+    function switchTab(tabName) {
+      sfxClick();
+      currentTab = tabName;
+      renderApp();
+    }
+
+    function updateNavActive() {
+      const nav = document.getElementById('bottom-nav');
+      if (!nav) return;
+      if (!state.adopted) {
+        nav.classList.add('hidden');
+        return;
+      }
+      nav.classList.remove('hidden');
+      ['sanctuary', 'challenges', 'shop'].forEach((id) => {
+        const btn = document.getElementById(`nav-${id}`);
+        if (!btn) return;
+        if (id === currentTab) {
+          btn.classList.remove('text-slate-400');
+          btn.classList.add('text-blue-400', 'bg-blue-500/10');
+        } else {
+          btn.classList.remove('text-blue-400', 'bg-blue-500/10');
+          btn.classList.add('text-slate-400');
+        }
+      });
+    }
+
+    // =========================================================================
+    // 7. ONGLET COMPAGNON
+    // =========================================================================
+    function renderSanctuaryTab(container) {
       const sp = SPECIES_DATA[state.species] || SPECIES_DATA.loutre;
-      const evo = getEvolutionInfo(state.xp);
-      const isTired = state.energy < 35;
-      const energyColor = state.energy > 60 ? 'bg-emerald-400' : (state.energy >= 35 ? 'bg-amber-400' : 'bg-rose-500');
+      const stageInfo = getStageInfoFromXp(state.xp);
+      let xpPercent = 100;
+      let xpLabel = `${state.xp} XP (Max)`;
 
-      const statusText = state.energy >= 75
-        ? 'En pleine forme et prêt à jouer !'
-        : state.energy >= 35
-          ? 'Un petit défi lui redonnerait un coup de boost.'
-          : 'Fatigué... Range quelques objets pour lui redonner de la force !';
+      if (stageInfo.next) {
+        const span = Math.max(1, stageInfo.next.minXp - stageInfo.current.minXp);
+        const progress = Math.max(0, state.xp - stageInfo.current.minXp);
+        xpPercent = Math.min(100, Math.round((progress / span) * 100));
+        xpLabel = `${state.xp} / ${stageInfo.next.minXp} XP`;
+      }
 
-      return `
-        <div class="p-4 flex flex-col gap-4">
-          <!-- Barre supérieure : Nom, Stade, Cagnotte -->
-          <div class="flex items-center justify-between bg-[#151B26] border border-[#232D3F] rounded-2xl px-4 py-3">
-            <div>
+      container.innerHTML = `
+        <div class="flex-1 flex flex-col justify-between">
+          <div class="relative min-h-[340px] flex flex-col justify-between p-4 border-b border-[#1E2634]">
+            ${buildHabitatBackdropHTML(state.equippedHabitat)}
+
+            <div class="relative z-10 flex items-center justify-between gap-2">
+              <div class="px-3 py-1.5 rounded-2xl bg-[#151B26]/85 border border-white/10">
+                <div class="text-sm font-bold text-white leading-tight">${state.petName}</div>
+                <div class="text-[11px] text-amber-300 font-medium">${sp.name} • ${stageInfo.current.label}</div>
+              </div>
+
               <div class="flex items-center gap-2">
-                <h2 class="text-base font-extrabold text-white">${state.petName}</h2>
-                <button onclick="openChangeSpeciesModal()" title="Changer d'espèce (aperçu)" class="text-[11px] px-2 py-0.5 rounded-md bg-[#0D1117] border border-[#2A3548] text-slate-400 hover:text-blue-400 transition">
-                  ${sp.name} ⇄
-                </button>
+                <div class="px-3 py-1.5 rounded-2xl bg-[#151B26]/85 border border-amber-500/25 text-amber-300 text-xs font-bold">
+                  🪙 ${state.coins}
+                </div>
+                <div class="px-3 py-1.5 rounded-2xl bg-[#151B26]/85 border border-emerald-500/25 text-emerald-300 text-xs font-bold">
+                  ⚡ ${state.energy}%
+                </div>
               </div>
-              <span class="text-xs text-blue-400 font-semibold">${evo.current.label} • ${state.xp} XP</span>
             </div>
 
-            <!-- Cagnotte Pièces -->
-            <button onclick="switchTab('shop')" class="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/30 px-3 py-1.5 rounded-xl hover:bg-amber-500/20 transition">
-              <span class="text-sm">🪙</span>
-              <span class="text-sm font-extrabold text-amber-300">${state.coins}</span>
+            <div class="relative z-10 flex flex-col items-center justify-center my-2">
+              ${buildPetArtHTML(state.species, { size: 'lg', xp: state.xp, energy: state.energy, eatingItem: currentEatingItem })}
+            </div>
+
+            <div class="relative z-10 space-y-1.5 bg-[#151B26]/85 border border-white/10 rounded-2xl p-3">
+              <div class="flex items-center justify-between text-[11px]">
+                <span class="text-slate-300 font-semibold">Croissance : ${stageInfo.current.label}</span>
+                <span class="text-blue-300 font-semibold">${xpLabel}</span>
+              </div>
+              <div class="w-full h-2 rounded-full bg-slate-800 overflow-hidden">
+                <div class="h-full bg-blue-500 transition-all duration-300" style="width: ${xpPercent}%"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="p-4 space-y-3">
+            <button
+              type="button"
+              onclick="petCompanion()"
+              class="w-full py-3 rounded-2xl bg-[#151B26] hover:bg-[#1C2433] border border-[#2A3548] text-white font-bold text-sm transition flex items-center justify-center gap-2"
+            >
+              <span>💛</span>
+              <span>Câliner ${state.petName} (+5 XP)</span>
             </button>
-          </div>
 
-          <!-- SCÈNE PRINCIPALE DU COMPAGNON -->
-          <div id="pet-stage" onclick="petAnimal(event)" class="relative w-full h-64 rounded-3xl overflow-hidden border border-[#232D3F] shadow-inner select-none cursor-pointer group">
-            <div id="pet-svg-group" class="w-full h-full">
-              ${renderRealisticScene({
-                speciesId: state.species,
-                habitatId: state.equippedHabitat,
-                equipped: state.equippedAccessories,
-                isTired: isTired,
-                containerClass: 'w-full h-full'
-              })}
-            </div>
-
-            <div class="absolute top-3 left-3 z-20 px-2.5 py-1 rounded-full bg-black/50 backdrop-blur-md text-[11px] text-slate-200 border border-white/10">
-              Tapote pour caresser
-            </div>
-
-            <div id="particles-layer" class="absolute inset-0 z-30 pointer-events-none"></div>
-          </div>
-
-          <!-- JAUGES DE VIE & ÉVOLUTION -->
-          <div class="bg-[#151B26] border border-[#232D3F] rounded-2xl p-4 space-y-3.5">
-            <div class="space-y-1.5">
-              <div class="flex justify-between items-center text-xs">
-                <span class="font-semibold text-slate-300 flex items-center gap-1.5">
-                  <span>❤️ Énergie vitale</span>
-                </span>
-                <span class="font-bold text-white">${state.energy}%</span>
-              </div>
-              <div class="w-full h-2.5 bg-[#0D1117] rounded-full overflow-hidden border border-[#232D3F]">
-                <div class="h-full ${energyColor} rounded-full transition-all duration-500" style="width: ${state.energy}%"></div>
-              </div>
-              <p class="text-[11px] text-slate-400">${statusText}</p>
-            </div>
-
-            <div class="space-y-1.5 pt-1 border-t border-[#1E2634]">
-              <div class="flex justify-between items-center text-xs">
-                <span class="font-semibold text-slate-300">⭐ Croissance (${evo.current.label})</span>
-                <span class="text-[11px] text-slate-400">${evo.next ? `Prochain : ${evo.next.label} (${evo.next.minXp} XP)` : 'Niveau Max !'}</span>
-              </div>
-              <div class="w-full h-2 bg-[#0D1117] rounded-full overflow-hidden border border-[#232D3F]">
-                <div class="h-full bg-blue-500 rounded-full transition-all duration-500" style="width: ${evo.progressPct}%"></div>
-              </div>
-            </div>
-          </div>
-
-          <!-- BOUTON D'ACTION PRINCIPAL -->
-          <button onclick="switchTab('challenges')" class="w-full py-4 rounded-2xl bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 active:scale-[0.99] text-white font-extrabold text-sm shadow-lg shadow-blue-600/25 transition flex items-center justify-center gap-2">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-            <span>Lancer un défi de rangement</span>
-          </button>
-
-          <!-- STATISTIQUES RAPIDES -->
-          <div class="grid grid-cols-3 gap-2.5">
-            <div class="bg-[#151B26] border border-[#232D3F] rounded-2xl p-3 text-center">
-              <div class="text-[11px] text-slate-400">Défis réussis</div>
-              <div class="text-base font-extrabold text-white mt-0.5">${state.totalChallenges}</div>
-            </div>
-            <div class="bg-[#151B26] border border-[#232D3F] rounded-2xl p-3 text-center">
-              <div class="text-[11px] text-slate-400">Record 30s</div>
-              <div class="text-base font-extrabold text-blue-400 mt-0.5">${state.bestSprint30 > 0 ? state.bestSprint30 + ' obj.' : '—'}</div>
-            </div>
-            <div class="bg-[#151B26] border border-[#232D3F] rounded-2xl p-3 text-center">
-              <div class="text-[11px] text-slate-400">Record 10 obj.</div>
-              <div class="text-base font-extrabold text-emerald-400 mt-0.5">${state.bestRace10 ? state.bestRace10.toFixed(1) + 's' : '—'}</div>
-            </div>
-          </div>
-        </div>
-      `;
-    }
-
-    function petAnimal(e) {
-      sfxPet();
-      const group = document.getElementById('pet-svg-group');
-      if (group) {
-        group.classList.remove('anim-bounce');
-        void group.offsetWidth;
-        group.classList.add('anim-bounce');
-      }
-
-      const layer = document.getElementById('particles-layer');
-      if (layer) {
-        const rect = layer.getBoundingClientRect();
-        const x = (e && e.clientX ? e.clientX - rect.left : rect.width / 2);
-        const y = (e && e.clientY ? e.clientY - rect.top : rect.height / 2);
-        const icons = ['❤️', '✨', '💙', '⭐'];
-        const chosen = icons[Math.floor(Math.random() * icons.length)];
-
-        const p = document.createElement('div');
-        p.className = 'floating-particle absolute text-xl font-bold';
-        p.style.left = `${Math.max(20, Math.min(rect.width - 30, x))}px`;
-        p.style.top = `${Math.max(20, Math.min(rect.height - 30, y))}px`;
-        p.textContent = chosen;
-        layer.appendChild(p);
-        setTimeout(() => p.remove(), 950);
-      }
-    }
-
-    // --- ÉCRAN 3 : DÉFIS CHRONO & CONTRAINTES ---
-    function renderChallengesScreen() {
-      if (activeChallenge) {
-        return renderActiveChallengeView();
-      }
-
-      return `
-        <div class="p-4 flex flex-col gap-4">
-          <div class="space-y-1">
-            <h2 class="text-lg font-extrabold text-white">Micro-Défis Express</h2>
-            <p class="text-xs text-slate-400">Choisis un défi court pour gagner de l'énergie ❤️ et des pièces 🪙.</p>
-          </div>
-
-          <!-- DÉFI 1 : SPRINT 30 SECONDES -->
-          <div class="bg-[#151B26] border border-[#232D3F] hover:border-blue-500/40 rounded-2xl p-4 space-y-3 transition">
-            <div class="flex items-start justify-between gap-3">
-              <div class="flex items-center gap-3">
-                <div class="w-11 h-11 rounded-2xl bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-xl">
-                  ⏱️
-                </div>
-                <div>
-                  <h3 class="text-sm font-extrabold text-white">Sprint 30 Secondes</h3>
-                  <p class="text-xs text-slate-400">Range le maximum d'objets avant la fin du bip !</p>
-                </div>
-              </div>
-            </div>
-            <div class="flex items-center justify-between pt-2 border-t border-[#1E2634]">
-              <span class="text-[11px] font-semibold text-blue-400">
-                Record : ${state.bestSprint30 > 0 ? state.bestSprint30 + ' objets' : 'Aucun encore'}
-              </span>
-              <button onclick="startSprint30()" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition">
-                Démarrer ▶
+            <div class="grid grid-cols-2 gap-2.5">
+              <button
+                type="button"
+                onclick="switchTab('challenges')"
+                class="py-3 px-3 rounded-2xl bg-blue-600/15 hover:bg-blue-600/25 border border-blue-500/30 text-blue-200 font-bold text-xs transition"
+              >
+                ⏱️ Lancer un défi
               </button>
-            </div>
-          </div>
-
-          <!-- DÉFI 2 : COURSE AUX 10 OBJETS -->
-          <div class="bg-[#151B26] border border-[#232D3F] hover:border-emerald-500/40 rounded-2xl p-4 space-y-3 transition">
-            <div class="flex items-start justify-between gap-3">
-              <div class="flex items-center gap-3">
-                <div class="w-11 h-11 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-xl">
-                  ⚡
-                </div>
-                <div>
-                  <h3 class="text-sm font-extrabold text-white">Course aux 10 Objets</h3>
-                  <p class="text-xs text-slate-400">Range exactement 10 objets le plus vite possible.</p>
-                </div>
-              </div>
-            </div>
-            <div class="flex items-center justify-between pt-2 border-t border-[#1E2634]">
-              <span class="text-[11px] font-semibold text-emerald-400">
-                Record : ${state.bestRace10 ? state.bestRace10.toFixed(1) + ' sec' : 'Aucun encore'}
-              </span>
-              <button onclick="startRace10()" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition">
-                Top Chrono ▶
-              </button>
-            </div>
-          </div>
-
-          <!-- DÉFI 3 : MISSION CONTRAINTE ALÉATOIRE -->
-          <div class="bg-[#151B26] border border-[#232D3F] hover:border-purple-500/40 rounded-2xl p-4 space-y-3 transition">
-            <div class="flex items-start justify-between gap-3">
-              <div class="flex items-center gap-3">
-                <div class="w-11 h-11 rounded-2xl bg-purple-500/15 border border-purple-500/30 flex items-center justify-center text-xl">
-                  🎯
-                </div>
-                <div>
-                  <h3 class="text-sm font-extrabold text-white">Mission Contrainte</h3>
-                  <p class="text-xs text-slate-400">Une règle précise (lettre E, couleur, sol...) tirée au sort.</p>
-                </div>
-              </div>
-            </div>
-            <div class="flex items-center justify-between pt-2 border-t border-[#1E2634]">
-              <span class="text-[11px] font-semibold text-purple-300">
-                Gain : +25 à 35 🪙
-              </span>
-              <button onclick="startConstraintChallenge()" class="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition">
-                Tirer un défi 🎲
+              <button
+                type="button"
+                onclick="switchTab('shop')"
+                class="py-3 px-3 rounded-2xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-200 font-bold text-xs transition"
+              >
+                🛍️ Ouvrir la boutique
               </button>
             </div>
           </div>
@@ -996,331 +882,290 @@
       `;
     }
 
-    // --- LOGIQUE DES 3 MODES DE DÉFIS ---
-    function startSprint30() {
-      sfxClick();
-      activeChallenge = {
-        type: 'sprint30',
-        remaining: 30,
-        finished: false,
-        count: 5
-      };
-      renderApp();
+    function petCompanion() {
+      const beforeStage = getStageIndexFromXp(state.xp);
+      state.xp += 5;
+      state.energy = Math.min(100, state.energy + 2);
+      const afterStage = getStageIndexFromXp(state.xp);
+      saveState();
 
-      challengeTimerInterval = setInterval(() => {
-        if (!activeChallenge || activeChallenge.finished) return;
-        activeChallenge.remaining -= 1;
-        if (activeChallenge.remaining <= 5 && activeChallenge.remaining > 0) {
-          sfxTick();
-        }
-        const display = document.getElementById('sprint-timer-display');
-        if (display) display.textContent = `${activeChallenge.remaining}s`;
-
-        if (activeChallenge.remaining <= 0) {
-          clearInterval(challengeTimerInterval);
-          challengeTimerInterval = null;
-          activeChallenge.finished = true;
-          sfxVictory();
-          renderApp();
-        }
-      }, 1000);
-    }
-
-    function adjustSprintCount(delta) {
-      if (!activeChallenge) return;
-      sfxClick();
-      activeChallenge.count = Math.max(1, (activeChallenge.count || 1) + delta);
-      const el = document.getElementById('sprint-count-val');
-      if (el) el.textContent = activeChallenge.count;
-    }
-
-    function validateSprint30() {
-      const count = activeChallenge.count || 1;
-      const isNewRecord = count > state.bestSprint30;
-      if (isNewRecord) state.bestSprint30 = count;
-
-      const coinsEarned = Math.min(60, 10 + count * 2 + (isNewRecord ? 15 : 0));
-      const xpEarned = 15 + count * 2;
-      const energyEarned = Math.min(40, 15 + count);
-
-      completeChallengeReward({
-        coins: coinsEarned,
-        xp: xpEarned,
-        energy: energyEarned,
-        recordMsg: isNewRecord ? `Nouveau record : ${count} objets rangés !` : `${count} objets rangés en 30s !`
-      });
-    }
-
-    function startRace10() {
-      sfxClick();
-      activeChallenge = {
-        type: 'race10',
-        startTime: performance.now(),
-        elapsed: 0
-      };
-      renderApp();
-
-      challengeTimerInterval = setInterval(() => {
-        if (!activeChallenge) return;
-        activeChallenge.elapsed = (performance.now() - activeChallenge.startTime) / 1000;
-        const display = document.getElementById('race-timer-display');
-        if (display) display.textContent = `${activeChallenge.elapsed.toFixed(1)}s`;
-      }, 100);
-    }
-
-    function stopRace10() {
-      if (!activeChallenge) return;
-      clearInterval(challengeTimerInterval);
-      challengeTimerInterval = null;
-      const finalTime = Math.max(1.0, (performance.now() - activeChallenge.startTime) / 1000);
-      const isNewRecord = !state.bestRace10 || finalTime < state.bestRace10;
-      if (isNewRecord) state.bestRace10 = finalTime;
-
-      const coinsEarned = isNewRecord ? 40 : 25;
-      const xpEarned = isNewRecord ? 45 : 30;
-      const energyEarned = 25;
-
-      completeChallengeReward({
-        coins: coinsEarned,
-        xp: xpEarned,
-        energy: energyEarned,
-        recordMsg: isNewRecord
-          ? `Nouveau record : ${finalTime.toFixed(1)} secondes !`
-          : `10 objets rangés en ${finalTime.toFixed(1)}s (Record : ${state.bestRace10.toFixed(1)}s)`
-      });
-    }
-
-    function startConstraintChallenge() {
-      sfxClick();
-      const picked = CONSTRAINT_CHALLENGES[Math.floor(Math.random() * CONSTRAINT_CHALLENGES.length)];
-      activeChallenge = {
-        type: 'constraint',
-        challenge: picked
-      };
+      if (afterStage > beforeStage) {
+        sfxVictory();
+        showToast(`${state.petName} passe au stade ${EVOLUTION_STAGES[afterStage].label} !`, 'success');
+      } else {
+        sfxPet();
+        showToast(`${state.petName} ronronne de plaisir (+5 XP) !`, 'info');
+      }
       renderApp();
     }
 
-    function rerollConstraintChallenge() {
-      sfxClick();
-      const others = CONSTRAINT_CHALLENGES.filter(c => c.title !== activeChallenge.challenge.title);
-      activeChallenge.challenge = others[Math.floor(Math.random() * others.length)];
-      renderApp();
-    }
-
-    function validateConstraintChallenge() {
-      const ch = activeChallenge.challenge;
-      completeChallengeReward({
-        coins: ch.rewardCoins,
-        xp: ch.rewardXp,
-        energy: 25,
-        recordMsg: `Mission « ${ch.title} » accomplie !`
-      });
-    }
-
-    function cancelActiveChallenge() {
+    // =========================================================================
+    // 8. ONGLET DÉFIS
+    // =========================================================================
+    function stopChallengeTimer() {
       if (challengeTimerInterval) {
         clearInterval(challengeTimerInterval);
         challengeTimerInterval = null;
       }
+    }
+
+    function renderChallengesTab(container) {
+      if (activeChallenge) {
+        const mins = Math.floor(activeChallenge.remaining / 60);
+        const secs = activeChallenge.remaining % 60;
+        const formattedTime = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+
+        container.innerHTML = `
+          <div class="p-5 space-y-5 flex-1 flex flex-col justify-between">
+            <div class="space-y-4">
+              <div class="p-4 rounded-2xl bg-[#151B26] border border-[#2A3548] space-y-2 text-center">
+                <div class="text-xs uppercase tracking-wider text-blue-400 font-bold">Défi en cours</div>
+                <h2 class="text-lg font-extrabold text-white">${activeChallenge.title}</h2>
+                <p class="text-xs text-slate-300">${activeChallenge.desc}</p>
+              </div>
+
+              <div class="py-6 rounded-3xl bg-[#151B26] border border-[#232D3F] flex flex-col items-center justify-center gap-2">
+                <div class="text-4xl font-black text-white tabular-nums">${formattedTime}</div>
+                <div class="text-xs text-slate-400">Récompense : +${activeChallenge.rewardCoins} pièces • +${activeChallenge.rewardXp} XP</div>
+              </div>
+            </div>
+
+            <div class="space-y-2.5">
+              <button
+                type="button"
+                onclick="completeActiveChallenge()"
+                class="w-full py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-lg transition"
+              >
+                ✓ Mission terminée !
+              </button>
+              <button
+                type="button"
+                onclick="cancelActiveChallenge()"
+                class="w-full py-2.5 rounded-2xl bg-[#151B26] hover:bg-[#1E2634] text-slate-400 font-semibold text-xs transition"
+              >
+                Annuler le défi
+              </button>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      const constraintCards = CONSTRAINT_CHALLENGES.map((ch, idx) => `
+        <div class="p-3.5 rounded-2xl bg-[#151B26] border border-[#232D3F] flex items-center justify-between gap-3">
+          <div class="space-y-0.5">
+            <div class="text-xs font-bold text-white">${ch.title}</div>
+            <div class="text-[11px] text-slate-400">${ch.desc}</div>
+            <div class="text-[11px] text-amber-300 font-semibold pt-0.5">+${ch.rewardCoins} pièces • +${ch.rewardXp} XP</div>
+          </div>
+          <button
+            type="button"
+            onclick="startConstraintChallenge(${idx})"
+            class="px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shrink-0 transition"
+          >
+            Lancer
+          </button>
+        </div>
+      `).join('');
+
+      container.innerHTML = `
+        <div class="p-4 space-y-4">
+          <div>
+            <h2 class="text-lg font-extrabold text-white">Défis de rangement</h2>
+            <p class="text-xs text-slate-400">Valide une mission pour gagner des pièces et faire grandir ${state.petName}.</p>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2.5">
+            <button
+              type="button"
+              onclick="startTimedChallenge('Sprint 30s', 'Range un maximum d’affaires en 30 secondes.', 30, 20, 25)"
+              class="p-3.5 rounded-2xl bg-[#151B26] hover:bg-[#1B2332] border border-[#232D3F] text-left space-y-1 transition"
+            >
+              <div class="text-xs font-extrabold text-amber-300">⚡ Sprint 30s</div>
+              <div class="text-[11px] text-slate-400">Défi éclair de rangement.</div>
+              <div class="text-[11px] text-slate-300 font-semibold">+20 pièces • +25 XP</div>
+            </button>
+
+            <button
+              type="button"
+              onclick="startTimedChallenge('Mission 2 min', 'Range une zone complète en 2 minutes.', 120, 40, 45)"
+              class="p-3.5 rounded-2xl bg-[#151B26] hover:bg-[#1B2332] border border-[#232D3F] text-left space-y-1 transition"
+            >
+              <div class="text-xs font-extrabold text-blue-300">⏱️ Mission 2 min</div>
+              <div class="text-[11px] text-slate-400">Défi concentré sur une zone.</div>
+              <div class="text-[11px] text-slate-300 font-semibold">+40 pièces • +45 XP</div>
+            </button>
+          </div>
+
+          <div class="space-y-2">
+            <div class="text-xs font-bold text-slate-300 uppercase tracking-wider">Missions à contrainte</div>
+            ${constraintCards}
+          </div>
+        </div>
+      `;
+    }
+
+    function startTimedChallenge(title, desc, durationSec, rewardCoins, rewardXp) {
+      sfxClick();
+      stopChallengeTimer();
+      activeChallenge = {
+        title,
+        desc,
+        remaining: durationSec,
+        rewardCoins,
+        rewardXp
+      };
+      challengeTimerInterval = setInterval(() => {
+        if (!activeChallenge) {
+          stopChallengeTimer();
+          return;
+        }
+        activeChallenge.remaining -= 1;
+        if (activeChallenge.remaining <= 0) {
+          activeChallenge.remaining = 0;
+          stopChallengeTimer();
+          sfxTick();
+        }
+        if (currentTab === 'challenges') {
+          renderApp();
+        }
+      }, 1000);
+      renderApp();
+    }
+
+    function startConstraintChallenge(index) {
+      const ch = CONSTRAINT_CHALLENGES[index];
+      if (!ch) return;
+      startTimedChallenge(ch.title, ch.desc, 120, ch.rewardCoins, ch.rewardXp);
+    }
+
+    function completeActiveChallenge() {
+      if (!activeChallenge) return;
+      stopChallengeTimer();
+      const { title, rewardCoins, rewardXp } = activeChallenge;
+      activeChallenge = null;
+
+      const beforeStage = getStageIndexFromXp(state.xp);
+      state.coins += rewardCoins;
+      state.xp += rewardXp;
+      state.totalChallenges += 1;
+      const afterStage = getStageIndexFromXp(state.xp);
+      saveState();
+
+      sfxVictory();
+      if (afterStage > beforeStage) {
+        showToast(`${title} validé ! ${state.petName} est maintenant ${EVOLUTION_STAGES[afterStage].label} !`, 'success');
+      } else {
+        showToast(`${title} validé ! +${rewardCoins} pièces • +${rewardXp} XP`, 'success');
+      }
+      currentTab = 'sanctuary';
+      renderApp();
+    }
+
+    function cancelActiveChallenge() {
+      stopChallengeTimer();
       activeChallenge = null;
       sfxClick();
       renderApp();
     }
 
-    function renderActiveChallengeView() {
-      if (activeChallenge.type === 'sprint30') {
-        if (!activeChallenge.finished) {
-          return `
-            <div class="p-5 flex-1 flex flex-col items-center justify-between text-center">
-              <div class="w-full flex justify-between items-center">
-                <span class="text-xs font-bold text-blue-400 uppercase tracking-wider">Sprint 30s en cours</span>
-                <button onclick="cancelActiveChallenge()" class="text-xs text-slate-400 hover:text-white">Annuler</button>
-              </div>
+    // =========================================================================
+    // 9. ONGLET BOUTIQUE
+    // =========================================================================
+    function renderShopTab(container) {
+      const categories = [
+        { id: 'accessory', label: 'Accessoires' },
+        { id: 'habitat', label: 'Lieux de vie' },
+        { id: 'care', label: 'Friandises' }
+      ];
 
-              <div class="my-auto space-y-6">
-                <div class="w-44 h-44 mx-auto rounded-full bg-blue-500/10 border-4 border-blue-500 flex flex-col items-center justify-center shadow-lg shadow-blue-500/20">
-                  <span id="sprint-timer-display" class="text-5xl font-extrabold text-white tabular-nums">${activeChallenge.remaining}s</span>
-                  <span class="text-xs text-blue-300 mt-1">Go ! Range vite !</span>
-                </div>
-                <p class="text-sm text-slate-300 max-w-xs mx-auto">Attrape un maximum d'objets et remets-les à leur place avant la fin du chrono.</p>
-              </div>
-
-              <button onclick="activeChallenge.remaining = 1" class="w-full py-3 rounded-xl bg-[#151B26] border border-[#232D3F] text-xs text-slate-400 hover:text-white">
-                (Aperçu : Simuler la fin du chrono)
-              </button>
-            </div>
-          `;
-        } else {
-          return `
-            <div class="p-5 flex-1 flex flex-col items-center justify-center text-center gap-6">
-              <div class="w-16 h-16 rounded-2xl bg-blue-500/20 border border-blue-500/40 flex items-center justify-center text-3xl">
-                🎉
-              </div>
-              <div class="space-y-1">
-                <h3 class="text-xl font-extrabold text-white">Temps écoulé !</h3>
-                <p class="text-xs text-slate-400">Combien d'objets as-tu réussi à ranger ?</p>
-              </div>
-
-              <div class="flex items-center gap-5 bg-[#151B26] border border-[#232D3F] px-6 py-4 rounded-2xl">
-                <button onclick="adjustSprintCount(-1)" class="w-11 h-11 rounded-xl bg-[#0D1117] border border-[#2A3548] text-xl font-bold text-white hover:border-blue-500">-</button>
-                <span id="sprint-count-val" class="text-4xl font-extrabold text-blue-400 w-14 text-center tabular-nums">${activeChallenge.count}</span>
-                <button onclick="adjustSprintCount(1)" class="w-11 h-11 rounded-xl bg-[#0D1117] border border-[#2A3548] text-xl font-bold text-white hover:border-blue-500">+</button>
-              </div>
-
-              <button onclick="validateSprint30()" class="w-full py-4 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-sm shadow-lg shadow-blue-600/25">
-                Valider et nourrir ${state.petName} ✨
-              </button>
-            </div>
-          `;
-        }
-      }
-
-      if (activeChallenge.type === 'race10') {
+      const tabsHtml = categories.map((cat) => {
+        const active = shopCategory === cat.id;
         return `
-          <div class="p-5 flex-1 flex flex-col items-center justify-between text-center">
-            <div class="w-full flex justify-between items-center">
-              <span class="text-xs font-bold text-emerald-400 uppercase tracking-wider">Course aux 10 Objets</span>
-              <button onclick="cancelActiveChallenge()" class="text-xs text-slate-400 hover:text-white">Annuler</button>
-            </div>
-
-            <div class="my-auto space-y-6">
-              <div class="w-44 h-44 mx-auto rounded-full bg-emerald-500/10 border-4 border-emerald-500 flex flex-col items-center justify-center shadow-lg shadow-emerald-500/20">
-                <span id="race-timer-display" class="text-4xl font-extrabold text-white tabular-nums">${activeChallenge.elapsed.toFixed(1)}s</span>
-                <span class="text-xs text-emerald-300 mt-1">10 objets à ranger</span>
-              </div>
-              <p class="text-sm text-slate-300 max-w-xs mx-auto">Dès que le 10e objet est rangé à sa place, appuie sur le gros bouton vert !</p>
-            </div>
-
-            <button onclick="stopRace10()" class="w-full py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-500 active:scale-[0.99] text-white font-extrabold text-base shadow-lg shadow-emerald-600/25">
-              J'ai fini les 10 objets ! 🏁
-            </button>
-          </div>
-        `;
-      }
-
-      if (activeChallenge.type === 'constraint') {
-        const ch = activeChallenge.challenge;
-        return `
-          <div class="p-5 flex-1 flex flex-col items-center justify-between text-center">
-            <div class="w-full flex justify-between items-center">
-              <span class="text-xs font-bold text-purple-400 uppercase tracking-wider">Mission Contrainte</span>
-              <button onclick="cancelActiveChallenge()" class="text-xs text-slate-400 hover:text-white">Annuler</button>
-            </div>
-
-            <div class="my-auto bg-[#151B26] border border-purple-500/30 rounded-3xl p-6 space-y-4 w-full">
-              <div class="w-14 h-14 mx-auto rounded-2xl bg-purple-500/15 border border-purple-500/30 flex items-center justify-center text-3xl">
-                🎯
-              </div>
-              <h3 class="text-lg font-extrabold text-white">${ch.title}</h3>
-              <p class="text-sm text-slate-300 leading-relaxed">${ch.desc}</p>
-              <div class="inline-flex items-center gap-3 px-3 py-1.5 rounded-xl bg-[#0D1117] border border-[#232D3F] text-xs font-bold text-amber-300">
-                <span>+${ch.rewardCoins} 🪙</span>
-                <span>•</span>
-                <span class="text-blue-400">+${ch.rewardXp} XP</span>
-              </div>
-            </div>
-
-            <div class="w-full space-y-2.5">
-              <button onclick="validateConstraintChallenge()" class="w-full py-4 rounded-2xl bg-purple-600 hover:bg-purple-500 text-white font-extrabold text-sm shadow-lg shadow-purple-600/25">
-                Mission accomplie ! ✨
-              </button>
-              <button onclick="rerollConstraintChallenge()" class="w-full py-2.5 rounded-xl bg-[#151B26] border border-[#232D3F] text-xs font-semibold text-slate-300 hover:text-white">
-                🔄 Changer de mission
-              </button>
-            </div>
-          </div>
-        `;
-      }
-    }
-
-    function completeChallengeReward({ coins, xp, energy, recordMsg }) {
-      sfxVictory();
-      state.coins += coins;
-      state.xp += xp;
-      state.energy = Math.min(100, state.energy + energy);
-      state.totalChallenges += 1;
-      activeChallenge = null;
-      saveState();
-
-      showModal(`
-        <div class="text-center space-y-4">
-          <div class="w-16 h-16 mx-auto rounded-2xl bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-3xl">
-            🏆
-          </div>
-          <div class="space-y-1">
-            <h3 class="text-lg font-extrabold text-white">Bravo !</h3>
-            <p class="text-xs text-blue-300 font-semibold">${recordMsg}</p>
-          </div>
-          <div class="grid grid-cols-3 gap-2 bg-[#0D1117] border border-[#232D3F] rounded-2xl p-3">
-            <div>
-              <div class="text-base font-extrabold text-amber-300">+${coins} 🪙</div>
-              <div class="text-[10px] text-slate-400">Pièces</div>
-            </div>
-            <div>
-              <div class="text-base font-extrabold text-emerald-400">+${energy}% ❤️</div>
-              <div class="text-[10px] text-slate-400">Énergie</div>
-            </div>
-            <div>
-              <div class="text-base font-extrabold text-blue-400">+${xp} XP</div>
-              <div class="text-[10px] text-slate-400">Croissance</div>
-            </div>
-          </div>
-          <button onclick="closeModalAndGoSanctuary()" class="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm">
-            Retrouver ${state.petName}
+          <button
+            type="button"
+            onclick="setShopCategory('${cat.id}')"
+            class="flex-1 py-2 px-3 rounded-xl text-xs font-bold transition ${
+              active ? 'bg-blue-600 text-white' : 'bg-[#151B26] text-slate-400 hover:text-slate-200'
+            }"
+          >
+            ${cat.label}
           </button>
-        </div>
-      `);
-    }
+        `;
+      }).join('');
 
-    function closeModalAndGoSanctuary() {
-      closeModal();
-      currentTab = 'sanctuary';
-      renderApp();
-      setTimeout(() => petAnimal(), 150);
-    }
-
-    // --- ÉCRAN 4 : BOUTIQUE & PERSONNALISATION ---
-    function renderShopScreen() {
-      const filtered = SHOP_ITEMS.filter(item => item.category === shopCategory);
-
-      const itemsHtml = filtered.map(item => {
+      const items = SHOP_ITEMS.filter((i) => i.category === shopCategory);
+      const itemsHtml = items.map((item) => {
         const isOwned = state.ownedItems.includes(item.id);
         let isEquipped = false;
-        if (item.category === 'habitat') isEquipped = state.equippedHabitat === item.id;
-        if (item.category === 'accessory') isEquipped = state.equippedAccessories[item.slot] === item.id;
+        if (item.category === 'habitat') {
+          isEquipped = state.equippedHabitat === item.id;
+        } else if (item.category === 'accessory') {
+          isEquipped = state.equippedAccessories[item.slot] === item.id;
+        }
 
         let actionBtn = '';
         if (item.category === 'care') {
           const canAfford = state.coins >= item.price;
           actionBtn = `
-            <button onclick="buyOrUseItem('${item.id}')" ${!canAfford ? 'disabled' : ''} class="px-3.5 py-2 rounded-xl text-xs font-bold transition ${canAfford ? 'bg-blue-600 hover:bg-blue-500 text-white' : 'bg-[#0D1117] text-slate-500 border border-[#232D3F] cursor-not-allowed'}">
-              ${item.price} 🪙
+            <button
+              type="button"
+              onclick="buyAndFeed('${item.id}')"
+              class="px-3 py-2 rounded-xl text-xs font-bold transition ${
+                canAfford
+                  ? 'bg-amber-500 hover:bg-amber-400 text-slate-950'
+                  : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+              }"
+            >
+              Donner • ${item.price} 🪙
+            </button>
+          `;
+        } else if (isEquipped) {
+          actionBtn = `
+            <button
+              type="button"
+              onclick="toggleEquipItem('${item.id}')"
+              class="px-3 py-2 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-bold"
+            >
+              Équipé
             </button>
           `;
         } else if (isOwned) {
           actionBtn = `
-            <button onclick="toggleEquipItem('${item.id}')" class="px-3.5 py-2 rounded-xl text-xs font-bold transition ${isEquipped ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'bg-[#0D1117] hover:border-blue-500 text-slate-200 border border-[#2A3548]'}">
-              ${isEquipped ? 'Équipé ✓' : 'Équiper'}
+            <button
+              type="button"
+              onclick="toggleEquipItem('${item.id}')"
+              class="px-3 py-2 rounded-xl bg-blue-600/20 border border-blue-500/40 text-blue-300 text-xs font-bold hover:bg-blue-600/30"
+            >
+              Équiper
             </button>
           `;
         } else {
           const canAfford = state.coins >= item.price;
           actionBtn = `
-            <button onclick="buyOrUseItem('${item.id}')" ${!canAfford ? 'disabled' : ''} class="px-3.5 py-2 rounded-xl text-xs font-bold transition ${canAfford ? 'bg-amber-500 hover:bg-amber-400 text-slate-950' : 'bg-[#0D1117] text-slate-500 border border-[#232D3F] cursor-not-allowed'}">
+            <button
+              type="button"
+              onclick="buyItem('${item.id}')"
+              class="px-3 py-2 rounded-xl text-xs font-bold transition ${
+                canAfford
+                  ? 'bg-amber-500 hover:bg-amber-400 text-slate-950'
+                  : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+              }"
+            >
               ${item.price} 🪙
             </button>
           `;
         }
 
         return `
-          <div class="bg-[#151B26] border border-[#232D3F] rounded-2xl p-3.5 flex items-center justify-between gap-3">
+          <div class="p-3.5 rounded-2xl bg-[#151B26] border border-[#232D3F] flex items-center justify-between gap-3">
             <div class="flex items-center gap-3">
               <div class="w-11 h-11 rounded-2xl bg-[#0D1117] border border-[#232D3F] flex items-center justify-center text-2xl shrink-0">
                 ${item.icon}
               </div>
               <div>
-                <h4 class="text-sm font-bold text-white">${item.name}</h4>
-                <p class="text-[11px] text-slate-400 leading-snug">${item.desc}</p>
+                <div class="text-xs font-bold text-white">${item.name}</div>
+                <div class="text-[11px] text-slate-400">${item.desc}</div>
               </div>
             </div>
             <div class="shrink-0">
@@ -1330,29 +1175,20 @@
         `;
       }).join('');
 
-      return `
-        <div class="p-4 flex flex-col gap-4">
+      container.innerHTML = `
+        <div class="p-4 space-y-4">
           <div class="flex items-center justify-between">
             <div>
               <h2 class="text-lg font-extrabold text-white">Boutique</h2>
-              <p class="text-xs text-slate-400">Équipe ${state.petName} et décore son lieu de vie.</p>
+              <p class="text-xs text-slate-400">Débloque des récompenses avec tes pièces.</p>
             </div>
-            <div class="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/30 px-3 py-1.5 rounded-xl">
-              <span class="text-sm">🪙</span>
-              <span class="text-sm font-extrabold text-amber-300">${state.coins}</span>
+            <div class="px-3 py-1.5 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-bold">
+              🪙 ${state.coins}
             </div>
           </div>
 
-          <div class="flex gap-2 bg-[#151B26] p-1.5 rounded-2xl border border-[#232D3F]">
-            <button onclick="setShopCategory('accessory')" class="flex-1 py-2 rounded-xl text-xs font-bold transition ${shopCategory === 'accessory' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}">
-              Accessoires
-            </button>
-            <button onclick="setShopCategory('habitat')" class="flex-1 py-2 rounded-xl text-xs font-bold transition ${shopCategory === 'habitat' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}">
-              Lieux de vie
-            </button>
-            <button onclick="setShopCategory('care')" class="flex-1 py-2 rounded-xl text-xs font-bold transition ${shopCategory === 'care' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}">
-              Friandises
-            </button>
+          <div class="flex gap-2">
+            ${tabsHtml}
           </div>
 
           <div class="space-y-2.5">
@@ -1368,174 +1204,105 @@
       renderApp();
     }
 
-    function buyOrUseItem(itemId) {
-      const item = SHOP_ITEMS.find(i => i.id === itemId);
-      if (!item || state.coins < item.price) return;
-
-      state.coins -= item.price;
-      sfxCoin();
-
-      if (item.category === 'care') {
-        state.energy = Math.min(100, state.energy + item.effectValue);
-        if (item.effectType === 'feast') state.xp += 30;
-        showToast(`${item.name} utilisé ! Énergie : ${state.energy}%`, item.icon);
-      } else {
-        if (!state.ownedItems.includes(item.id)) {
-          state.ownedItems.push(item.id);
-        }
-        if (item.category === 'habitat') {
-          state.equippedHabitat = item.id;
-        } else if (item.category === 'accessory') {
-          state.equippedAccessories[item.slot] = item.id;
-        }
-        showToast(`${item.name} acheté et équipé !`, item.icon);
+    function buyItem(itemId) {
+      const item = SHOP_ITEMS.find((i) => i.id === itemId);
+      if (!item || state.ownedItems.includes(item.id)) return;
+      if (state.coins < item.price) {
+        showToast("Pas assez de pièces pour cet article.", 'warning');
+        return;
       }
 
+      state.coins -= item.price;
+      state.ownedItems.push(item.id);
+      if (item.category === 'habitat') {
+        state.equippedHabitat = item.id;
+      } else if (item.category === 'accessory' && item.slot) {
+        state.equippedAccessories[item.slot] = item.id;
+      }
       saveState();
+      sfxCoin();
+      showToast(`${item.name} débloqué !`, 'success');
       renderApp();
     }
 
     function toggleEquipItem(itemId) {
-      const item = SHOP_ITEMS.find(i => i.id === itemId);
-      if (!item) return;
+      const item = SHOP_ITEMS.find((i) => i.id === itemId);
+      if (!item || !state.ownedItems.includes(item.id)) return;
       sfxClick();
 
       if (item.category === 'habitat') {
-        state.equippedHabitat = item.id;
-      } else if (item.category === 'accessory') {
-        if (state.equippedAccessories[item.slot] === item.id) {
-          state.equippedAccessories[item.slot] = null;
-        } else {
-          state.equippedAccessories[item.slot] = item.id;
-        }
+        state.equippedHabitat = state.equippedHabitat === item.id ? 'hab_clearing' : item.id;
+      } else if (item.category === 'accessory' && item.slot) {
+        state.equippedAccessories[item.slot] = state.equippedAccessories[item.slot] === item.id ? null : item.id;
       }
       saveState();
       renderApp();
     }
 
-    // =========================================================================
-    // 7. MODALES OUTILS DÉMO & CHANGEMENT RAPIDE D'ESPÈCE
-    // =========================================================================
-    function showModal(htmlContent) {
-      const overlay = document.getElementById('modal-overlay');
-      const box = document.getElementById('modal-box');
-      box.innerHTML = htmlContent;
-      overlay.classList.remove('hidden');
-      overlay.classList.add('flex');
-    }
+    function buyAndFeed(itemId) {
+      const item = SHOP_ITEMS.find((i) => i.id === itemId);
+      if (!item || item.category !== 'care') return;
+      if (state.coins < item.price) {
+        showToast("Pas assez de pièces pour cette friandise.", 'warning');
+        return;
+      }
 
-    function closeModal() {
-      const overlay = document.getElementById('modal-overlay');
-      overlay.classList.add('hidden');
-      overlay.classList.remove('flex');
-    }
-
-    function openChangeSpeciesModal() {
-      const buttons = Object.values(SPECIES_DATA).map(sp => {
-        const active = sp.id === state.species;
-        return `
-          <button onclick="quickSwitchSpecies('${sp.id}')" class="p-3 rounded-xl border flex flex-col items-center gap-1.5 transition ${active ? 'bg-blue-500/20 border-blue-500 text-blue-400' : 'bg-[#0D1117] border-[#232D3F] text-slate-300 hover:border-slate-500'}">
-            <span class="text-2xl">${sp.emoji}</span>
-            <span class="text-[11px] font-bold">${sp.name}</span>
-          </button>
-        `;
-      }).join('');
-
-      showModal(`
-        <div class="space-y-4">
-          <div class="flex items-center justify-between">
-            <h3 class="text-base font-extrabold text-white">Tester un autre animal</h3>
-            <button onclick="closeModal()" class="text-slate-400 hover:text-white text-sm">✕</button>
-          </div>
-          <p class="text-xs text-slate-400">Aperçu rapide : tes accessoires et ton décor s'adaptent automatiquement sur chaque espèce.</p>
-          <div class="grid grid-cols-3 gap-2">
-            ${buttons}
-          </div>
-        </div>
-      `);
-    }
-
-    function quickSwitchSpecies(speciesId) {
-      sfxClick();
-      state.species = speciesId;
-      state.petName = SPECIES_DATA[speciesId].defaultPetName;
+      const beforeStage = getStageIndexFromXp(state.xp);
+      state.coins -= item.price;
+      state.energy = Math.min(100, state.energy + (item.effectValue || 20));
+      if (item.effectType === 'feast') {
+        state.xp += 30;
+      }
+      const afterStage = getStageIndexFromXp(state.xp);
       saveState();
-      closeModal();
-      renderApp();
-    }
 
-    function openDemoModal() {
-      sfxClick();
-      showModal(`
-        <div class="space-y-4">
-          <div class="flex items-center justify-between">
-            <h3 class="text-base font-extrabold text-white">Outils de test (Aperçu)</h3>
-            <button onclick="closeModal()" class="text-slate-400 hover:text-white text-sm">✕</button>
-          </div>
-          <p class="text-xs text-slate-400">Simule des événements pour tester la boutique, la jauge de fatigue ou les évolutions.</p>
+      currentEatingItem = item;
+      if (eatingTimeout) clearTimeout(eatingTimeout);
+      eatingTimeout = setTimeout(() => {
+        currentEatingItem = null;
+        if (currentTab === 'sanctuary') {
+          renderApp();
+        }
+      }, 2200);
 
-          <div class="space-y-2">
-            <button onclick="demoAddCoins()" class="w-full py-2.5 px-3 rounded-xl bg-[#0D1117] border border-[#2A3548] hover:border-amber-400 text-left text-xs font-semibold text-amber-300 flex items-center justify-between">
-              <span>🪙 Ajouter +100 pièces</span>
-              <span>Tester la boutique</span>
-            </button>
+      sfxPet();
+      showToast(`${state.petName} savoure : ${item.name} !`, 'success');
+      if (afterStage > beforeStage) {
+        sfxVictory();
+        showToast(`Nouveau stade : ${EVOLUTION_STAGES[afterStage].label} !`, 'success');
+      }
 
-            <button onclick="demoAddXp()" class="w-full py-2.5 px-3 rounded-xl bg-[#0D1117] border border-[#2A3548] hover:border-blue-400 text-left text-xs font-semibold text-blue-300 flex items-center justify-between">
-              <span>⭐ Ajouter +150 XP</span>
-              <span>Faire grandir l'animal</span>
-            </button>
-
-            <button onclick="demoDrainEnergy()" class="w-full py-2.5 px-3 rounded-xl bg-[#0D1117] border border-[#2A3548] hover:border-rose-400 text-left text-xs font-semibold text-rose-300 flex items-center justify-between">
-              <span>💤 Simuler 24h sans rangement</span>
-              <span>Énergie à 25%</span>
-            </button>
-
-            <button onclick="demoResetAll()" class="w-full py-2.5 px-3 rounded-xl bg-rose-500/10 border border-rose-500/30 hover:bg-rose-500/20 text-left text-xs font-semibold text-rose-300 flex items-center justify-between mt-3">
-              <span>🔄 Tout réinitialiser</span>
-              <span>Retour écran d'adoption</span>
-            </button>
-          </div>
-        </div>
-      `);
-    }
-
-    function demoAddCoins() {
-      sfxCoin();
-      state.coins += 100;
-      saveState();
-      closeModal();
-      showToast('+100 pièces ajoutées !', '🪙');
-      renderApp();
-    }
-
-    function demoAddXp() {
-      sfxVictory();
-      state.xp += 150;
-      saveState();
-      closeModal();
-      showToast('+150 XP ajoutés !', '⭐');
-      renderApp();
-    }
-
-    function demoDrainEnergy() {
-      sfxClick();
-      state.energy = 25;
-      saveState();
-      closeModal();
-      showToast('Énergie baissée à 25%', '💤');
-      renderApp();
-    }
-
-    function demoResetAll() {
-      localStorage.removeItem(STORAGE_KEY);
-      state = getDefaultState();
       currentTab = 'sanctuary';
-      closeModal();
       renderApp();
     }
 
-    // Initialisation au chargement
-    renderApp();
+    // =========================================================================
+    // 10. BOUCLE DE RENDU PRINCIPALE
+    // =========================================================================
+    function renderApp() {
+      updateSoundIcon();
+      updateNavActive();
+
+      const main = document.getElementById('main-content');
+      if (!main) return;
+
+      if (!state.adopted) {
+        renderAdoptionScreen(main);
+        return;
+      }
+
+      if (currentTab === 'challenges') {
+        renderChallengesTab(main);
+      } else if (currentTab === 'shop') {
+        renderShopTab(main);
+      } else {
+        renderSanctuaryTab(main);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      renderApp();
+    });
   </script>
 </body>
 </html>
