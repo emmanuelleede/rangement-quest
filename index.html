@@ -31,11 +31,11 @@
 
     @keyframes petBounce {
       0%, 100% { transform: scale(1); }
-      35% { transform: scale(1.08) translateY(-8px); }
+      35% { transform: scale(1.09) translateY(-9px); }
       70% { transform: scale(0.96); }
     }
     .anim-bounce {
-      animation: petBounce 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+      animation: petBounce 0.48s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
     @keyframes sparkleFloat {
@@ -44,6 +44,15 @@
     }
     .sparkle-dot {
       animation: sparkleFloat 2.8s ease-in-out infinite;
+    }
+
+    @keyframes floatUpFade {
+      0% { opacity: 1; transform: translateY(0) scale(0.85); }
+      100% { opacity: 0; transform: translateY(-44px) scale(1.25); }
+    }
+    .floating-reaction {
+      animation: floatUpFade 0.85s ease-out forwards;
+      pointer-events: none;
     }
 
     ::-webkit-scrollbar { width: 4px; }
@@ -64,7 +73,7 @@
         </div>
         <div>
           <h1 class="text-sm font-bold tracking-tight text-white leading-none">Rangement Quest</h1>
-          <span class="text-[11px] text-slate-400 font-medium">Mode Aperçu Studio</span>
+          <span class="text-[11px] text-slate-400 font-medium">Style 3D Stylisé</span>
         </div>
       </div>
 
@@ -267,6 +276,7 @@
     let currentEatingItem = null;
     let eatingTimeout = null;
     let previewStageIndex = 0;
+    let useLocalImagesMode = false;
 
     function getDefaultState() {
       return {
@@ -317,12 +327,17 @@
     let state = loadState();
 
     // =========================================================================
-    // 4. RENDU VISUEL (IMAGES DANS images/ AVEC REPLI PROPRE)
+    // 4. RENDU 3D STYLISÉ INTÉGRÉ + OPTION IMAGES LOCALES
     // =========================================================================
     const SPECIES_VISUAL_CONFIG = {
       loutre: {
         fallbackEmoji: '🦦',
-        glow: 'rgba(251, 191, 36, 0.25)',
+        glow: 'rgba(251, 191, 36, 0.32)',
+        spiritColor: '#67e8f9',
+        furLight: '#c28554',
+        furMid: '#8d5530',
+        furDark: '#563119',
+        belly: '#f3dec3',
         label: 'Loutre',
         localStageImages: [
           'images/loutre_nouveau_ne.png',
@@ -334,7 +349,12 @@
       },
       chat: {
         fallbackEmoji: '🐱',
-        glow: 'rgba(96, 165, 250, 0.25)',
+        glow: 'rgba(96, 165, 250, 0.32)',
+        spiritColor: '#93c5fd',
+        furLight: '#94a3b8',
+        furMid: '#64748b',
+        furDark: '#334155',
+        belly: '#f1f5f9',
         label: 'Chaton',
         localStageImages: [
           'images/chat_nouveau_ne.png',
@@ -346,7 +366,12 @@
       },
       dragon: {
         fallbackEmoji: '🐉',
-        glow: 'rgba(168, 85, 247, 0.25)',
+        glow: 'rgba(192, 132, 252, 0.35)',
+        spiritColor: '#5eead4',
+        furLight: '#c084fc',
+        furMid: '#9333ea',
+        furDark: '#581c87',
+        belly: '#fde68a',
         label: 'Dragonnet',
         localStageImages: [
           'images/dragon_nouveau_ne.png',
@@ -358,7 +383,12 @@
       },
       corbeau: {
         fallbackEmoji: '🐦‍⬛',
-        glow: 'rgba(99, 102, 241, 0.25)',
+        glow: 'rgba(129, 140, 248, 0.34)',
+        spiritColor: '#67e8f9',
+        furLight: '#475569',
+        furMid: '#1e293b',
+        furDark: '#090d16',
+        belly: '#334155',
         label: 'Corbeau',
         localStageImages: [
           'images/corbeau_nouveau_ne.png',
@@ -370,7 +400,12 @@
       },
       renard: {
         fallbackEmoji: '🦊',
-        glow: 'rgba(249, 115, 22, 0.25)',
+        glow: 'rgba(251, 146, 60, 0.35)',
+        spiritColor: '#38bdf8',
+        furLight: '#fb923c',
+        furMid: '#ea580c',
+        furDark: '#9a3412',
+        belly: '#fff7ed',
         label: 'Renard',
         localStageImages: [
           'images/renard_nouveau_ne.png',
@@ -385,19 +420,35 @@
     const HABITAT_THEMES = {
       hab_clearing: {
         name: 'Clairière Enchantée',
-        gradient: 'linear-gradient(180deg, #122620 0%, #0D1117 100%)'
+        skyTop: '#062626',
+        skyMid: '#0d4a46',
+        groundTop: '#134e4a',
+        groundBottom: '#071418',
+        aura: 'rgba(45, 212, 191, 0.24)'
       },
       hab_cozy: {
         name: 'Salon Cosy',
-        gradient: 'linear-gradient(180deg, #2B1A12 0%, #0D1117 100%)'
+        skyTop: '#24130c',
+        skyMid: '#4a2518',
+        groundTop: '#5c2d1c',
+        groundBottom: '#140b08',
+        aura: 'rgba(251, 191, 36, 0.24)'
       },
       hab_crystal: {
         name: 'Grotte aux Cristaux',
-        gradient: 'linear-gradient(180deg, #102A43 0%, #0D1117 100%)'
+        skyTop: '#081b33',
+        skyMid: '#123a63',
+        groundTop: '#164e63',
+        groundBottom: '#07111e',
+        aura: 'rgba(56, 189, 248, 0.26)'
       },
       hab_space: {
         name: 'Observatoire Spatial',
-        gradient: 'linear-gradient(180deg, #1C1333 0%, #0D1117 100%)'
+        skyTop: '#0d0924',
+        skyMid: '#1e164a',
+        groundTop: '#271d5c',
+        groundBottom: '#090714',
+        aura: 'rgba(167, 139, 250, 0.25)'
       }
     };
 
@@ -427,8 +478,6 @@
       const cfg = SPECIES_VISUAL_CONFIG[speciesId] || SPECIES_VISUAL_CONFIG.loutre;
       const stageIndex = getStageIndexFromXp(xp);
       const candidates = [];
-
-      // On tente uniquement l'image exacte du stade courant puis le repli de l'espèce
       if (Array.isArray(cfg.localStageImages) && cfg.localStageImages[stageIndex]) {
         candidates.push(cfg.localStageImages[stageIndex]);
       }
@@ -481,13 +530,105 @@
       }
     };
 
+    // Rendu 3D stylisé inspiré de l'éclairage doux & poétique des références
+    function buildStylized3DPetSVG(speciesId, stageIndex, uid, isTired = false) {
+      const cfg = SPECIES_VISUAL_CONFIG[speciesId] || SPECIES_VISUAL_CONFIG.loutre;
+      const scaleByStage = [0.84, 0.94, 1.03, 1.12][stageIndex] || 0.9;
+      const earLift = [0, -3, -6, -9][stageIndex] || 0;
+      const tailSpread = [0.85, 0.95, 1.08, 1.22][stageIndex] || 1;
+      const gradId = `g_${uid}`;
+      const spiritGradId = `sp_${uid}`;
+
+      const extraSpeciesParts = speciesId === 'dragon'
+        ? `
+          <path d="M 76 58 L 68 38 L 86 52 Z" fill="#fde68a" stroke="#f59e0b" stroke-width="2" />
+          <path d="M 124 58 L 132 38 L 114 52 Z" fill="#fde68a" stroke="#f59e0b" stroke-width="2" />
+          <path d="M 64 114 C 34 94, 30 128, 60 138 Z" fill="${cfg.furLight}" opacity="0.9" />
+          <path d="M 136 114 C 166 94, 170 128, 140 138 Z" fill="${cfg.furLight}" opacity="0.9" />
+        `
+        : speciesId === 'corbeau'
+          ? `
+            <path d="M 96 48 L 100 32 L 104 48 Z" fill="${cfg.spiritColor}" opacity="0.85" />
+            <polygon points="100,96 92,106 108,106" fill="#fbbf24" />
+          `
+          : `
+            <ellipse cx="76" cy="${62 + earLift}" rx="15" ry="25" transform="rotate(-18 76 ${62 + earLift})" fill="url(#${gradId})" />
+            <ellipse cx="76" cy="${63 + earLift}" rx="8" ry="16" transform="rotate(-18 76 ${63 + earLift})" fill="${cfg.belly}" opacity="0.75" />
+            <ellipse cx="124" cy="${62 + earLift}" rx="15" ry="25" transform="rotate(18 124 ${62 + earLift})" fill="url(#${gradId})" />
+            <ellipse cx="124" cy="${63 + earLift}" rx="8" ry="16" transform="rotate(18 124 ${63 + earLift})" fill="${cfg.belly}" opacity="0.75" />
+          `;
+
+      return `
+        <svg viewBox="0 0 200 200" class="w-full h-full overflow-visible" aria-hidden="true">
+          <defs>
+            <radialGradient id="${gradId}" cx="38%" cy="28%" r="72%">
+              <stop offset="0%" stop-color="${cfg.furLight}" />
+              <stop offset="55%" stop-color="${cfg.furMid}" />
+              <stop offset="100%" stop-color="${cfg.furDark}" />
+            </radialGradient>
+            <linearGradient id="${spiritGradId}" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="${cfg.spiritColor}" stop-opacity="0.55" />
+              <stop offset="100%" stop-color="#38bdf8" stop-opacity="0.05" />
+            </linearGradient>
+          </defs>
+
+          <!-- Halo lumineux & silhouette d'esprit poétique en arrière-plan -->
+          <ellipse cx="100" cy="176" rx="52" ry="10" fill="rgba(0,0,0,0.45)" />
+          <path
+            d="M 122 152 C 154 146, 166 112, 150 86 C 142 74, 146 56, 134 48 C 122 60, 114 78, 110 98 C 102 118, 106 140, 122 152 Z"
+            fill="url(#${spiritGradId})"
+            transform="scale(${tailSpread}) translate(${(1 - tailSpread) * 100}, ${(1 - tailSpread) * 120})"
+          />
+
+          <g transform="translate(100, 112) scale(${scaleByStage}) translate(-100, -112)">
+            <!-- Queue / corps 3D arrondi -->
+            <path d="M 124 146 C 156 144, 164 116, 146 102 C 134 94, 122 112, 120 132 Z" fill="url(#${gradId})" />
+            <ellipse cx="100" cy="134" rx="38" ry="36" fill="url(#${gradId})" />
+            <ellipse cx="100" cy="138" rx="22" ry="25" fill="${cfg.belly}" opacity="0.85" />
+
+            <!-- Pattes avant -->
+            <ellipse cx="78" cy="162" rx="13" ry="9" fill="url(#${gradId})" />
+            <ellipse cx="122" cy="162" rx="13" ry="9" fill="url(#${gradId})" />
+
+            <!-- Oreilles / cornes -->
+            ${extraSpeciesParts}
+
+            <!-- Tête 3D -->
+            <circle cx="100" cy="88" r="36" fill="url(#${gradId})" />
+            <path d="M 74 96 C 74 114, 126 114, 126 96 C 122 116, 78 116, 74 96 Z" fill="${cfg.belly}" opacity="0.92" />
+
+            <!-- Yeux brillants avec reflets -->
+            ${isTired ? `
+              <path d="M 76 85 Q 84 91 92 85" stroke="#0f172a" stroke-width="3" fill="none" stroke-linecap="round" />
+              <path d="M 108 85 Q 116 91 124 85" stroke="#0f172a" stroke-width="3" fill="none" stroke-linecap="round" />
+            ` : `
+              <circle cx="84" cy="84" r="9.5" fill="#1e1b18" />
+              <circle cx="81" cy="80.5" r="3.6" fill="#ffffff" />
+              <circle cx="87" cy="87" r="1.7" fill="#bae6fd" />
+
+              <circle cx="116" cy="84" r="9.5" fill="#1e1b18" />
+              <circle cx="113" cy="80.5" r="3.6" fill="#ffffff" />
+              <circle cx="119" cy="87" r="1.7" fill="#bae6fd" />
+            `}
+
+            <!-- Joues douces & museau -->
+            <ellipse cx="71" cy="94" rx="6.5" ry="4" fill="#fb7185" opacity="0.35" />
+            <ellipse cx="129" cy="94" rx="6.5" ry="4" fill="#fb7185" opacity="0.35" />
+            <ellipse cx="100" cy="95" rx="6.5" ry="4.5" fill="#1e293b" />
+            <ellipse cx="98.5" cy="93.5" r="2" fill="#ffffff" opacity="0.7" />
+            <path d="M 93 102 Q 100 107 107 102" stroke="#334155" stroke-width="2.2" fill="none" stroke-linecap="round" />
+          </g>
+        </svg>
+      `;
+    }
+
     function buildPetArtHTML(speciesId, options = {}) {
       const {
         size = 'lg',
         xp = state.xp,
         energy = state.energy,
         accessories = state.equippedAccessories,
-        showSparkles = false,
+        showSparkles = true,
         eatingItem = currentEatingItem
       } = options;
 
@@ -504,8 +645,18 @@
         lg: { box: 'w-52 h-52 sm:w-56 sm:h-56', img: 'w-48 h-48 sm:w-52 sm:h-52 object-contain', emoji: 'text-7xl' }
       };
       const sz = sizeMap[size] || sizeMap.lg;
-      const candidates = getLocalPetImageCandidates(speciesId, xp);
-      const fallbackVisual = `<div class="w-full h-full flex items-center justify-center ${sz.emoji}">${cfg.fallbackEmoji}</div>`;
+      const uid = `${speciesId}_${size}_${stageInfo.index}`;
+      const stylized3D = buildStylized3DPetSVG(speciesId, stageInfo.index, uid, isTired);
+
+      const visualContent = useLocalImagesMode
+        ? renderLocalImageWithFallback(
+            getLocalPetImageCandidates(speciesId, xp),
+            `${cfg.label} - ${stageInfo.current.label}`,
+            sz.img,
+            'filter: drop-shadow(0 14px 22px rgba(0,0,0,0.5));',
+            stylized3D
+          )
+        : stylized3D;
 
       const accBadges = [];
       ['head', 'eyes', 'neck', 'companion'].forEach((slot) => {
@@ -513,14 +664,15 @@
         if (itemId) {
           const item = SHOP_ITEMS.find((i) => i.id === itemId);
           if (item) {
-            accBadges.push(`<span title="${item.name}" class="px-1.5 py-0.5 rounded-full bg-slate-900/80 border border-white/15 text-xs shadow">${item.icon}</span>`);
+            accBadges.push(`<span title="${item.name}" class="px-1.5 py-0.5 rounded-full bg-slate-900/85 border border-white/15 text-xs shadow">${item.icon}</span>`);
           }
         }
       });
 
       const sparklesHtml = showSparkles ? `
-        <span class="sparkle-dot absolute top-2 left-3 w-2 h-2 rounded-full bg-amber-300/80 pointer-events-none"></span>
-        <span class="sparkle-dot absolute top-6 right-4 w-1.5 h-1.5 rounded-full bg-yellow-200/80 pointer-events-none" style="animation-delay: 0.9s;"></span>
+        <span class="sparkle-dot absolute top-3 left-4 w-2 h-2 rounded-full bg-cyan-200/85 pointer-events-none"></span>
+        <span class="sparkle-dot absolute top-8 right-5 w-1.5 h-1.5 rounded-full bg-amber-200/85 pointer-events-none" style="animation-delay: 0.9s;"></span>
+        <span class="sparkle-dot absolute bottom-9 left-6 w-1.5 h-1.5 rounded-full bg-indigo-200/80 pointer-events-none" style="animation-delay: 1.7s;"></span>
       ` : '';
 
       const eatingBadge = eatingItem
@@ -532,16 +684,11 @@
 
       return `
         <div class="relative flex flex-col items-center justify-center ${sz.box} ${animClass} select-none">
-          <div class="relative z-10 w-full h-full flex items-center justify-center">
-            ${renderLocalImageWithFallback(
-              candidates,
-              `${cfg.label} - ${stageInfo.current.label}`,
-              sz.img,
-              'filter: drop-shadow(0 12px 20px rgba(0,0,0,0.45));',
-              fallbackVisual
-            )}
-          </div>
+          <div class="absolute inset-4 rounded-full blur-2xl pointer-events-none" style="background: ${cfg.glow};"></div>
           ${sparklesHtml}
+          <div class="relative z-10 w-full h-full flex items-center justify-center">
+            ${visualContent}
+          </div>
           ${accBadges.length ? `<div class="relative z-20 -mt-2 flex items-center gap-1 flex-wrap justify-center">${accBadges.join('')}</div>` : ''}
           ${eatingBadge}
         </div>
@@ -551,8 +698,18 @@
     function buildHabitatBackdropHTML(habitatId) {
       const hab = HABITAT_THEMES[habitatId] || HABITAT_THEMES.hab_clearing;
       return `
-        <div class="absolute inset-0 overflow-hidden pointer-events-none" style="background: ${hab.gradient};">
-          <div class="w-full h-full opacity-45" style="background: radial-gradient(circle at 50% 35%, rgba(255,255,255,0.08) 0%, transparent 70%);"></div>
+        <div class="absolute inset-0 overflow-hidden pointer-events-none">
+          <div
+            class="w-full h-full"
+            style="background: radial-gradient(circle at 50% 28%, ${hab.aura} 0%, transparent 58%), linear-gradient(180deg, ${hab.skyTop} 0%, ${hab.skyMid} 56%, ${hab.groundTop} 78%, ${hab.groundBottom} 100%);"
+          ></div>
+          <svg viewBox="0 0 400 320" preserveAspectRatio="none" class="absolute inset-0 w-full h-full opacity-55">
+            <circle cx="65" cy="48" r="1.8" fill="#ffffff" opacity="0.7" />
+            <circle cx="155" cy="34" r="1.3" fill="#bae6fd" opacity="0.8" />
+            <circle cx="268" cy="52" r="2" fill="#fef08a" opacity="0.65" />
+            <circle cx="340" cy="38" r="1.5" fill="#ffffff" opacity="0.75" />
+            <path d="M 0 215 Q 110 185 215 212 T 400 202 L 400 320 L 0 320 Z" fill="rgba(4, 12, 18, 0.45)" />
+          </svg>
         </div>
       `;
     }
@@ -602,7 +759,13 @@
           <h3 class="text-base font-bold text-white">⚙️ Contrôles Démo</h3>
           <button onclick="closeModal()" class="text-slate-400 hover:text-white text-sm">✕</button>
         </div>
-        <p class="text-xs text-slate-400">Teste rapidement les pièces, l'évolution et la réinitialisation.</p>
+        <p class="text-xs text-slate-400">Teste l'évolution, les pièces ou bascule vers tes images locales.</p>
+        <button
+          onclick="toggleVisualSourceMode()"
+          class="w-full py-2.5 px-3 rounded-xl bg-indigo-500/15 border border-indigo-400/30 text-indigo-200 text-xs font-semibold hover:bg-indigo-500/25 transition"
+        >
+          Rendu : ${useLocalImagesMode ? 'Images locales (images/...)' : '3D Stylisé intégré'} (Cliquer pour changer)
+        </button>
         <div class="grid grid-cols-2 gap-2">
           <button onclick="demoAddCoins(100)" class="py-2.5 px-3 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-semibold hover:bg-amber-500/25">+100 Pièces</button>
           <button onclick="demoAddXp(250)" class="py-2.5 px-3 rounded-xl bg-blue-500/15 border border-blue-500/30 text-blue-300 text-xs font-semibold hover:bg-blue-500/25">+250 XP (Évolution)</button>
@@ -610,6 +773,17 @@
           <button onclick="demoResetAll()" class="py-2.5 px-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs font-semibold hover:bg-rose-500/25">Réinitialiser</button>
         </div>
       `);
+    }
+
+    function toggleVisualSourceMode() {
+      useLocalImagesMode = !useLocalImagesMode;
+      sfxClick();
+      showToast(
+        useLocalImagesMode ? 'Mode images locales activé.' : 'Mode 3D stylisé activé.',
+        'info'
+      );
+      openDemoModal();
+      renderApp();
     }
 
     function demoAddCoins(amount) {
@@ -840,7 +1014,7 @@
               </div>
             </div>
 
-            <div class="relative z-10 flex flex-col items-center justify-center my-2">
+            <div id="pet-stage-zone" onclick="tapCompanion()" class="relative z-10 flex flex-col items-center justify-center my-2 cursor-pointer">
               ${buildPetArtHTML(state.species, { size: 'lg', xp: state.xp, energy: state.energy, eatingItem: currentEatingItem })}
             </div>
 
@@ -862,7 +1036,7 @@
               class="w-full py-3 rounded-2xl bg-[#151B26] hover:bg-[#1C2433] border border-[#2A3548] text-white font-bold text-sm transition flex items-center justify-center gap-2"
             >
               <span>💛</span>
-              <span>Câliner ${state.petName} (+5 XP)</span>
+              <span>Câliner ${state.petName} (+3 XP)</span>
             </button>
 
             <div class="grid grid-cols-2 gap-2.5">
@@ -886,6 +1060,21 @@
       `;
     }
 
+    function spawnReactionBadge(text) {
+      const zone = document.getElementById('pet-stage-zone');
+      if (!zone) return;
+      const badge = document.createElement('div');
+      badge.className = 'floating-reaction absolute top-2 px-2.5 py-1 rounded-full bg-slate-900/85 border border-amber-300/40 text-amber-200 text-xs font-bold shadow';
+      badge.textContent = text;
+      zone.appendChild(badge);
+      setTimeout(() => badge.remove(), 860);
+    }
+
+    function tapCompanion() {
+      sfxPet();
+      spawnReactionBadge('✨ Coucou !');
+    }
+
     function petCompanion() {
       const beforeStage = getStageIndexFromXp(state.xp);
       state.xp += 3;
@@ -893,12 +1082,14 @@
       const afterStage = getStageIndexFromXp(state.xp);
       saveState();
 
+      spawnReactionBadge('💛 +3 XP');
+
       if (afterStage > beforeStage) {
         sfxVictory();
         showToast(`${state.petName} passe au stade ${EVOLUTION_STAGES[afterStage].label} !`, 'success');
       } else {
         sfxPet();
-        showToast(`${state.petName} ronronne de plaisir (+3 XP) !`, 'info');
+        showToast(`${state.petName} réagit au câlin (+3 XP) !`, 'info');
       }
       renderApp();
     }
