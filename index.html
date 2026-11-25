@@ -497,12 +497,12 @@
         if (!imgEl || imgEl.dataset.cleaned === '1') return;
         const w = imgEl.naturalWidth;
         const h = imgEl.naturalHeight;
-        if (!w || !h || w > 1200 || h > 1200) return;
+        if (!w || !h || w > 1400 || h > 1400) return;
 
         const canvas = document.createElement('canvas');
         canvas.width = w;
         canvas.height = h;
-        const ctx = canvas.getContext('2d');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
         if (!ctx) return;
 
         ctx.drawImage(imgEl, 0, 0);
@@ -516,9 +516,9 @@
           const a = data[pxIdx + 3];
           if (a === 0) return true;
           const maxDiff = Math.max(Math.abs(r - g), Math.abs(g - b), Math.abs(r - b));
-          if (maxDiff > 14) return false;
-          const isLightSquare = r >= 200 && g >= 200 && b >= 200;
-          const isGreySquare = r >= 130 && r <= 199 && g >= 130 && g <= 199 && b >= 130 && b <= 199;
+          if (maxDiff > 18) return false;
+          const isLightSquare = r >= 195 && g >= 195 && b >= 195;
+          const isGreySquare = r >= 120 && r <= 194 && g >= 120 && g <= 194 && b >= 120 && b <= 194;
           return isLightSquare || isGreySquare;
         };
 
@@ -565,12 +565,14 @@
           }
         }
 
+        imgEl.dataset.cleaned = '1';
         if (removedCount > 0) {
           ctx.putImageData(imgData, 0, 0);
-          imgEl.dataset.cleaned = '1';
           imgEl.src = canvas.toDataURL('image/png');
         }
-      } catch (e) {}
+      } catch (e) {
+        imgEl.dataset.cleaned = '1';
+      }
     };
 
     function buildPetVisualHTML(speciesId, options = {}) {
@@ -696,6 +698,13 @@
     // 5. ÉCRAN D'ADOPTION
     // =========================================================================
     let selectedSpeciesDraft = 'loutre';
+    let selectedStageDraft = 0;
+
+    function selectDraftStage(stageIdx) {
+      sfxClick();
+      selectedStageDraft = Math.max(0, Math.min(EVOLUTION_STAGES.length - 1, stageIdx));
+      renderOnboarding();
+    }
 
     function renderOnboarding() {
       const nav = document.getElementById('bottom-nav');
@@ -707,18 +716,40 @@
       if (!main) return;
 
       const sp = SPECIES_DATA[selectedSpeciesDraft] || SPECIES_DATA.loutre;
+      const draftStage = EVOLUTION_STAGES[selectedStageDraft] || EVOLUTION_STAGES[0];
+      const draftXp = draftStage.minXp;
 
       main.innerHTML = `
-        <div class="p-4 space-y-5">
+        <div class="p-4 space-y-4">
           <div class="text-center space-y-1 pt-1">
             <h2 class="text-xl font-extrabold text-white">Adopte ton compagnon</h2>
             <p class="text-xs text-slate-400">Il grandit au fil de tes rangements et de tes défis.</p>
           </div>
 
           <div class="rounded-3xl border border-[#232d3f] bg-gradient-to-b from-[#162336] to-[#0e141f] p-4 flex flex-col items-center">
-            ${buildPetVisualHTML(selectedSpeciesDraft, { size: 'md', xp: 0, energy: 80 })}
-            <div class="mt-2 text-sm font-bold text-white">${sp.name} · Nouveau-né</div>
+            ${buildPetVisualHTML(selectedSpeciesDraft, { size: 'md', xp: draftXp, energy: 80 })}
+            <div class="mt-2 text-sm font-bold text-white">${sp.name} · ${draftStage.label}</div>
             <p class="text-xs text-slate-400 text-center mt-0.5">${sp.tagline}</p>
+
+            <!-- Aperçu direct des 4 stades pour tester les visuels -->
+            <div class="grid grid-cols-4 gap-1.5 w-full mt-3 pt-3 border-t border-white/10">
+              ${EVOLUTION_STAGES.map((st, idx) => {
+                const active = idx === selectedStageDraft;
+                return `
+                  <button
+                    type="button"
+                    onclick="selectDraftStage(${idx})"
+                    class="py-1.5 px-1 rounded-xl text-[10px] font-bold border transition truncate ${
+                      active
+                        ? 'bg-amber-500/20 border-amber-400 text-amber-200'
+                        : 'bg-[#0d1117]/70 border-white/10 text-slate-400 hover:text-slate-200'
+                    }"
+                  >
+                    ${idx + 1}. ${st.label}
+                  </button>
+                `;
+              }).join('')}
+            </div>
           </div>
 
           <div class="grid grid-cols-5 gap-2">
@@ -842,6 +873,26 @@
             <!-- Barre d'évolution -->
             <div class="w-full h-2 rounded-full bg-black/40 border border-white/10 overflow-hidden mb-3">
               <div class="h-full rounded-full bg-gradient-to-r from-amber-400 to-orange-500 transition-all duration-500" style="width:${stageInfo.progressPct}%;"></div>
+            </div>
+
+            <!-- Sélecteur rapide des 4 stades pour tester l'affichage -->
+            <div class="grid grid-cols-4 gap-1.5 mb-3">
+              ${EVOLUTION_STAGES.map((st, idx) => {
+                const active = idx === stageInfo.index;
+                return `
+                  <button
+                    type="button"
+                    onclick="demoSetStage(${idx})"
+                    class="py-1.5 px-1 rounded-xl text-[10px] font-bold border transition truncate ${
+                      active
+                        ? 'bg-white/20 border-amber-300 text-white shadow-sm'
+                        : 'bg-black/30 border-white/10 text-slate-300 hover:bg-black/45'
+                    }"
+                  >
+                    ${idx + 1}. ${st.label}
+                  </button>
+                `;
+              }).join('')}
             </div>
 
             <!-- Zone interactive -->
