@@ -337,7 +337,7 @@
       { id: 'c_med_4', difficulty: 'medium', minSeconds: 60, title: 'Chasse aux Jouets', desc: 'Range 10 jouets ou pièces de construction dans leur boîte.', rewardCoins: 30, rewardXp: 30 },
       { id: 'c_med_5', difficulty: 'medium', minSeconds: 60, title: 'Chasse aux Intrus 🕵️', desc: 'Repère et rapporte à leur vraie place tous les objets qui n’appartiennent pas à cette pièce.', rewardCoins: 30, rewardXp: 30 },
       { id: 'c_med_6', difficulty: 'medium', minSeconds: 60, title: 'Mission Un Seul Voyage 🧺', desc: 'Réunis un maximum d’objets qui traînent dans tes bras et range-les en un seul aller-retour.', rewardCoins: 30, rewardXp: 30 },
-      { id: 'c_med_ecole', difficulty: 'medium', noTimer: true, minSeconds: 0, title: 'Ranger ses affaires d’école 🎒', desc: 'Trie et range cartable, trousse, cahiers et feuilles à leur place, sans chrono.', rewardCoins: 35, rewardXp: 35 },
+      { id: 'c_easy_ecole', difficulty: 'easy', noTimer: true, minSeconds: 0, title: 'Ranger ses affaires d’école 🎒', desc: 'Range ton cartable, accroche ton manteau et pose tes chaussures à leur place, sans chrono.', rewardCoins: 25, rewardXp: 25 },
 
       { id: 'c_hard_1', difficulty: 'hard', minSeconds: 90, title: 'Opération Sol Net', desc: 'Libère entièrement le sol de la chambre : plus rien ne doit toucher le tapis !', rewardCoins: 45, rewardXp: 45 },
       { id: 'c_hard_2', difficulty: 'hard', minSeconds: 90, title: 'Zéro Objet sur le Lit', desc: 'Débarrasse complètement le lit, refais la couette et range chaque affaire.', rewardCoins: 45, rewardXp: 45 },
@@ -1700,6 +1700,1921 @@
     function openRenamePetModal() {
       sfxClick();
       const safeName = String(state.petName || '').replace(/"/g, '"');
+      openModal(`
+        <div class="flex items-center justify-between">
+          <h3 class="text-base font-extrabold text-white">✏️ Nouveau prénom</h3>
+          <button onclick="closeModal()" class="text-slate-400 hover:text-white text-sm font-bold">✕</button>
+        </div>
+        <p class="text-xs text-slate-300">
+          Choisis un nouveau prénom pour ton compagnon : ses pièces, son XP et ses objets restent conservés.
+        </p>
+        <input
+          id="rename-pet-input"
+          type="text"
+          maxlength="16"
+          value="${safeName}"
+          placeholder="Nouveau prénom..."
+          onkeydown="if (event.key === 'Enter') saveRenamedPet()"
+          class="w-full px-4 py-3 rounded-2xl bg-[#0D1117] border border-[#2A3548] text-white text-sm font-semibold focus:outline-none focus:border-blue-500"
+        />
+        <div class="grid grid-cols-2 gap-2.5 pt-1">
+          <button onclick="closeModal()" class="py-2.5 px-3 rounded-xl bg-[#1E2634] hover:bg-[#283346] text-slate-200 text-xs font-bold transition">
+            Annuler
+          </button>
+          <button onclick="saveRenamedPet()" class="py-2.5 px-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition">
+            Enregistrer
+          </button>
+        </div>
+      `);
+
+      setTimeout(() => {
+        const input = document.getElementById('rename-pet-input');
+        if (input) {
+          input.focus();
+          input.select();
+        }
+      }, 30);
+    }
+
+    // Enregistre le nouveau prénom sans modifier les autres statistiques de la partie
+    function saveRenamedPet() {
+      const input = document.getElementById('rename-pet-input');
+      const spec = SPECIES_DATA[state.species] || SPECIES_DATA.loutre;
+      const cleaned = input && input.value ? input.value.trim().slice(0, 16) : '';
+      const nextName = cleaned || state.petName || spec.defaultPetName;
+
+      state.petName = nextName;
+      state.lastActiveAt = Date.now();
+      saveState();
+      sfxPet();
+      closeModal();
+      showToast(`✨ Ton compagnon s'appelle maintenant ${nextName} !`, 'success');
+      renderCurrentView();
+    }
+
+    function switchTab(tabName) {
+      sfxClick();
+      currentTab = tabName;
+
+      document.querySelectorAll('.nav-btn').forEach((btn) => {
+        btn.classList.remove('text-blue-400');
+        btn.classList.add('text-slate-400');
+      });
+      const activeBtn = document.getElementById(`nav-${tabName}`);
+      if (activeBtn) {
+        activeBtn.classList.remove('text-slate-400');
+        activeBtn.classList.add('text-blue-400');
+      }
+
+      renderCurrentView();
+    }
+
+    function renderCurrentView() {
+      if (!state.adopted) {
+        renderOnboarding();
+        return;
+      }
+      if (currentTab === 'sanctuary') renderSanctuary();
+      else if (currentTab === 'challenges') renderChallenges();
+      else if (currentTab === 'shop') renderShop();
+    }
+
+    // Enregistrement du Service Worker PWA pour emmanuelleede.github.io/rangement-quest/
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('https://emmanuelleede.github.io/rangement-quest/sw.js', {
+          scope: '/rangement-quest/'
+        }).catch(() => {});
+      });
+    }
+
+    // Initialisation au chargement
+    window.addEventListener('DOMContentLoaded', () => {
+      updateSoundIcon();
+      applyInactivityDecay(false);
+      renderCurrentView();
+    });
+  </script>
+</body>
+</html><!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rangement Quest - Compagnon & Défis</title>
+  <meta name="theme-color" content="#0D1117" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Rangement Quest" />
+  <link rel="manifest" href="https://emmanuelleede.github.io/rangement-quest/manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="https://emmanuelleede.github.io/rangement-quest/icons/icon-192.png" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    * {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: #090C10;
+      color: #F8FAFC;
+      margin: 0;
+      padding: 0;
+    }
+
+    @keyframes petBreathe {
+      0%, 100% { transform: scale(1) translateY(0); }
+      50% { transform: scale(1.035) translateY(-4px); }
+    }
+    .anim-breathe {
+      animation: petBreathe 3.2s ease-in-out infinite;
+    }
+
+    @keyframes petTiredBreathe {
+      0%, 100% { transform: scale(0.98) translateY(2px); filter: saturate(0.75) brightness(0.9); }
+      50% { transform: scale(1.00) translateY(4px); filter: saturate(0.75) brightness(0.9); }
+    }
+    .anim-tired {
+      animation: petTiredBreathe 4.5s ease-in-out infinite;
+    }
+
+    @keyframes petBounce {
+      0%, 100% { transform: scale(1) rotate(0deg); }
+      25% { transform: scale(1.1) translateY(-10px) rotate(-3deg); }
+      50% { transform: scale(1.05) translateY(-4px) rotate(3deg); }
+      75% { transform: scale(1.08) translateY(-8px) rotate(-2deg); }
+    }
+    .anim-bounce {
+      animation: petBounce 0.65s cubic-bezier(0.34, 1.56, 0.64, 1) infinite;
+    }
+
+    @keyframes sparkleFloat {
+      0%, 100% { opacity: 0.25; transform: translateY(0) scale(0.8); }
+      50% { opacity: 0.95; transform: translateY(-10px) scale(1.15); }
+    }
+    .sparkle-dot {
+      animation: sparkleFloat 2.8s ease-in-out infinite;
+    }
+
+    @keyframes floatUpFade {
+      0% { opacity: 1; transform: translateY(0) scale(0.8); }
+      100% { opacity: 0; transform: translateY(-48px) scale(1.35); }
+    }
+    .floating-particle {
+      animation: floatUpFade 0.9s ease-out forwards;
+      pointer-events: none;
+    }
+
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: #0D1117; }
+    ::-webkit-scrollbar-thumb { background: #232D3F; border-radius: 4px; }
+  </style>
+</head>
+<body class="min-h-screen flex justify-center bg-[#090C10]">
+
+  <!-- Conteneur principal mobile-first -->
+  <div id="app-shell" class="w-full max-w-md min-h-screen bg-[#0D1117] border-x border-[#1E2634] flex flex-col relative shadow-2xl overflow-hidden">
+
+    <!-- En-tête fixe -->
+    <header class="px-4 py-3 bg-[#151B26]/95 backdrop-blur-md border-b border-[#1E2634] flex items-center justify-between z-20">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-xl bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-blue-400">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+          </svg>
+        </div>
+        <div onclick="handleSecretDemoTap()" class="cursor-pointer select-none">
+          <h1 class="text-sm font-bold tracking-tight text-white leading-none">Rangement Quest</h1>
+          <span class="text-[11px] text-slate-400 font-medium">Compagnon & Défis</span>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button id="btn-sound" onclick="toggleSound()" title="Activer/Couper le son" class="p-2 rounded-xl bg-[#1E2634] hover:bg-[#283346] text-slate-300 transition">
+          <svg id="icon-sound-on" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+          </svg>
+          <svg id="icon-sound-off" class="w-4 h-4 hidden text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+          </svg>
+        </button>
+
+        <!-- Bouton Démo masqué pour l'usage enfant (accessible via la console si besoin : openDemoModal()) -->
+        <button id="btn-demo" onclick="openDemoModal()" class="hidden px-2.5 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold hover:bg-amber-500/20 transition items-center gap-1">
+          <span>⚙️</span><span>Démo</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Notifications flottantes -->
+    <div id="toast-container" class="fixed top-16 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 pointer-events-none w-full max-w-sm px-4"></div>
+
+    <!-- Zone principale défilante -->
+    <main id="main-content" class="flex-1 overflow-y-auto pb-24 flex flex-col"></main>
+
+    <!-- Barre de navigation basse -->
+    <nav id="bottom-nav" class="hidden absolute bottom-0 inset-x-0 bg-[#151B26]/95 backdrop-blur-md border-t border-[#1E2634] px-3 py-2 flex justify-around items-center z-20">
+      <button onclick="switchTab('sanctuary')" id="nav-sanctuary" class="nav-btn flex flex-col items-center gap-1 py-1.5 px-4 rounded-xl text-blue-400 transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+        <span class="text-[11px] font-semibold">Compagnon</span>
+      </button>
+
+      <button onclick="switchTab('challenges')" id="nav-challenges" class="nav-btn flex flex-col items-center gap-1 py-1.5 px-4 rounded-xl text-slate-400 hover:text-slate-200 transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <span class="text-[11px] font-semibold">Défis</span>
+      </button>
+
+      <button onclick="switchTab('shop')" id="nav-shop" class="nav-btn flex flex-col items-center gap-1 py-1.5 px-4 rounded-xl text-slate-400 hover:text-slate-200 transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+        <span class="text-[11px] font-semibold">Boutique</span>
+      </button>
+    </nav>
+
+    <!-- Fenêtre modale -->
+    <div id="modal-overlay" class="hidden fixed inset-0 bg-black/75 backdrop-blur-sm z-40 items-center justify-center p-4">
+      <div id="modal-box" class="bg-[#151B26] border border-[#2A3548] rounded-3xl w-full max-w-sm p-5 shadow-2xl space-y-4"></div>
+    </div>
+
+  </div>
+
+  <script>
+    // =========================================================================
+    // 1. MOTEUR SONORE (WEB AUDIO API)
+    // =========================================================================
+    let soundEnabled = true;
+    let audioCtx = null;
+
+    function getAudioContext() {
+      try {
+        if (!audioCtx && (window.AudioContext || window.webkitAudioContext)) {
+          const Ctx = window.AudioContext || window.webkitAudioContext;
+          audioCtx = new Ctx();
+        }
+        if (audioCtx && audioCtx.state === 'suspended') {
+          audioCtx.resume().catch(() => {});
+        }
+      } catch (e) {}
+      return audioCtx;
+    }
+
+    function playTone(freq, duration = 0.12, type = 'sine', gainVal = 0.08, delay = 0) {
+      if (!soundEnabled) return;
+      try {
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, ctx.currentTime + delay);
+        gain.gain.setValueAtTime(gainVal, ctx.currentTime + delay);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + duration);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(ctx.currentTime + delay);
+        osc.stop(ctx.currentTime + delay + duration);
+      } catch (e) {}
+    }
+
+    function updateSoundIcon() {
+      const onIcon = document.getElementById('icon-sound-on');
+      const offIcon = document.getElementById('icon-sound-off');
+      if (!onIcon || !offIcon) return;
+      if (soundEnabled) {
+        onIcon.classList.remove('hidden');
+        offIcon.classList.add('hidden');
+      } else {
+        onIcon.classList.add('hidden');
+        offIcon.classList.remove('hidden');
+      }
+    }
+
+    function toggleSound() {
+      soundEnabled = !soundEnabled;
+      updateSoundIcon();
+      if (soundEnabled) sfxClick();
+    }
+
+    function sfxClick() { playTone(520, 0.07, 'sine', 0.06); }
+    function sfxTick() { playTone(760, 0.05, 'triangle', 0.05); }
+    function sfxPet() {
+      playTone(587.33, 0.12, 'sine', 0.07, 0);
+      playTone(880, 0.16, 'sine', 0.07, 0.08);
+    }
+    function sfxCoin() {
+      playTone(987.77, 0.09, 'triangle', 0.08, 0);
+      playTone(1318.51, 0.18, 'triangle', 0.08, 0.07);
+    }
+    function sfxVictory() {
+      playTone(523.25, 0.12, 'triangle', 0.08, 0);
+      playTone(659.25, 0.12, 'triangle', 0.08, 0.1);
+      playTone(783.99, 0.12, 'triangle', 0.08, 0.2);
+      playTone(1046.50, 0.28, 'triangle', 0.09, 0.3);
+    }
+
+    // =========================================================================
+    // 2. DONNÉES : ESPÈCES, STADES, BOUTIQUE PAR ÂGE, HABITATS & DÉFIS
+    // =========================================================================
+    const SPECIES_DATA = {
+      loutre: {
+        id: 'loutre',
+        name: 'Loutre',
+        emoji: '🦦',
+        defaultPetName: 'Loulou',
+        tagline: 'Curieuse, joueuse et adore les défis rapides.'
+      },
+      chat: {
+        id: 'chat',
+        name: 'Chat',
+        emoji: '🐱',
+        defaultPetName: 'Moka',
+        tagline: 'Calme et précis, parfait pour les missions minutieuses.'
+      },
+      dragon: {
+        id: 'dragon',
+        name: 'Dragon',
+        emoji: '🐉',
+        defaultPetName: 'Ignis',
+        tagline: 'Courageux et plein d’énergie à chaque victoire.'
+      },
+      corbeau: {
+        id: 'corbeau',
+        name: 'Corbeau',
+        emoji: '🐦‍⬛',
+        defaultPetName: 'Kael',
+        tagline: 'Malin et observateur, roi des chasseurs d’objets.'
+      },
+      renard: {
+        id: 'renard',
+        name: 'Renard',
+        emoji: '🦊',
+        defaultPetName: 'Vesper',
+        tagline: 'Rapide et astucieux sur les sprints chronométrés.'
+      },
+      grenouille: {
+        id: 'grenouille',
+        name: 'Grenouille',
+        emoji: '🐸',
+        defaultPetName: 'Reinette',
+        tagline: 'Bondissante et vive, elle adore les défis express.'
+      },
+      panthere: {
+        id: 'panthere',
+        name: 'Panthère',
+        emoji: '🐆',
+        defaultPetName: 'Neige',
+        tagline: 'Agile et silencieuse, reine de l’organisation.'
+      },
+      daim: {
+        id: 'daim',
+        name: 'Daim',
+        emoji: '🦌',
+        defaultPetName: 'Bambi',
+        tagline: 'Doux et attentif, il veille sur chaque recoin.'
+      },
+      faucon: {
+        id: 'faucon',
+        name: 'Faucon',
+        emoji: '🦅',
+        defaultPetName: 'Pèlerin',
+        tagline: 'Perçant et rapide, aucun objet ne lui échappe.'
+      },
+      souris: {
+        id: 'souris',
+        name: 'Souris',
+        emoji: '🐭',
+        defaultPetName: 'Roussette',
+        tagline: 'Petite et maline, parfaite pour les petits objets.'
+      },
+      ecureuil: {
+        id: 'ecureuil',
+        name: 'Écureuil',
+        emoji: '🐿️',
+        defaultPetName: 'Noisette',
+        tagline: 'Champion du tri et du rangement dans les boîtes.'
+      }
+    };
+
+    const SPECIES_VISUAL_CONFIG = {
+      loutre: {
+        fallbackEmoji: '🦦',
+        glow: 'rgba(251, 191, 36, 0.32)',
+        label: 'Loutre',
+        localStageImages: [
+          'images/loutre_nouveau_ne.png',
+          'images/loutre_bebe.png',
+          'images/loutre_junior.png',
+          'images/loutre_adulte.png'
+        ],
+        localFallback: 'images/loutre.png'
+      },
+      chat: {
+        fallbackEmoji: '🐱',
+        glow: 'rgba(96, 165, 250, 0.32)',
+        label: 'Chat',
+        localStageImages: [
+          'images/chat_nouveau_ne.png',
+          'images/chat_bebe.png',
+          'images/chat_junior.png',
+          'images/chat_adulte.png'
+        ],
+        localFallback: 'images/chat.png'
+      },
+      dragon: {
+        fallbackEmoji: '🐉',
+        glow: 'rgba(168, 85, 247, 0.35)',
+        label: 'Dragon',
+        localStageImages: [
+          'images/dragonnet_nouveau_ne.png',
+          'images/dragonnet_bebe.png',
+          'images/dragonnet_junior.png',
+          'images/dragonnet_adulte.png'
+        ],
+        localFallback: 'images/dragonnet.png'
+      },
+      corbeau: {
+        fallbackEmoji: '🐦‍⬛',
+        glow: 'rgba(99, 102, 241, 0.35)',
+        label: 'Corbeau',
+        localStageImages: [
+          'images/corbeau_nouveau_ne.png',
+          'images/corbeau_bebe.png',
+          'images/corbeau_junior.png',
+          'images/corbeau_adulte.png'
+        ],
+        localFallback: 'images/corbeau.png'
+      },
+      renard: {
+        fallbackEmoji: '🦊',
+        glow: 'rgba(249, 115, 22, 0.32)',
+        label: 'Renard',
+        localStageImages: [
+          'images/renard_nouveau_ne.png',
+          'images/renard_bebe.png',
+          'images/renard_junior.png',
+          'images/renard_adulte.png'
+        ],
+        localFallback: 'images/renard.png'
+      },
+      grenouille: {
+        fallbackEmoji: '🐸',
+        glow: 'rgba(34, 197, 94, 0.32)',
+        label: 'Grenouille',
+        localStageImages: [
+          'images/grenouille_nouveau_ne.png',
+          'images/grenouille_bebe.png',
+          'images/grenouille_junior.png',
+          'images/grenouille_adulte.png'
+        ],
+        localFallback: 'images/grenouille.png'
+      },
+      panthere: {
+        fallbackEmoji: '🐆',
+        glow: 'rgba(148, 163, 184, 0.32)',
+        label: 'Panthère des neiges',
+        localStageImages: [
+          'images/panthere_nouveau_ne.png',
+          'images/panthere_bebe.png',
+          'images/panthere_junior.png',
+          'images/panthere_adulte.png'
+        ],
+        localFallback: 'images/panthere.png'
+      },
+      daim: {
+        fallbackEmoji: '🦌',
+        glow: 'rgba(217, 119, 6, 0.32)',
+        label: 'Daim',
+        localStageImages: [
+          'images/daim_nouveau_ne.png',
+          'images/daim_bebe.png',
+          'images/daim_junior.png',
+          'images/daim_adulte.png'
+        ],
+        localFallback: 'images/daim.png'
+      },
+      faucon: {
+        fallbackEmoji: '🦅',
+        glow: 'rgba(56, 189, 248, 0.32)',
+        label: 'Faucon pèlerin',
+        localStageImages: [
+          'images/faucon_nouveau_ne.png',
+          'images/faucon_bebe.png',
+          'images/faucon_junior.png',
+          'images/faucon_adulte.png'
+        ],
+        localFallback: 'images/faucon.png'
+      },
+      souris: {
+        fallbackEmoji: '🐭',
+        glow: 'rgba(244, 114, 182, 0.32)',
+        label: 'Souris rousse',
+        localStageImages: [
+          'images/souris_nouveau_ne.png',
+          'images/souris_bebe.png',
+          'images/souris_junior.png',
+          'images/souris_adulte.png'
+        ],
+        localFallback: 'images/souris.png'
+      },
+      ecureuil: {
+        fallbackEmoji: '🐿️',
+        glow: 'rgba(234, 88, 12, 0.32)',
+        label: 'Écureuil',
+        localStageImages: [
+          'images/ecureuil_nouveau_ne.png',
+          'images/ecureuil_bebe.png',
+          'images/ecureuil_junior.png',
+          'images/ecureuil_adulte.png'
+        ],
+        localFallback: 'images/ecureuil.png'
+      }
+    };
+
+    const EVOLUTION_STAGES = [
+      { level: 1, era: 'newborn', label: 'Nouveau-né', minXp: 0 },
+      { level: 2, era: 'baby', label: 'Bébé', minXp: 900 },
+      { level: 3, era: 'junior', label: 'Junior', minXp: 2200 },
+      { level: 4, era: 'adult', label: 'Adulte', minXp: 4000 }
+    ];
+
+    const HABITAT_THEMES = {
+      none: {
+        id: 'none',
+        name: 'Aucun habitat équipé',
+        localBg: null,
+        gradient: 'radial-gradient(circle at 50% 42%, #1E293B 0%, #0F172A 65%, #090D16 100%)',
+        borderClass: 'border-[#253044]',
+        badgeIcon: '🏠',
+        decorTop: [],
+        decorBottom: []
+      },
+      hab_clearing: {
+        id: 'hab_clearing',
+        name: 'Clairière Enchantée',
+        localBg: ['images/habitat_clairiere.jpeg', 'images/habitat_clairiere.jpg'],
+        gradient: 'radial-gradient(circle at 50% 30%, #10B981 0%, #065F46 48%, #06281E 100%)',
+        borderClass: 'border-emerald-400/50',
+        badgeIcon: '🌿',
+        decorTop: ['✨', '🍃', '🦋', '✨'],
+        decorBottom: ['🍄', '🌿', '🌸', '🪵']
+      },
+      hab_cozy: {
+        id: 'hab_cozy',
+        name: 'Salon Cosy',
+        localBg: ['images/habitat_salon.jpeg', 'images/habitat_salon.jpg'],
+        gradient: 'radial-gradient(circle at 50% 30%, #D97706 0%, #78350F 48%, #291206 100%)',
+        borderClass: 'border-amber-400/50',
+        badgeIcon: '🕯️',
+        decorTop: ['🕯️', '✨', '🧶', '🕯️'],
+        decorBottom: ['🛋️', '📚', '🧸', '☕']
+      },
+      hab_serre: {
+        id: 'hab_serre',
+        name: 'Serre Suspendue',
+        localBg: ['images/habitat_serre.jpeg', 'images/habitat_serre.jpg'],
+        gradient: 'radial-gradient(circle at 50% 30%, #34D399 0%, #047857 48%, #042F2E 100%)',
+        borderClass: 'border-teal-300/50',
+        badgeIcon: '🪴',
+        decorTop: ['✨', '🌿', '🕊️', '✨'],
+        decorBottom: ['🪴', '🌸', '☀️', '🍃']
+      },
+      hab_jungle: {
+        id: 'hab_jungle',
+        name: 'Pavillon Jungle',
+        localBg: ['images/habitat_jungle.jpeg', 'images/habitat_jungle.jpg'],
+        gradient: 'radial-gradient(circle at 50% 30%, #16A34A 0%, #14532D 48%, #052E16 100%)',
+        borderClass: 'border-lime-400/50',
+        badgeIcon: '🌴',
+        decorTop: ['🦜', '🌿', '✨', '🍃'],
+        decorBottom: ['🌴', '🌺', '🎋', '🪵']
+      },
+      hab_oasis: {
+        id: 'hab_oasis',
+        name: 'Oasis Étoilée',
+        localBg: ['images/habitat_oasis.jpeg', 'images/habitat_oasis.jpg'],
+        gradient: 'radial-gradient(circle at 50% 30%, #F59E0B 0%, #B45309 48%, #451A03 100%)',
+        borderClass: 'border-amber-300/50',
+        badgeIcon: '🏜️',
+        decorTop: ['✨', '🌙', '🏮', '✨'],
+        decorBottom: ['🌴', '⛺', '💧', '⭐']
+      },
+      hab_crystal: {
+        id: 'hab_crystal',
+        name: 'Grotte aux Cristaux',
+        localBg: ['images/habitat_grotte.jpeg', 'images/habitat_grotte.jpg'],
+        gradient: 'radial-gradient(circle at 50% 30%, #3B82F6 0%, #1E3A8A 48%, #0B1437 100%)',
+        borderClass: 'border-sky-400/50',
+        badgeIcon: '💎',
+        decorTop: ['💎', '✨', '💠', '💎'],
+        decorBottom: ['🔮', '💎', '🌊', '🪨']
+      },
+      hab_igloo: {
+        id: 'hab_igloo',
+        name: 'Igloo Aurore',
+        localBg: ['images/habitat_igloo.jpeg', 'images/habitat_igloo.jpg'],
+        gradient: 'radial-gradient(circle at 50% 30%, #38BDF8 0%, #0369A1 48%, #082F49 100%)',
+        borderClass: 'border-cyan-300/50',
+        badgeIcon: '❄️',
+        decorTop: ['❄️', '✨', '🌨️', '❄️'],
+        decorBottom: ['🧊', '🕯️', '🧣', '⭐']
+      },
+      hab_marin: {
+        id: 'hab_marin',
+        name: 'Palais Sous-Marin',
+        localBg: ['images/habitat_marin.jpeg', 'images/habitat_marin.jpg'],
+        gradient: 'radial-gradient(circle at 50% 30%, #0EA5E9 0%, #1D4ED8 48%, #172554 100%)',
+        borderClass: 'border-blue-400/50',
+        badgeIcon: '🐚',
+        decorTop: ['🫧', '🐠', '✨', '🫧'],
+        decorBottom: ['🐚', '🪸', '🌊', '✨']
+      },
+      hab_volcan: {
+        id: 'hab_volcan',
+        name: 'Refuge Volcanique',
+        localBg: ['images/habitat_volcan.jpeg', 'images/habitat_volcan.jpg'],
+        gradient: 'radial-gradient(circle at 50% 30%, #EA580C 0%, #9A3412 48%, #431407 100%)',
+        borderClass: 'border-orange-500/50',
+        badgeIcon: '🔥',
+        decorTop: ['🔥', '✨', '🏮', '🔥'],
+        decorBottom: ['🌋', '🕯️', '🪨', '✨']
+      },
+      hab_space: {
+        id: 'hab_space',
+        name: 'Observatoire Spatial',
+        localBg: ['images/habitat_observatoire.jpeg', 'images/habitat_observatoire.jpg'],
+        gradient: 'radial-gradient(circle at 50% 30%, #9333EA 0%, #3B0764 48%, #0D041C 100%)',
+        borderClass: 'border-purple-400/50',
+        badgeIcon: '🪐',
+        decorTop: ['⭐', '🪐', '🌙', '🌟'],
+        decorBottom: ['🔭', '🚀', '☄️', '✨']
+      }
+    };
+
+    const SHOP_ITEMS = [
+      { id: 'nb_bottle', category: 'accessory', era: 'newborn', name: 'Biberon Magique', desc: 'Un biberon tiède étoilé pour bien grandir.', icon: '🍼', price: 25 },
+      { id: 'nb_plush', category: 'accessory', era: 'newborn', name: 'Doudou Tout-Doux', desc: 'Son compagnon câlin pour la sieste.', icon: '🧸', price: 35 },
+      { id: 'nb_yarn', category: 'accessory', era: 'newborn', name: 'Pelote Douillette', desc: 'Une boule toute douce pour se blottir.', icon: '🧶', price: 45 },
+      { id: 'nb_nightlight', category: 'accessory', era: 'newborn', name: 'Veilleuse Lune', desc: 'Une douce lumière rassurante la nuit.', icon: '🌙', price: 60 },
+
+      { id: 'baby_duck', category: 'accessory', era: 'baby', name: 'Canard de Bain', desc: 'Un petit compagnon rigolo pour jouer.', icon: '🦆', price: 35 },
+      { id: 'baby_ball', category: 'accessory', era: 'baby', name: 'Balle Rebondissante', desc: 'Parfaite pour se dégourdir les pattes.', icon: '⚽', price: 45 },
+      { id: 'baby_rattle', category: 'accessory', era: 'baby', name: 'Carillon Étoilé', desc: 'Tinte doucement après chaque rangement.', icon: '🎐', price: 60 },
+      { id: 'baby_bow', category: 'accessory', era: 'baby', name: 'Ruban Joyeux', desc: 'Un joli nœud coloré pour les jeunes joueurs.', icon: '🎀', price: 75 },
+
+      { id: 'jun_glasses', category: 'accessory', era: 'junior', name: 'Lunettes Explorateur', desc: 'Pour repérer le moindre objet qui traîne.', icon: '👓', price: 45 },
+      { id: 'jun_bag', category: 'accessory', era: 'junior', name: 'Sac d’Aventure', desc: 'Prêt pour toutes les grandes expéditions.', icon: '🎒', price: 60 },
+      { id: 'jun_compass', category: 'accessory', era: 'junior', name: 'Boussole Astrale', desc: 'Indique toujours la bonne étagère.', icon: '🧭', price: 75 },
+      { id: 'jun_skateboard', category: 'accessory', era: 'junior', name: 'Planche Agile', desc: 'Pour foncer ranger toute la chambre.', icon: '🛹', price: 95 },
+
+      { id: 'adu_crown', category: 'accessory', era: 'adult', name: 'Couronne Stellaire', desc: 'La récompense suprême des grands maîtres.', icon: '👑', price: 110 },
+      { id: 'adu_trophy', category: 'accessory', era: 'adult', name: 'Trophée d’Or', desc: 'Symbole d’une chambre toujours impeccable.', icon: '🏆', price: 130 },
+      { id: 'adu_lantern', category: 'accessory', era: 'adult', name: 'Lanterne Ancienne', desc: 'Éclaire le sanctuaire d’une lueur dorée.', icon: '🏮', price: 145 },
+      { id: 'adu_orb', category: 'accessory', era: 'adult', name: 'Sphère Céleste', desc: 'Un artefact mystique de sagesse et d’ordre.', icon: '🔮', price: 165 },
+
+      { id: 'hab_clearing', category: 'habitat', era: 'all', unlockStage: 0, name: 'Clairière Enchantée', desc: 'Une cabane de branches et mousse sous les lucioles.', icon: '🌿', price: 45 },
+      { id: 'hab_cozy', category: 'habitat', era: 'all', unlockStage: 0, name: 'Salon Cosy', desc: 'Un salon douillet au cœur d’un arbre illuminé.', icon: '🕯️', price: 60 },
+      { id: 'hab_igloo', category: 'habitat', era: 'all', unlockStage: 0, name: 'Igloo Aurore', desc: 'Un cocon glacé réchauffé par de douces lanternes.', icon: '❄️', price: 75 },
+
+      { id: 'hab_serre', category: 'habitat', era: 'all', unlockStage: 1, name: 'Serre Suspendue', desc: 'Un nid suspendu entouré de plantes et guirlandes.', icon: '🪴', price: 90 },
+      { id: 'hab_jungle', category: 'habitat', era: 'all', unlockStage: 1, name: 'Pavillon Jungle', desc: 'Un abri tropical niché au milieu des fougères.', icon: '🌴', price: 105 },
+
+      { id: 'hab_oasis', category: 'habitat', era: 'all', unlockStage: 2, name: 'Oasis Étoilée', desc: 'Une tente berbère au bord d’une source sous les palmiers.', icon: '🏜️', price: 120 },
+      { id: 'hab_crystal', category: 'habitat', era: 'all', unlockStage: 2, name: 'Grotte aux Cristaux', desc: 'Des cristaux lumineux et une cascade apaisante.', icon: '💎', price: 135 },
+
+      { id: 'hab_marin', category: 'habitat', era: 'all', unlockStage: 3, name: 'Palais Sous-Marin', desc: 'Un salon coquillage face aux profondeurs bleutées.', icon: '🐚', price: 155 },
+      { id: 'hab_volcan', category: 'habitat', era: 'all', unlockStage: 3, name: 'Refuge Volcanique', desc: 'Une caverne chaleureuse éclairée par la braise.', icon: '🔥', price: 175 },
+      { id: 'hab_space', category: 'habitat', era: 'all', unlockStage: 3, name: 'Observatoire Spatial', desc: 'Un dôme vitré avec télescope face aux étoiles.', icon: '🪐', price: 200 },
+
+      { id: 'nb_milk', category: 'care', era: 'newborn', effectEnergy: 15, effectXp: 5, name: 'Lait Chaud Étoilé', desc: 'Redonne +15% d’énergie et +5 XP.', icon: '🥛', price: 15 },
+      { id: 'nb_compote', category: 'care', era: 'newborn', effectEnergy: 25, effectXp: 10, name: 'Compote Douce', desc: 'Redonne +25% d’énergie et +10 XP.', icon: '🥣', price: 25 },
+      { id: 'nb_brioche', category: 'care', era: 'newborn', effectEnergy: 40, effectXp: 20, name: 'Brioche Nuage', desc: 'Redonne +40% d’énergie et +20 XP.', icon: '🥐', price: 40 },
+
+      { id: 'baby_strawberry', category: 'care', era: 'baby', effectEnergy: 15, effectXp: 8, name: 'Fraises des Bois', desc: 'Redonne +15% d’énergie et +8 XP.', icon: '🍓', price: 18 },
+      { id: 'baby_pancake', category: 'care', era: 'baby', effectEnergy: 30, effectXp: 15, name: 'Crêpe Dorée', desc: 'Redonne +30% d’énergie et +15 XP.', icon: '🥞', price: 30 },
+      { id: 'baby_honey', category: 'care', era: 'baby', effectEnergy: 45, effectXp: 25, name: 'Pot de Miel Doré', desc: 'Redonne +45% d’énergie et +25 XP.', icon: '🍯', price: 45 },
+
+      { id: 'jun_apple', category: 'care', era: 'junior', effectEnergy: 15, effectXp: 10, name: 'Pomme Croquante', desc: 'Redonne +15% d’énergie et +10 XP.', icon: '🍎', price: 20 },
+      { id: 'jun_pie', category: 'care', era: 'junior', effectEnergy: 30, effectXp: 20, name: 'Tarte aux Baies', desc: 'Redonne +30% d’énergie et +20 XP.', icon: '🥧', price: 35 },
+      { id: 'jun_ramen', category: 'care', era: 'junior', effectEnergy: 50, effectXp: 30, name: 'Bol Énergétique', desc: 'Redonne +50% d’énergie et +30 XP.', icon: '🍜', price: 50 },
+
+      { id: 'adu_peach', category: 'care', era: 'adult', effectEnergy: 20, effectXp: 12, name: 'Pêche Solaire', desc: 'Redonne +20% d’énergie et +12 XP.', icon: '🍑', price: 25 },
+      { id: 'adu_feast', category: 'care', era: 'adult', effectEnergy: 40, effectXp: 25, name: 'Grand Banquet', desc: 'Redonne +40% d’énergie et +25 XP.', icon: '🍲', price: 45 },
+      { id: 'adu_cake', category: 'care', era: 'adult', effectEnergy: 60, effectXp: 40, name: 'Gâteau Céleste', desc: 'Redonne +60% d’énergie et +40 XP.', icon: '🎂', price: 65 }
+    ];
+
+    const CONSTRAINT_CHALLENGES = [
+      { id: 'c_easy_1', difficulty: 'easy', minSeconds: 45, title: 'Chasse à la lettre E', desc: 'Range 5 objets dont le nom contient la lettre E.', rewardCoins: 20, rewardXp: 20 },
+      { id: 'c_easy_2', difficulty: 'easy', minSeconds: 45, title: 'Duo de Couleur', desc: 'Range 5 objets de la même couleur (ex. bleu, rouge ou bois).', rewardCoins: 20, rewardXp: 20 },
+      { id: 'c_easy_3', difficulty: 'easy', minSeconds: 45, title: 'Mission Doudous & Peluches', desc: 'Remets toutes les peluches et figurines à leur place.', rewardCoins: 20, rewardXp: 20 },
+      { id: 'c_easy_4', difficulty: 'easy', minSeconds: 45, title: 'Trio Express', desc: 'Choisis 3 gros objets qui traînent et range-les proprement.', rewardCoins: 20, rewardXp: 20 },
+      { id: 'c_easy_5', difficulty: 'easy', minSeconds: 45, title: 'Rangement Ninja 🥷', desc: 'Range 5 objets sur la pointe des pieds sans faire le moindre bruit !', rewardCoins: 20, rewardXp: 20 },
+      { id: 'c_easy_6', difficulty: 'easy', minSeconds: 45, title: 'Chasse au Trésor Caché 🔍', desc: 'Vérifie sous le lit, la couette et les coussins et range tout ce qui s’y cache.', rewardCoins: 20, rewardXp: 20 },
+
+      { id: 'c_med_1', difficulty: 'medium', minSeconds: 60, title: 'Mission Livres & BD', desc: 'Aligne tous les livres, cahiers et BD sur l’étagère.', rewardCoins: 30, rewardXp: 30 },
+      { id: 'c_med_2', difficulty: 'medium', minSeconds: 60, title: 'Trio du Bureau', desc: 'Range 8 petits objets (crayons, feutres, papiers) sur le bureau.', rewardCoins: 30, rewardXp: 30 },
+      { id: 'c_med_3', difficulty: 'medium', minSeconds: 60, title: 'Panier à Linge', desc: 'Ramasse tous les vêtements qui traînent et mets-les au panier ou pliés.', rewardCoins: 30, rewardXp: 30 },
+      { id: 'c_med_4', difficulty: 'medium', minSeconds: 60, title: 'Chasse aux Jouets', desc: 'Range 10 jouets ou pièces de construction dans leur boîte.', rewardCoins: 30, rewardXp: 30 },
+      { id: 'c_med_5', difficulty: 'medium', minSeconds: 60, title: 'Chasse aux Intrus 🕵️', desc: 'Repère et rapporte à leur vraie place tous les objets qui n’appartiennent pas à cette pièce.', rewardCoins: 30, rewardXp: 30 },
+      { id: 'c_med_6', difficulty: 'medium', minSeconds: 60, title: 'Mission Un Seul Voyage 🧺', desc: 'Réunis un maximum d’objets qui traînent dans tes bras et range-les en un seul aller-retour.', rewardCoins: 30, rewardXp: 30 },
+
+      { id: 'c_hard_1', difficulty: 'hard', minSeconds: 90, title: 'Opération Sol Net', desc: 'Libère entièrement le sol de la chambre : plus rien ne doit toucher le tapis !', rewardCoins: 45, rewardXp: 45 },
+      { id: 'c_hard_2', difficulty: 'hard', minSeconds: 90, title: 'Zéro Objet sur le Lit', desc: 'Débarrasse complètement le lit, refais la couette et range chaque affaire.', rewardCoins: 45, rewardXp: 45 },
+      { id: 'c_hard_3', difficulty: 'hard', minSeconds: 90, title: 'Grand Tri des Boîtes', desc: 'Trie et range 15 objets dans leurs bacs respectifs.', rewardCoins: 45, rewardXp: 45 },
+      { id: 'c_hard_4', difficulty: 'hard', minSeconds: 90, title: 'Tri du Plus Petit au Plus Grand 📏', desc: 'Range d’abord tous les tout petits objets, puis les moyens, puis les grands !', rewardCoins: 45, rewardXp: 45 }
+    ];
+
+    const DIFFICULTY_META = {
+      easy: { label: 'Facile', badgeClass: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30', icon: '🌱' },
+      medium: { label: 'Moyen', badgeClass: 'bg-blue-500/15 text-blue-300 border-blue-500/30', icon: '⚡' },
+      hard: { label: 'Difficile', badgeClass: 'bg-purple-500/15 text-purple-300 border-purple-500/30', icon: '🔥' }
+    };
+
+    // =========================================================================
+    // 3. ÉTAT PERSISTANT, INACTIVITÉ 24H & TRANSITION D'ÂGE
+    // =========================================================================
+    const STORAGE_KEY = 'rangement_quest_state_v3';
+    const DAY_MS = 24 * 60 * 60 * 1000;
+
+    let currentTab = 'sanctuary';
+    let shopCategory = 'accessory';
+    let activeChallenge = null;
+    let challengeTimerInterval = null;
+    let eatingPreviewItem = null;
+
+    function getDefaultState() {
+      return {
+        adopted: false,
+        species: 'loutre',
+        petName: 'Loulou',
+        coins: 40,
+        xp: 0,
+        energy: 85,
+        totalChallenges: 0,
+        challengeRecords: {},
+        bestSprint30: 0,
+        bestRace10: null,
+        ownedItems: [],
+        equippedHabitat: 'none',
+        equippedSlots: [null, null, null, null],
+        lastEra: 'newborn',
+        lastActiveAt: Date.now()
+      };
+    }
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return getDefaultState();
+        const parsed = JSON.parse(raw);
+        const merged = {
+          ...getDefaultState(),
+          ...parsed,
+          challengeRecords: parsed && typeof parsed.challengeRecords === 'object' && parsed.challengeRecords !== null
+            ? parsed.challengeRecords
+            : {},
+          equippedSlots: Array.isArray(parsed.equippedSlots) && parsed.equippedSlots.length === 4
+            ? parsed.equippedSlots
+            : [null, null, null, null]
+        };
+        if (!HABITAT_THEMES[merged.equippedHabitat]) {
+          merged.equippedHabitat = 'none';
+        }
+        return merged;
+      } catch (e) {
+        return getDefaultState();
+      }
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      } catch (e) {}
+    }
+
+    let state = loadState();
+
+    function applyInactivityDecay(silent = false) {
+      if (!state.adopted) {
+        state.lastActiveAt = Date.now();
+        saveState();
+        return;
+      }
+      const now = Date.now();
+      const last = state.lastActiveAt || now;
+      const elapsed = now - last;
+      const daysPassed = Math.floor(elapsed / DAY_MS);
+
+      if (daysPassed >= 1) {
+        const loss = daysPassed * 10;
+        const oldEnergy = state.energy;
+        state.energy = Math.max(10, state.energy - loss);
+        state.lastActiveAt = last + daysPassed * DAY_MS;
+        saveState();
+        if (!silent && state.energy < oldEnergy) {
+          showToast(`😴 ${daysPassed} jour(s) sans visite : énergie -${oldEnergy - state.energy}%`, 'info');
+        }
+      } else {
+        state.lastActiveAt = now;
+        saveState();
+      }
+    }
+
+    // =========================================================================
+    // 4. HELPERS VISUELS & PROGRESSION
+    // =========================================================================
+    function getStageIndexFromXp(xp) {
+      let idx = 0;
+      for (let i = 0; i < EVOLUTION_STAGES.length; i++) {
+        if (xp >= EVOLUTION_STAGES[i].minXp) {
+          idx = i;
+        }
+      }
+      return idx;
+    }
+
+    function getStageInfoFromXp(xp) {
+      const idx = getStageIndexFromXp(xp);
+      const current = EVOLUTION_STAGES[idx] || EVOLUTION_STAGES[0];
+      const next = EVOLUTION_STAGES[idx + 1] || null;
+      return {
+        index: idx,
+        current,
+        next,
+        isMax: !next
+      };
+    }
+
+    function getCurrentEra() {
+      return getStageInfoFromXp(state.xp).current.era;
+    }
+
+    function grantXp(amount) {
+      const prevStage = getStageInfoFromXp(state.xp);
+      state.xp += amount;
+      const newStage = getStageInfoFromXp(state.xp);
+
+      if (newStage.index > prevStage.index) {
+        state.equippedSlots = [null, null, null, null];
+        state.lastEra = newStage.current.era;
+        showToast(`🎉 ${state.petName} devient ${newStage.current.label} ! Nouveaux objets en boutique !`, 'success');
+      }
+    }
+
+    function getLocalPetImageCandidates(speciesId, xp = 0) {
+      const cfg = SPECIES_VISUAL_CONFIG[speciesId] || SPECIES_VISUAL_CONFIG.loutre;
+      const stageIndex = getStageIndexFromXp(xp);
+      const candidates = [];
+
+      if (Array.isArray(cfg.localStageImages) && cfg.localStageImages[stageIndex]) {
+        candidates.push(cfg.localStageImages[stageIndex]);
+      }
+      if (Array.isArray(cfg.localStageImages)) {
+        cfg.localStageImages.forEach((imgPath) => {
+          if (imgPath && !candidates.includes(imgPath)) {
+            candidates.push(imgPath);
+          }
+        });
+      }
+      if (cfg.localFallback && !candidates.includes(cfg.localFallback)) {
+        candidates.push(cfg.localFallback);
+      }
+      return candidates;
+    }
+
+    function renderLocalImageWithFallback(candidates, altText, extraClasses, styleAttr, fallbackHtml) {
+      const cleanList = (Array.isArray(candidates) ? candidates : [candidates]).filter(Boolean);
+      if (!cleanList.length) {
+        return fallbackHtml;
+      }
+
+      const encodedList = encodeURIComponent(JSON.stringify(cleanList));
+      const firstSrc = cleanList[0];
+
+      return `
+        <img
+          src="${firstSrc}"
+          alt="${altText}"
+          data-candidates="${encodedList}"
+          data-candidate-index="0"
+          class="${extraClasses || ''}"
+          style="${styleAttr || ''}"
+          onerror="handleLocalImageError(this)"
+        />
+        <div class="local-img-fallback hidden w-full h-full">${fallbackHtml}</div>
+      `;
+    }
+
+    window.handleLocalImageError = function (imgEl) {
+      try {
+        const rawList = imgEl.getAttribute('data-candidates');
+        const currentIdx = parseInt(imgEl.getAttribute('data-candidate-index') || '0', 10);
+        const candidates = rawList ? JSON.parse(decodeURIComponent(rawList)) : [];
+        const nextIdx = currentIdx + 1;
+
+        if (nextIdx < candidates.length) {
+          imgEl.setAttribute('data-candidate-index', String(nextIdx));
+          imgEl.src = candidates[nextIdx];
+          return;
+        }
+      } catch (e) {}
+
+      imgEl.classList.add('hidden');
+      const fallbackEl = imgEl.parentElement && imgEl.parentElement.querySelector('.local-img-fallback');
+      if (fallbackEl) {
+        fallbackEl.classList.remove('hidden');
+      }
+    };
+
+    function buildHabitatBackdropHTML(habitatId) {
+      const hab = HABITAT_THEMES[habitatId] || HABITAT_THEMES.none;
+      const fallbackBg = `<div class="w-full h-full" style="background: ${hab.gradient};"></div>`;
+
+      return `
+        <div class="absolute inset-0 overflow-hidden pointer-events-none">
+          ${hab.localBg
+            ? renderLocalImageWithFallback(hab.localBg, hab.name, 'w-full h-full object-cover opacity-90', '', fallbackBg)
+            : fallbackBg}
+          <div class="absolute inset-0 bg-gradient-to-b from-[#0D1117]/20 via-transparent to-[#0D1117]/55"></div>
+        </div>
+      `;
+    }
+
+    function buildPetArtHTML(speciesId, options = {}) {
+      const {
+        size = 'lg',
+        xp = state.xp,
+        energy = state.energy,
+        showSparkles = true,
+        eatingItem = null
+      } = options;
+
+      const cfg = SPECIES_VISUAL_CONFIG[speciesId] || SPECIES_VISUAL_CONFIG.loutre;
+      const stageInfo = getStageInfoFromXp(xp);
+      const isTired = energy < 25;
+      const animClass = eatingItem
+        ? 'anim-bounce'
+        : (isTired ? 'anim-tired' : 'anim-breathe');
+
+      const sizeMap = {
+        sm: { box: 'w-16 h-16', img: 'w-16 h-16 object-contain', emoji: 'text-4xl' },
+        md: { box: 'w-28 h-28', img: 'w-28 h-28 object-contain', emoji: 'text-5xl' },
+        lg: { box: 'w-40 h-40 sm:w-44 sm:h-44', img: 'w-36 h-36 sm:w-40 sm:h-40 object-contain', emoji: 'text-7xl' }
+      };
+      const sz = sizeMap[size] || sizeMap.lg;
+      const candidates = getLocalPetImageCandidates(speciesId, xp);
+      const fallbackVisual = `<div class="w-full h-full flex items-center justify-center ${sz.emoji}">${cfg.fallbackEmoji}</div>`;
+
+      const sparklesHtml = showSparkles ? `
+        <span class="sparkle-dot absolute top-1 left-2 w-2 h-2 rounded-full bg-amber-300/80 pointer-events-none" style="animation-delay: 0s;"></span>
+        <span class="sparkle-dot absolute top-4 right-2 w-1.5 h-1.5 rounded-full bg-yellow-200/80 pointer-events-none" style="animation-delay: 0.9s;"></span>
+      ` : '';
+
+      const eatingBadge = eatingItem
+        ? `<div class="mt-1 px-3 py-1 rounded-full bg-amber-500/25 border border-amber-400/50 text-amber-100 text-xs font-bold flex items-center gap-1.5 animate-bounce whitespace-nowrap shadow-lg">
+             <span>${eatingItem.icon}</span>
+             <span>Miam ! 💖</span>
+           </div>`
+        : '';
+
+      return `
+        <div class="relative flex flex-col items-center justify-center ${sz.box} ${animClass} select-none">
+          <div class="absolute inset-2 rounded-full blur-2xl pointer-events-none" style="background: ${cfg.glow};"></div>
+          ${sparklesHtml}
+          <div class="relative z-10 w-full h-full flex items-center justify-center">
+            ${renderLocalImageWithFallback(
+              candidates,
+              `${cfg.label} - ${stageInfo.current.label}`,
+              sz.img,
+              'filter: drop-shadow(0 12px 18px rgba(0,0,0,0.48));',
+              fallbackVisual
+            )}
+          </div>
+          ${eatingBadge}
+        </div>
+      `;
+    }
+
+    function renderAccessorySlotHTML(slotIndex) {
+      const itemId = state.equippedSlots[slotIndex];
+      const item = itemId ? SHOP_ITEMS.find((i) => i.id === itemId) : null;
+
+      if (!item) {
+        return `
+          <button
+            onclick="openSlotPicker(${slotIndex})"
+            title="Case vide — ouvrir la boutique d'accessoires"
+            class="w-14 h-14 rounded-2xl border border-dashed border-white/25 bg-slate-900/55 hover:bg-slate-800/75 hover:border-blue-400/50 backdrop-blur-sm flex flex-col items-center justify-center gap-0.5 text-slate-400 hover:text-blue-300 transition active:scale-95"
+          >
+            <span class="text-sm font-bold leading-none">+</span>
+            <span class="text-[9px] font-semibold">Vide</span>
+          </button>
+        `;
+      }
+
+      return `
+        <button
+          onclick="interactWithSlot(${slotIndex})"
+          title="${item.name}"
+          class="w-14 h-14 rounded-2xl border border-amber-400/40 bg-slate-900/75 hover:bg-slate-800/90 backdrop-blur-sm flex flex-col items-center justify-center gap-0.5 shadow-lg transition active:scale-90"
+        >
+          <span class="text-2xl leading-none">${item.icon}</span>
+          <span class="text-[9px] font-semibold text-slate-200 truncate max-w-[50px] px-0.5">${item.name.split(' ')[0]}</span>
+        </button>
+      `;
+    }
+
+    // =========================================================================
+    // 5. NOTIFICATIONS & MODALES
+    // =========================================================================
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      if (!container) return;
+
+      const colorMap = {
+        success: 'bg-emerald-950/95 border-emerald-500/40 text-emerald-200',
+        warning: 'bg-amber-950/95 border-amber-500/40 text-amber-200',
+        info: 'bg-[#151B26]/95 border-blue-500/40 text-slate-100'
+      };
+
+      const toast = document.createElement('div');
+      toast.className = `px-4 py-2.5 rounded-2xl border backdrop-blur-md text-xs font-semibold shadow-xl transition-all duration-300 text-center ${colorMap[type] || colorMap.info}`;
+      toast.textContent = message;
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(-8px)';
+        setTimeout(() => toast.remove(), 300);
+      }, 2600);
+    }
+
+    function openModal(innerHtml) {
+      const overlay = document.getElementById('modal-overlay');
+      const box = document.getElementById('modal-box');
+      if (!overlay || !box) return;
+      box.innerHTML = innerHtml;
+      overlay.classList.remove('hidden');
+      overlay.classList.add('flex');
+    }
+
+    function closeModal() {
+      const overlay = document.getElementById('modal-overlay');
+      if (!overlay) return;
+      overlay.classList.add('hidden');
+      overlay.classList.remove('flex');
+    }
+
+    // =========================================================================
+    // 6. ÉCRAN D'ADOPTION
+    // =========================================================================
+    let selectedSpecies = 'loutre';
+
+    function renderOnboarding() {
+      const nav = document.getElementById('bottom-nav');
+      if (nav) nav.classList.add('hidden');
+
+      const main = document.getElementById('main-content');
+      const speciesList = Object.values(SPECIES_DATA);
+      const currentSpec = SPECIES_DATA[selectedSpecies] || SPECIES_DATA.loutre;
+
+      main.innerHTML = `
+        <div class="p-5 flex-1 flex flex-col justify-between space-y-5">
+          <div class="space-y-1.5 text-center pt-2">
+            <span class="inline-block px-3 py-1 rounded-full bg-blue-500/15 border border-blue-500/30 text-blue-300 text-xs font-semibold">
+              Bienvenue dans Rangement Quest
+            </span>
+            <h2 class="text-xl font-extrabold text-white tracking-tight">Choisis ton compagnon</h2>
+            <p class="text-xs text-slate-400">Range ta chambre pour le faire grandir et débloquer ses objets.</p>
+          </div>
+
+          <div class="bg-[#151B26] border border-[#232D3F] rounded-3xl p-4 flex flex-col items-center text-center space-y-2 relative overflow-hidden">
+            ${buildPetArtHTML(selectedSpecies, { size: 'lg', xp: 0, energy: 100, showSparkles: true })}
+            <div>
+              <h3 class="text-base font-bold text-white">${currentSpec.name}</h3>
+              <p class="text-xs text-slate-400 max-w-xs">${currentSpec.tagline}</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-4 gap-2 max-h-40 overflow-y-auto pr-0.5">
+            ${speciesList.map((sp) => {
+              const isSelected = sp.id === selectedSpecies;
+              return `
+                <button onclick="selectOnboardingSpecies('${sp.id}')" class="p-2 rounded-2xl border flex flex-col items-center gap-1 transition ${isSelected ? 'bg-blue-500/20 border-blue-400 text-white shadow-lg shadow-blue-500/10' : 'bg-[#151B26] border-[#232D3F] text-slate-400 hover:border-slate-600'}">
+                  <span class="text-2xl">${sp.emoji}</span>
+                  <span class="text-[10px] font-semibold truncate w-full text-center">${sp.name}</span>
+                </button>
+              `;
+            }).join('')}
+          </div>
+
+          <div class="space-y-2">
+            <label class="block text-xs font-semibold text-slate-300">Donne-lui un prénom :</label>
+            <input
+              id="pet-name-input"
+              type="text"
+              maxlength="16"
+              value="${currentSpec.defaultPetName}"
+              placeholder="Ex. Loulou, Moka..."
+              class="w-full px-4 py-3 rounded-2xl bg-[#151B26] border border-[#2A3548] text-white text-sm font-semibold focus:outline-none focus:border-blue-500"
+            />
+          </div>
+
+          <button onclick="confirmAdoption()" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-sm shadow-lg shadow-blue-600/25 transition active:scale-[0.98]">
+            Adopter mon compagnon ✨
+          </button>
+        </div>
+      `;
+    }
+
+    function selectOnboardingSpecies(speciesId) {
+      sfxClick();
+      selectedSpecies = speciesId;
+      renderOnboarding();
+    }
+
+    function confirmAdoption() {
+      const input = document.getElementById('pet-name-input');
+      const spec = SPECIES_DATA[selectedSpecies] || SPECIES_DATA.loutre;
+      const chosenName = (input && input.value.trim()) ? input.value.trim() : spec.defaultPetName;
+
+      state = {
+        ...getDefaultState(),
+        adopted: true,
+        species: selectedSpecies,
+        petName: chosenName,
+        lastActiveAt: Date.now()
+      };
+      saveState();
+      sfxVictory();
+      showToast(`🎉 ${chosenName} rejoint ton sanctuaire !`, 'success');
+      switchTab('sanctuary');
+    }
+
+    // =========================================================================
+    // 7. ONGLET COMPAGNON (SANCTUAIRE SANS SUPERPOSITION)
+    // =========================================================================
+    function renderSanctuary() {
+      const nav = document.getElementById('bottom-nav');
+      if (nav) nav.classList.remove('hidden');
+
+      const main = document.getElementById('main-content');
+      const spec = SPECIES_DATA[state.species] || SPECIES_DATA.loutre;
+      const stageInfo = getStageInfoFromXp(state.xp);
+      const hab = HABITAT_THEMES[state.equippedHabitat] || HABITAT_THEMES.none;
+      const era = getCurrentEra();
+
+      let xpProgressPct = 100;
+      let xpProgressText = `${state.xp} XP (Stade Max)`;
+      if (!stageInfo.isMax) {
+        const span = stageInfo.next.minXp - stageInfo.current.minXp;
+        const done = state.xp - stageInfo.current.minXp;
+        xpProgressPct = Math.min(100, Math.max(0, Math.round((done / span) * 100)));
+        xpProgressText = `${state.xp} / ${stageInfo.next.minXp} XP`;
+      }
+
+      const energyColor = state.energy >= 50
+        ? 'bg-emerald-500'
+        : (state.energy >= 25 ? 'bg-amber-500' : 'bg-rose-500');
+
+      const quickFoodByEra = {
+        newborn: { id: 'nb_milk', icon: '🥛', label: 'Lait', price: 15, energy: 15, xp: 5 },
+        baby: { id: 'baby_strawberry', icon: '🍓', label: 'Fraises', price: 18, energy: 15, xp: 8 },
+        junior: { id: 'jun_apple', icon: '🍎', label: 'Pomme', price: 20, energy: 15, xp: 10 },
+        adult: { id: 'adu_peach', icon: '🍑', label: 'Pêche', price: 25, energy: 20, xp: 12 }
+      };
+      const quickFood = quickFoodByEra[era] || quickFoodByEra.newborn;
+
+      const topDecorHtml = (hab.decorTop && hab.decorTop.length)
+        ? `<div class="flex items-center justify-center gap-6 text-sm opacity-80 select-none pointer-events-none">${hab.decorTop.map((d) => `<span>${d}</span>`).join('')}</div>`
+        : '';
+
+      const bottomDecorHtml = (hab.decorBottom && hab.decorBottom.length)
+        ? `<div class="flex items-center gap-2 text-xs opacity-90 select-none pointer-events-none">${hab.decorBottom.map((d) => `<span>${d}</span>`).join('')}</div>`
+        : '';
+
+      main.innerHTML = `
+        <div class="p-4 space-y-4">
+
+          <div class="grid grid-cols-3 gap-2.5">
+            <div class="bg-[#151B26] border border-[#232D3F] rounded-2xl p-2.5 text-center">
+              <div class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Pièces</div>
+              <div class="text-sm font-extrabold text-amber-300 mt-0.5">🪙 ${state.coins}</div>
+            </div>
+            <div class="bg-[#151B26] border border-[#232D3F] rounded-2xl p-2.5 text-center">
+              <div class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Stade</div>
+              <div class="text-sm font-extrabold text-blue-300 mt-0.5">${stageInfo.current.label}</div>
+            </div>
+            <div class="bg-[#151B26] border border-[#232D3F] rounded-2xl p-2.5 text-center">
+              <div class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Défis</div>
+              <div class="text-sm font-extrabold text-emerald-300 mt-0.5">🏆 ${state.totalChallenges}</div>
+            </div>
+          </div>
+
+          <div id="pet-stage-card" class="relative rounded-3xl border ${hab.borderClass || 'border-[#253044]'} overflow-hidden shadow-xl transition-all duration-500">
+            ${buildHabitatBackdropHTML(state.equippedHabitat)}
+
+            <div class="relative z-10 p-4 flex flex-col gap-3">
+              <div class="flex items-start justify-between gap-2">
+                <div class="min-w-0 flex items-center gap-1.5">
+                  <div class="min-w-0">
+                    <div class="flex items-center gap-1.5">
+                      <h2 class="text-lg font-extrabold text-white leading-tight truncate">${state.petName}</h2>
+                      <button onclick="openRenamePetModal()" title="Changer le prénom" class="shrink-0 w-6 h-6 rounded-lg bg-slate-950/60 hover:bg-slate-900/90 border border-white/15 text-slate-200 text-[11px] flex items-center justify-center transition active:scale-95">
+                        ✏️
+                      </button>
+                    </div>
+                    <p class="text-xs text-slate-300 font-medium">${spec.name} · Niv. ${stageInfo.current.level} (${stageInfo.current.label})</p>
+                  </div>
+                </div>
+
+                <button onclick="petCompanion(event)" class="shrink-0 px-3 py-1.5 rounded-full bg-pink-500/25 hover:bg-pink-500/35 border border-pink-400/40 text-pink-200 text-xs font-bold flex items-center gap-1.5 transition active:scale-95">
+                  <span>💖</span><span>Caresser</span>
+                </button>
+              </div>
+
+              ${topDecorHtml}
+
+              <div class="grid grid-cols-[56px_1fr_56px] items-center gap-2 py-1">
+                <div class="flex flex-col items-center gap-3">
+                  ${renderAccessorySlotHTML(0)}
+                  ${renderAccessorySlotHTML(1)}
+                </div>
+
+                <div class="flex items-center justify-center min-h-[168px]">
+                  ${buildPetArtHTML(state.species, {
+                    size: 'lg',
+                    xp: state.xp,
+                    energy: state.energy,
+                    showSparkles: true,
+                    eatingItem: eatingPreviewItem
+                  })}
+                </div>
+
+                <div class="flex flex-col items-center gap-3">
+                  ${renderAccessorySlotHTML(2)}
+                  ${renderAccessorySlotHTML(3)}
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between px-3 py-1.5 rounded-xl bg-slate-950/65 border border-white/10 backdrop-blur-sm">
+                <div class="flex items-center gap-1.5 min-w-0">
+                  <span class="text-xs">${hab.badgeIcon}</span>
+                  <span class="text-[11px] font-semibold text-slate-200 truncate">${hab.name}</span>
+                </div>
+                ${bottomDecorHtml}
+              </div>
+
+              <div class="grid grid-cols-2 gap-2.5 pt-0.5">
+                <button onclick="quickFeed()" class="py-2.5 px-3 rounded-2xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/35 text-amber-200 text-xs font-bold flex items-center justify-center gap-1.5 transition active:scale-95">
+                  <span>${quickFood.icon}</span>
+                  <span>${quickFood.label} (${quickFood.price} 🪙)</span>
+                </button>
+
+                <button onclick="switchTab('challenges')" class="py-2.5 px-3 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-lg shadow-blue-600/25 transition active:scale-95">
+                  <span>⚡</span>
+                  <span>Lancer un défi</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Progression de vie & Bien-être -->
+          <div class="bg-[#151B26] border border-[#232D3F] rounded-3xl p-4 space-y-3.5">
+            <div class="space-y-1.5">
+              <div class="flex justify-between items-center text-xs">
+                <span class="font-semibold text-slate-200 flex items-center gap-1.5"><span>🌱</span> Progression de vie (${stageInfo.current.label})</span>
+                <span class="font-bold text-blue-300">${xpProgressText}</span>
+              </div>
+              <div class="w-full h-2.5 bg-[#0D1117] rounded-full overflow-hidden border border-white/5">
+                <div class="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full transition-all duration-500" style="width: ${xpProgressPct}%"></div>
+              </div>
+              <p class="text-[11px] text-slate-400">
+                ${stageInfo.isMax ? `${state.petName} a atteint son stade Adulte.` : `Prochaine étape : ${stageInfo.next.label} à ${stageInfo.next.minXp} XP.`}
+              </p>
+            </div>
+
+            <div class="space-y-1.5 pt-1 border-t border-white/5">
+              <div class="flex justify-between items-center text-xs">
+                <span class="font-semibold text-slate-200 flex items-center gap-1.5"><span>💛</span> Bien-être</span>
+                <span class="font-bold text-white">${state.energy}%</span>
+              </div>
+              <div class="w-full h-2.5 bg-[#0D1117] rounded-full overflow-hidden border border-white/5">
+                <div class="h-full ${energyColor} rounded-full transition-all duration-500" style="width: ${state.energy}%"></div>
+              </div>
+              <p class="text-[11px] text-slate-400">Caresse-le, donne-lui une friandise ou réussis des défis pour garder son bien-être au top.</p>
+            </div>
+          </div>
+
+          <!-- Réinitialisation / Nouvel animal -->
+          <div class="pt-1 flex flex-wrap justify-center gap-2">
+            <button onclick="openRenamePetModal()" class="px-3.5 py-2 rounded-xl bg-[#151B26] hover:bg-[#1E2634] border border-[#232D3F] text-slate-300 hover:text-white text-xs font-semibold transition flex items-center gap-1.5">
+              <span>✏️</span>
+              <span>Changer le prénom</span>
+            </button>
+            <button onclick="openResetPetModal()" class="px-3.5 py-2 rounded-xl bg-[#151B26] hover:bg-[#1E2634] border border-[#232D3F] text-slate-400 hover:text-slate-200 text-xs font-semibold transition flex items-center gap-1.5">
+              <span>🔄</span>
+              <span>Changer d'animal / Recommencer</span>
+            </button>
+          </div>
+
+        </div>
+      `;
+    }
+
+    function spawnJoyParticles() {
+      const card = document.getElementById('pet-stage-card');
+      if (!card) return;
+      const icons = ['💖', '✨', '😋', '💛'];
+      icons.forEach((sym, i) => {
+        const p = document.createElement('div');
+        p.className = 'floating-particle absolute z-30 text-xl';
+        p.style.left = `${36 + i * 9}%`;
+        p.style.top = `${42 + (i % 2) * 8}%`;
+        p.style.animationDelay = `${i * 0.08}s`;
+        p.textContent = sym;
+        card.appendChild(p);
+        setTimeout(() => p.remove(), 1100);
+      });
+    }
+
+    function petCompanion(event) {
+      sfxPet();
+      state.energy = Math.min(100, state.energy + 3);
+      state.lastActiveAt = Date.now();
+      saveState();
+
+      renderSanctuary();
+      spawnJoyParticles();
+    }
+
+    function quickFeed() {
+      const era = getCurrentEra();
+      const quickFoodByEra = {
+        newborn: { id: 'nb_milk', name: 'Lait Chaud Étoilé', icon: '🥛', price: 15, effectEnergy: 15, effectXp: 5 },
+        baby: { id: 'baby_strawberry', name: 'Fraises des Bois', icon: '🍓', price: 18, effectEnergy: 15, effectXp: 8 },
+        junior: { id: 'jun_apple', name: 'Pomme Croquante', icon: '🍎', price: 20, effectEnergy: 15, effectXp: 10 },
+        adult: { id: 'adu_peach', name: 'Pêche Solaire', icon: '🍑', price: 25, effectEnergy: 20, effectXp: 12 }
+      };
+      const food = quickFoodByEra[era] || quickFoodByEra.newborn;
+
+      if (state.coins < food.price) {
+        showToast(`Pas assez de pièces (${food.price} 🪙 requis).`, 'warning');
+        return;
+      }
+
+      sfxCoin();
+      state.coins -= food.price;
+      state.energy = Math.min(100, state.energy + food.effectEnergy);
+      state.lastActiveAt = Date.now();
+      grantXp(food.effectXp);
+      saveState();
+
+      eatingPreviewItem = food;
+      renderSanctuary();
+      spawnJoyParticles();
+      setTimeout(() => {
+        eatingPreviewItem = null;
+        if (currentTab === 'sanctuary') renderSanctuary();
+      }, 1700);
+    }
+
+    function openSlotPicker(slotIndex) {
+      sfxClick();
+      shopCategory = 'accessory';
+      switchTab('shop');
+      showToast(`Choisis un accessoire pour remplir la case #${slotIndex + 1} !`, 'info');
+    }
+
+    function interactWithSlot(slotIndex) {
+      const itemId = state.equippedSlots[slotIndex];
+      const item = SHOP_ITEMS.find((i) => i.id === itemId);
+      if (!item) return;
+
+      sfxPet();
+      state.energy = Math.min(100, state.energy + 2);
+      state.lastActiveAt = Date.now();
+      saveState();
+      showToast(`${item.icon} ${state.petName} joue avec : ${item.name} (+2% énergie)`, 'success');
+      renderSanctuary();
+    }
+
+    // =========================================================================
+    // 8. ONGLET DÉFIS & CHRONOMÈTRES
+    // =========================================================================
+    let selectedDifficulty = 'easy';
+
+    function stopChallengeTimer() {
+      if (challengeTimerInterval) {
+        clearInterval(challengeTimerInterval);
+        challengeTimerInterval = null;
+      }
+    }
+
+    function renderChallenges() {
+      const nav = document.getElementById('bottom-nav');
+      if (nav) nav.classList.remove('hidden');
+
+      const main = document.getElementById('main-content');
+      if (!main) return;
+
+      if (activeChallenge) {
+        const isDone = activeChallenge.remaining <= 0;
+        const elapsedSeconds = Math.max(1, activeChallenge.total - activeChallenge.remaining);
+        const pct = Math.min(100, Math.max(0, Math.round((elapsedSeconds / activeChallenge.total) * 100)));
+        const currentBest = state.challengeRecords && typeof state.challengeRecords[activeChallenge.id] === 'number'
+          ? state.challengeRecords[activeChallenge.id]
+          : null;
+
+        main.innerHTML = `
+          <div class="p-4 space-y-4 flex-1 flex flex-col justify-between">
+            <div class="bg-[#151B26] border border-[#232D3F] rounded-3xl p-5 text-center space-y-4">
+              <span class="inline-block px-3 py-1 rounded-full bg-blue-500/15 border border-blue-500/30 text-blue-300 text-xs font-bold">
+                Défi en cours
+              </span>
+              <h2 class="text-xl font-extrabold text-white">${activeChallenge.title}</h2>
+              <p class="text-xs text-slate-300 max-w-xs mx-auto">${activeChallenge.desc}</p>
+
+              <div class="py-4">
+                <div class="text-5xl font-extrabold tracking-tight ${isDone ? 'text-emerald-400' : 'text-white'}">
+                  ${activeChallenge.remaining}s
+                </div>
+                <div class="text-[11px] font-semibold text-slate-400 mt-1.5">
+                  Temps écoulé : <span class="text-slate-200">${elapsedSeconds}s</span> / ${activeChallenge.total}s${currentBest !== null ? ` · Record : <span class="text-amber-300">${currentBest}s</span>` : ''}
+                </div>
+                <div class="w-full h-3 bg-[#0D1117] rounded-full overflow-hidden border border-white/10 mt-3">
+                  <div class="h-full ${isDone ? 'bg-emerald-500' : 'bg-blue-500'} transition-all duration-300" style="width: ${pct}%"></div>
+                </div>
+              </div>
+
+              <div class="text-xs text-slate-400">
+                Récompense : <span class="text-amber-300 font-bold">+${activeChallenge.rewardCoins} 🪙</span> · <span class="text-blue-300 font-bold">+${activeChallenge.rewardXp} XP</span>
+              </div>
+            </div>
+
+            <div class="space-y-2.5">
+              <button onclick="completeActiveChallenge()" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-extrabold text-sm shadow-lg shadow-emerald-500/25 transition active:scale-95">
+                ${isDone ? 'Valider et récupérer les récompenses 🎉' : `J'ai fini ! Valider en ${elapsedSeconds}s ⚡`}
+              </button>
+              <button onclick="cancelActiveChallenge()" class="w-full py-2.5 rounded-2xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-300 text-xs font-bold transition">
+                Abandonner le défi
+              </button>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      const filteredChallenges = CONSTRAINT_CHALLENGES.filter((c) => c.difficulty === selectedDifficulty);
+
+      main.innerHTML = `
+        <div class="p-4 space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-lg font-extrabold text-white">Défis de Rangement</h2>
+              <p class="text-[11px] text-slate-400">Valide dès que tu as fini pour battre ton record</p>
+            </div>
+            <div class="px-3 py-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-extrabold">
+              🏆 ${state.totalChallenges}
+            </div>
+          </div>
+
+          <div class="grid grid-cols-3 gap-2 bg-[#151B26] p-1.5 rounded-2xl border border-[#232D3F]">
+            ${['easy', 'medium', 'hard'].map((diff) => {
+              const meta = DIFFICULTY_META[diff];
+              const isSel = selectedDifficulty === diff;
+              return `
+                <button onclick="setChallengeDifficulty('${diff}')" class="py-2 rounded-xl text-xs font-bold transition ${isSel ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}">
+                  ${meta.icon} ${meta.label}
+                </button>
+              `;
+            }).join('')}
+          </div>
+
+          <div class="space-y-2.5">
+            ${filteredChallenges.map((ch) => {
+              const meta = DIFFICULTY_META[ch.difficulty];
+              const bestSec = state.challengeRecords && typeof state.challengeRecords[ch.id] === 'number'
+                ? state.challengeRecords[ch.id]
+                : null;
+              return `
+                <div class="bg-[#151B26] border border-[#232D3F] rounded-2xl p-4 space-y-3">
+                  <div class="flex items-start justify-between gap-2">
+                    <div>
+                      <div class="flex flex-wrap items-center gap-1.5">
+                        <span class="inline-block px-2 py-0.5 rounded-full border text-[10px] font-bold ${meta.badgeClass}">
+                          ${meta.icon} ${meta.label} · ${ch.minSeconds}s max
+                        </span>
+                        ${bestSec !== null ? `
+                          <span class="inline-block px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[10px] font-bold">
+                            🏅 Record : ${bestSec}s
+                          </span>
+                        ` : ''}
+                      </div>
+                      <h3 class="text-sm font-bold text-white mt-1.5">${ch.title}</h3>
+                      <p class="text-xs text-slate-400 mt-0.5">${ch.desc}</p>
+                    </div>
+                  </div>
+                  <div class="flex items-center justify-between pt-2 border-t border-white/5">
+                    <span class="text-xs font-bold text-amber-300">+${ch.rewardCoins} 🪙 · +${ch.rewardXp} XP</span>
+                    <button onclick="startConstraintChallenge('${ch.id}')" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition active:scale-95">
+                      Démarrer ⚡
+                    </button>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    function setChallengeDifficulty(diff) {
+      sfxClick();
+      selectedDifficulty = diff;
+      renderChallenges();
+    }
+
+    function startConstraintChallenge(challengeId) {
+      const ch = CONSTRAINT_CHALLENGES.find((c) => c.id === challengeId);
+      if (!ch) return;
+
+      sfxClick();
+      stopChallengeTimer();
+      activeChallenge = {
+        ...ch,
+        total: ch.minSeconds,
+        remaining: ch.minSeconds
+      };
+
+      challengeTimerInterval = setInterval(() => {
+        if (!activeChallenge) {
+          stopChallengeTimer();
+          return;
+        }
+        activeChallenge.remaining -= 1;
+        if (activeChallenge.remaining <= 5 && activeChallenge.remaining > 0) {
+          sfxTick();
+        }
+        if (activeChallenge.remaining <= 0) {
+          activeChallenge.remaining = 0;
+          stopChallengeTimer();
+          sfxVictory();
+        }
+        if (currentTab === 'challenges') renderChallenges();
+      }, 1000);
+
+      renderChallenges();
+    }
+
+    function cancelActiveChallenge() {
+      sfxClick();
+      stopChallengeTimer();
+      activeChallenge = null;
+      renderChallenges();
+    }
+
+    function completeActiveChallenge() {
+      if (!activeChallenge) return;
+      const ch = activeChallenge;
+      const elapsedSeconds = Math.max(1, ch.total - ch.remaining);
+      stopChallengeTimer();
+      activeChallenge = null;
+
+      if (!state.challengeRecords || typeof state.challengeRecords !== 'object') {
+        state.challengeRecords = {};
+      }
+      const prevRecord = typeof state.challengeRecords[ch.id] === 'number' ? state.challengeRecords[ch.id] : null;
+      const isNewRecord = prevRecord === null || elapsedSeconds < prevRecord;
+      if (isNewRecord) {
+        state.challengeRecords[ch.id] = elapsedSeconds;
+      }
+
+      sfxVictory();
+      state.coins += ch.rewardCoins;
+      state.totalChallenges += 1;
+      state.energy = Math.min(100, state.energy + 10);
+      state.lastActiveAt = Date.now();
+      grantXp(ch.rewardXp);
+      saveState();
+
+      const recordMsg = isNewRecord ? ` · 🏅 Nouveau record : ${elapsedSeconds}s !` : ` (${elapsedSeconds}s)`;
+      showToast(`🏆 Défi réussi ! +${ch.rewardCoins} 🪙 et +${ch.rewardXp} XP${recordMsg}`, 'success');
+      switchTab('sanctuary');
+      spawnJoyParticles();
+    }
+
+    // =========================================================================
+    // 9. ONGLET BOUTIQUE (ADAPTÉE À CHAQUE STADE + 4 CASES D'ACCESSOIRES)
+    // =========================================================================
+    function renderShop() {
+      const nav = document.getElementById('bottom-nav');
+      if (nav) nav.classList.remove('hidden');
+
+      const main = document.getElementById('main-content');
+      if (!main) return;
+
+      const era = getCurrentEra();
+      const stageInfo = getStageInfoFromXp(state.xp);
+      const eraLabel = `Collection ${stageInfo.current.label}`;
+
+      const filteredItems = SHOP_ITEMS.filter((item) => {
+        if (item.category !== shopCategory) return false;
+        if (item.era === 'all') return true;
+        return item.era === era;
+      });
+
+      const equippedCount = state.equippedSlots.filter(Boolean).length;
+
+      main.innerHTML = `
+        <div class="p-4 space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-lg font-extrabold text-white">Boutique</h2>
+              <p class="text-[11px] text-slate-400">${eraLabel}</p>
+            </div>
+            <div class="px-3 py-1.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-extrabold">
+              🪙 ${state.coins}
+            </div>
+          </div>
+
+          <div class="grid grid-cols-3 gap-2 bg-[#151B26] p-1.5 rounded-2xl border border-[#232D3F]">
+            <button onclick="setShopCategory('accessory')" class="py-2 rounded-xl text-xs font-bold transition ${shopCategory === 'accessory' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}">
+              🧸 Accessoires
+            </button>
+            <button onclick="setShopCategory('habitat')" class="py-2 rounded-xl text-xs font-bold transition ${shopCategory === 'habitat' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}">
+              🏡 Habitats
+            </button>
+            <button onclick="setShopCategory('care')" class="py-2 rounded-xl text-xs font-bold transition ${shopCategory === 'care' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}">
+              🍼 Friandises
+            </button>
+          </div>
+
+          ${shopCategory === 'accessory' ? `
+            <div class="px-3 py-2 rounded-2xl bg-blue-500/10 border border-blue-500/25 flex items-center justify-between text-xs">
+              <span class="text-blue-200 font-medium">Cases occupées autour de ${state.petName} :</span>
+              <span class="font-extrabold text-white">${equippedCount} / 4</span>
+            </div>
+          ` : ''}
+
+          <div class="space-y-2.5">
+            ${filteredItems.map((item) => {
+              const isOwned = state.ownedItems.includes(item.id);
+              const isEquippedSlot = shopCategory === 'accessory' && state.equippedSlots.includes(item.id);
+              const isEquippedHab = shopCategory === 'habitat' && state.equippedHabitat === item.id;
+              const reqStageIdx = typeof item.unlockStage === 'number' ? item.unlockStage : 0;
+              const isLocked = shopCategory === 'habitat' && stageInfo.index < reqStageIdx;
+              const reqStageLabel = EVOLUTION_STAGES[reqStageIdx] ? EVOLUTION_STAGES[reqStageIdx].label : '';
+
+              let actionBtn = '';
+              if (isLocked) {
+                actionBtn = `
+                  <span class="px-3 py-2 rounded-xl bg-slate-900/90 border border-white/10 text-slate-400 text-[11px] font-bold inline-flex items-center gap-1">
+                    🔒 Stade ${reqStageLabel}
+                  </span>
+                `;
+              } else if (shopCategory === 'care') {
+                actionBtn = `
+                  <button onclick="buyOrUseItem('${item.id}')" class="px-3.5 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/40 text-amber-200 text-xs font-bold transition active:scale-95">
+                    Donner · ${item.price} 🪙
+                  </button>
+                `;
+              } else if (isEquippedSlot || isEquippedHab) {
+                actionBtn = `
+                  <button onclick="buyOrUseItem('${item.id}')" class="px-3.5 py-2 rounded-xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-200 text-xs font-bold">
+                    ✓ Placé
+                  </button>
+                `;
+              } else if (isOwned) {
+                actionBtn = `
+                  <button onclick="buyOrUseItem('${item.id}')" class="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition">
+                    Installer
+                  </button>
+                `;
+              } else {
+                actionBtn = `
+                  <button onclick="buyOrUseItem('${item.id}')" class="px-3.5 py-2 rounded-xl bg-[#1E2634] hover:bg-blue-600 border border-white/10 text-white text-xs font-bold transition active:scale-95">
+                    Acheter · ${item.price} 🪙
+                  </button>
+                `;
+              }
+
+              return `
+                <div class="bg-[#151B26] border border-[#232D3F] rounded-2xl p-3.5 flex items-center justify-between gap-3 ${isLocked ? 'opacity-65' : ''}">
+                  <div class="flex items-center gap-3 min-w-0">
+                    <div class="w-12 h-12 rounded-2xl bg-[#0D1117] border border-white/5 flex items-center justify-center text-2xl shrink-0">
+                      ${isLocked ? '🔒' : item.icon}
+                    </div>
+                    <div class="min-w-0">
+                      <h3 class="text-sm font-bold text-white truncate">${item.name}</h3>
+                      <p class="text-[11px] text-slate-400 line-clamp-2">${item.desc}</p>
+                    </div>
+                  </div>
+                  <div class="shrink-0">${actionBtn}</div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    function setShopCategory(cat) {
+      sfxClick();
+      shopCategory = cat;
+      renderShop();
+    }
+
+    function buyOrUseItem(itemId) {
+      const item = SHOP_ITEMS.find((i) => i.id === itemId);
+      if (!item) return;
+
+      const stageInfo = getStageInfoFromXp(state.xp);
+      if (item.category === 'habitat' && typeof item.unlockStage === 'number' && stageInfo.index < item.unlockStage) {
+        const reqLabel = EVOLUTION_STAGES[item.unlockStage]?.label || '';
+        showToast(`🔒 Débloqué quand ${state.petName} atteindra le stade ${reqLabel} !`, 'warning');
+        return;
+      }
+
+      if (item.category === 'care') {
+        if (state.coins < item.price) {
+          showToast(`Il te manque ${item.price - state.coins} 🪙 !`, 'warning');
+          return;
+        }
+        sfxCoin();
+        state.coins -= item.price;
+        state.energy = Math.min(100, state.energy + (item.effectEnergy || 15));
+        state.lastActiveAt = Date.now();
+        grantXp(item.effectXp || 10);
+        saveState();
+
+        eatingPreviewItem = item;
+        showToast(`${item.icon} ${state.petName} adore : ${item.name} ! (+${item.effectEnergy}% énergie)`, 'success');
+        switchTab('sanctuary');
+        spawnJoyParticles();
+        setTimeout(() => {
+          eatingPreviewItem = null;
+          if (currentTab === 'sanctuary') renderSanctuary();
+        }, 1700);
+        return;
+      }
+
+      if (!state.ownedItems.includes(item.id)) {
+        if (state.coins < item.price) {
+          showToast(`Il te manque ${item.price - state.coins} 🪙 !`, 'warning');
+          return;
+        }
+        state.coins -= item.price;
+        state.ownedItems.push(item.id);
+        sfxCoin();
+      } else {
+        sfxClick();
+      }
+
+      if (item.category === 'habitat') {
+        state.equippedHabitat = item.id;
+        state.lastActiveAt = Date.now();
+        saveState();
+        showToast(`🏡 Habitat installé : ${item.name}`, 'success');
+        switchTab('sanctuary');
+        return;
+      }
+
+      if (item.category === 'accessory') {
+        const existingIdx = state.equippedSlots.indexOf(item.id);
+        if (existingIdx !== -1) {
+          state.equippedSlots[existingIdx] = null;
+          saveState();
+          showToast(`${item.name} rangé.`, 'info');
+          renderShop();
+          return;
+        }
+
+        const emptyIdx = state.equippedSlots.indexOf(null);
+        if (emptyIdx !== -1) {
+          state.equippedSlots[emptyIdx] = item.id;
+        } else {
+          state.equippedSlots.shift();
+          state.equippedSlots.push(item.id);
+        }
+        state.lastActiveAt = Date.now();
+        saveState();
+        showToast(`${item.icon} ${item.name} ajouté à côté de ${state.petName} !`, 'success');
+        renderShop();
+      }
+    }
+
+    // =========================================================================
+    // 10. MENU DÉMO (MASQUÉ), RÉINITIALISATION & NAVIGATION GLOBALE
+    // =========================================================================
+    let secretDemoTapCount = 0;
+    let secretDemoTapTimer = null;
+
+    function handleSecretDemoTap() {
+      secretDemoTapCount += 1;
+      clearTimeout(secretDemoTapTimer);
+      if (secretDemoTapCount >= 5) {
+        secretDemoTapCount = 0;
+        openDemoModal();
+        return;
+      }
+      secretDemoTapTimer = setTimeout(() => {
+        secretDemoTapCount = 0;
+      }, 1400);
+    }
+
+    function openDemoModal() {
+      sfxClick();
+      openModal(`
+        <div class="flex items-center justify-between">
+          <h3 class="text-base font-extrabold text-white">⚙️ Outils Démo & Test</h3>
+          <button onclick="closeModal()" class="text-slate-400 hover:text-white text-sm font-bold">✕</button>
+        </div>
+        <p class="text-xs text-slate-400">Teste rapidement l'évolution, les achats et la baisse d'énergie après 24h.</p>
+        <div class="space-y-2">
+          <button onclick="demoAddCoins()" class="w-full py-2.5 px-3 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-200 text-xs font-bold text-left">
+            🪙 Ajouter +100 pièces
+          </button>
+          <button onclick="demoAddXp()" class="w-full py-2.5 px-3 rounded-xl bg-blue-500/15 hover:bg-blue-500/25 border border-blue-500/30 text-blue-200 text-xs font-bold text-left">
+            🌱 Ajouter +900 XP (faire grandir)
+          </button>
+          <button onclick="demoSimulate48h()" class="w-full py-2.5 px-3 rounded-xl bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/30 text-purple-200 text-xs font-bold text-left">
+            😴 Simuler 48h sans visite (-20% énergie)
+          </button>
+          <button onclick="demoResetAll()" class="w-full py-2.5 px-3 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-200 text-xs font-bold text-left">
+            🔄 Réinitialiser la partie
+          </button>
+        </div>
+      `);
+    }
+
+    function demoAddCoins() {
+      sfxCoin();
+      state.coins += 100;
+      saveState();
+      closeModal();
+      showToast('+100 pièces ajoutées !', 'success');
+      renderCurrentView();
+    }
+
+    function demoAddXp() {
+      sfxVictory();
+      grantXp(900);
+      saveState();
+      closeModal();
+      renderCurrentView();
+    }
+
+    function demoSimulate48h() {
+      state.lastActiveAt = Date.now() - (2 * DAY_MS + 1000);
+      applyInactivityDecay(false);
+      closeModal();
+      renderCurrentView();
+    }
+
+    function demoResetAll() {
+      stopChallengeTimer();
+      activeChallenge = null;
+      state = getDefaultState();
+      saveState();
+      closeModal();
+      showToast('Partie réinitialisée.', 'info');
+      renderOnboarding();
+    }
+
+    function openResetPetModal() {
+      sfxClick();
+      openModal(`
+        <div class="flex items-center justify-between">
+          <h3 class="text-base font-extrabold text-white">🔄 Nouveau compagnon</h3>
+          <button onclick="closeModal()" class="text-slate-400 hover:text-white text-sm font-bold">✕</button>
+        </div>
+        <p class="text-xs text-slate-300 leading-relaxed">
+          Veux-tu vraiment recommencer avec un nouvel animal ? Les pièces, l'XP et les objets actuels de <span class="font-bold text-white">${state.petName}</span> seront remis à zéro.
+        </p>
+        <div class="grid grid-cols-2 gap-2.5 pt-1">
+          <button onclick="closeModal()" class="py-2.5 px-3 rounded-xl bg-[#1E2634] hover:bg-[#283346] text-slate-200 text-xs font-bold transition">
+            Garder ${state.petName}
+          </button>
+          <button onclick="confirmChildReset()" class="py-2.5 px-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition">
+            Recommencer
+          </button>
+        </div>
+      `);
+    }
+
+    function confirmChildReset() {
+      sfxClick();
+      demoResetAll();
+    }
+
+    // Ouvre la modale permettant de renommer l'animal sans réinitialiser sa progression
+    function openRenamePetModal() {
+      sfxClick();
+      const safeName = String(state.petName || '').replace(/"/g, '&quot;');
       openModal(`
         <div class="flex items-center justify-between">
           <h3 class="text-base font-extrabold text-white">✏️ Nouveau prénom</h3>
