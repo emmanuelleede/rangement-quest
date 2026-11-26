@@ -106,7 +106,7 @@
           </svg>
         </button>
 
-        <!-- Bouton Démo masqué pour l'usage enfant (accessible via la console si besoin : openDemoModal()) -->
+        <!-- Bouton Démo masqué pour l'usage enfant -->
         <button id="btn-demo" onclick="openDemoModal()" class="hidden px-2.5 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold hover:bg-amber-500/20 transition items-center gap-1">
           <span>⚙️</span><span>Démo</span>
         </button>
@@ -222,218 +222,31 @@
     // 2. DONNÉES : ESPÈCES, STADES, BOUTIQUE PAR ÂGE, HABITATS & DÉFIS
     // =========================================================================
     const SPECIES_DATA = {
-      loutre: {
-        id: 'loutre',
-        name: 'Loutre',
-        emoji: '🦦',
-        defaultPetName: 'Loulou',
-        tagline: 'Curieuse, joueuse et adore les défis rapides.'
-      },
-      chat: {
-        id: 'chat',
-        name: 'Chat',
-        emoji: '🐱',
-        defaultPetName: 'Moka',
-        tagline: 'Calme et précis, parfait pour les missions minutieuses.'
-      },
-      dragon: {
-        id: 'dragon',
-        name: 'Dragon',
-        emoji: '🐉',
-        defaultPetName: 'Ignis',
-        tagline: 'Courageux et plein d’énergie à chaque victoire.'
-      },
-      corbeau: {
-        id: 'corbeau',
-        name: 'Corbeau',
-        emoji: '🐦‍⬛',
-        defaultPetName: 'Kael',
-        tagline: 'Malin et observateur, roi des chasseurs d’objets.'
-      },
-      renard: {
-        id: 'renard',
-        name: 'Renard',
-        emoji: '🦊',
-        defaultPetName: 'Vesper',
-        tagline: 'Rapide et astucieux sur les sprints chronométrés.'
-      },
-      grenouille: {
-        id: 'grenouille',
-        name: 'Grenouille',
-        emoji: '🐸',
-        defaultPetName: 'Reinette',
-        tagline: 'Bondissante et vive, elle adore les défis express.'
-      },
-      panthere: {
-        id: 'panthere',
-        name: 'Panthère',
-        emoji: '🐆',
-        defaultPetName: 'Neige',
-        tagline: 'Agile et silencieuse, reine de l’organisation.'
-      },
-      daim: {
-        id: 'daim',
-        name: 'Daim',
-        emoji: '🦌',
-        defaultPetName: 'Bambi',
-        tagline: 'Doux et attentif, il veille sur chaque recoin.'
-      },
-      faucon: {
-        id: 'faucon',
-        name: 'Faucon',
-        emoji: '🦅',
-        defaultPetName: 'Pèlerin',
-        tagline: 'Perçant et rapide, aucun objet ne lui échappe.'
-      },
-      souris: {
-        id: 'souris',
-        name: 'Souris',
-        emoji: '🐭',
-        defaultPetName: 'Roussette',
-        tagline: 'Petite et maline, parfaite pour les petits objets.'
-      },
-      ecureuil: {
-        id: 'ecureuil',
-        name: 'Écureuil',
-        emoji: '🐿️',
-        defaultPetName: 'Noisette',
-        tagline: 'Champion du tri et du rangement dans les boîtes.'
-      }
+      loutre: { id: 'loutre', name: 'Loutre', emoji: '🦦', defaultPetName: 'Loulou', tagline: 'Curieuse, joueuse et adore les défis rapides.' },
+      chat: { id: 'chat', name: 'Chat', emoji: '🐱', defaultPetName: 'Moka', tagline: 'Calme et précis, parfait pour les missions minutieuses.' },
+      dragon: { id: 'dragon', name: 'Dragon', emoji: '🐉', defaultPetName: 'Ignis', tagline: 'Courageux et plein d’énergie à chaque victoire.' },
+      corbeau: { id: 'corbeau', name: 'Corbeau', emoji: '🐦‍⬛', defaultPetName: 'Kael', tagline: 'Malin et observateur, roi des chasseurs d’objets.' },
+      renard: { id: 'renard', name: 'Renard', emoji: '🦊', defaultPetName: 'Vesper', tagline: 'Rapide et astucieux sur les sprints chronométrés.' },
+      grenouille: { id: 'grenouille', name: 'Grenouille', emoji: '🐸', defaultPetName: 'Reinette', tagline: 'Bondissante et vive, elle adore les défis express.' },
+      panthere: { id: 'panthere', name: 'Panthère', emoji: '🐆', defaultPetName: 'Neige', tagline: 'Agile et silencieuse, reine de l’organisation.' },
+      daim: { id: 'daim', name: 'Daim', emoji: '🦌', defaultPetName: 'Bambi', tagline: 'Doux et attentif, il veille sur chaque recoin.' },
+      faucon: { id: 'faucon', name: 'Faucon', emoji: '🦅', defaultPetName: 'Pèlerin', tagline: 'Perçant et rapide, aucun objet ne lui échappe.' },
+      souris: { id: 'souris', name: 'Souris', emoji: '🐭', defaultPetName: 'Roussette', tagline: 'Petite et maline, parfaite pour les petits objets.' },
+      ecureuil: { id: 'ecureuil', name: 'Écureuil', emoji: '🐿️', defaultPetName: 'Noisette', tagline: 'Champion du tri et du rangement dans les boîtes.' }
     };
 
     const SPECIES_VISUAL_CONFIG = {
-      loutre: {
-        fallbackEmoji: '🦦',
-        glow: 'rgba(251, 191, 36, 0.32)',
-        label: 'Loutre',
-        localStageImages: [
-          'images/loutre_nouveau_ne.png',
-          'images/loutre_bebe.png',
-          'images/loutre_junior.png',
-          'images/loutre_adulte.png'
-        ],
-        localFallback: 'images/loutre.png'
-      },
-      chat: {
-        fallbackEmoji: '🐱',
-        glow: 'rgba(96, 165, 250, 0.32)',
-        label: 'Chat',
-        localStageImages: [
-          'images/chat_nouveau_ne.png',
-          'images/chat_bebe.png',
-          'images/chat_junior.png',
-          'images/chat_adulte.png'
-        ],
-        localFallback: 'images/chat.png'
-      },
-      dragon: {
-        fallbackEmoji: '🐉',
-        glow: 'rgba(168, 85, 247, 0.35)',
-        label: 'Dragon',
-        localStageImages: [
-          'images/dragonnet_nouveau_ne.png',
-          'images/dragonnet_bebe.png',
-          'images/dragonnet_junior.png',
-          'images/dragonnet_adulte.png'
-        ],
-        localFallback: 'images/dragonnet.png'
-      },
-      corbeau: {
-        fallbackEmoji: '🐦‍⬛',
-        glow: 'rgba(99, 102, 241, 0.35)',
-        label: 'Corbeau',
-        localStageImages: [
-          'images/corbeau_nouveau_ne.png',
-          'images/corbeau_bebe.png',
-          'images/corbeau_junior.png',
-          'images/corbeau_adulte.png'
-        ],
-        localFallback: 'images/corbeau.png'
-      },
-      renard: {
-        fallbackEmoji: '🦊',
-        glow: 'rgba(249, 115, 22, 0.32)',
-        label: 'Renard',
-        localStageImages: [
-          'images/renard_nouveau_ne.png',
-          'images/renard_bebe.png',
-          'images/renard_junior.png',
-          'images/renard_adulte.png'
-        ],
-        localFallback: 'images/renard.png'
-      },
-      grenouille: {
-        fallbackEmoji: '🐸',
-        glow: 'rgba(34, 197, 94, 0.32)',
-        label: 'Grenouille',
-        localStageImages: [
-          'images/grenouille_nouveau_ne.png',
-          'images/grenouille_bebe.png',
-          'images/grenouille_junior.png',
-          'images/grenouille_adulte.png'
-        ],
-        localFallback: 'images/grenouille.png'
-      },
-      panthere: {
-        fallbackEmoji: '🐆',
-        glow: 'rgba(148, 163, 184, 0.32)',
-        label: 'Panthère des neiges',
-        localStageImages: [
-          'images/panthere_nouveau_ne.png',
-          'images/panthere_bebe.png',
-          'images/panthere_junior.png',
-          'images/panthere_adulte.png'
-        ],
-        localFallback: 'images/panthere.png'
-      },
-      daim: {
-        fallbackEmoji: '🦌',
-        glow: 'rgba(217, 119, 6, 0.32)',
-        label: 'Daim',
-        localStageImages: [
-          'images/daim_nouveau_ne.png',
-          'images/daim_bebe.png',
-          'images/daim_junior.png',
-          'images/daim_adulte.png'
-        ],
-        localFallback: 'images/daim.png'
-      },
-      faucon: {
-        fallbackEmoji: '🦅',
-        glow: 'rgba(56, 189, 248, 0.32)',
-        label: 'Faucon pèlerin',
-        localStageImages: [
-          'images/faucon_nouveau_ne.png',
-          'images/faucon_bebe.png',
-          'images/faucon_junior.png',
-          'images/faucon_adulte.png'
-        ],
-        localFallback: 'images/faucon.png'
-      },
-      souris: {
-        fallbackEmoji: '🐭',
-        glow: 'rgba(244, 114, 182, 0.32)',
-        label: 'Souris rousse',
-        localStageImages: [
-          'images/souris_nouveau_ne.png',
-          'images/souris_bebe.png',
-          'images/souris_junior.png',
-          'images/souris_adulte.png'
-        ],
-        localFallback: 'images/souris.png'
-      },
-      ecureuil: {
-        fallbackEmoji: '🐿️',
-        glow: 'rgba(234, 88, 12, 0.32)',
-        label: 'Écureuil',
-        localStageImages: [
-          'images/ecureuil_nouveau_ne.png',
-          'images/ecureuil_bebe.png',
-          'images/ecureuil_junior.png',
-          'images/ecureuil_adulte.png'
-        ],
-        localFallback: 'images/ecureuil.png'
-      }
+      loutre: { fallbackEmoji: '🦦', glow: 'rgba(251, 191, 36, 0.32)', label: 'Loutre', localStageImages: ['images/loutre_nouveau_ne.png', 'images/loutre_bebe.png', 'images/loutre_junior.png', 'images/loutre_adulte.png'], localFallback: 'images/loutre.png' },
+      chat: { fallbackEmoji: '🐱', glow: 'rgba(96, 165, 250, 0.32)', label: 'Chat', localStageImages: ['images/chat_nouveau_ne.png', 'images/chat_bebe.png', 'images/chat_junior.png', 'images/chat_adulte.png'], localFallback: 'images/chat.png' },
+      dragon: { fallbackEmoji: '🐉', glow: 'rgba(168, 85, 247, 0.35)', label: 'Dragon', localStageImages: ['images/dragonnet_nouveau_ne.png', 'images/dragonnet_bebe.png', 'images/dragonnet_junior.png', 'images/dragonnet_adulte.png'], localFallback: 'images/dragonnet.png' },
+      corbeau: { fallbackEmoji: '🐦‍⬛', glow: 'rgba(99, 102, 241, 0.35)', label: 'Corbeau', localStageImages: ['images/corbeau_nouveau_ne.png', 'images/corbeau_bebe.png', 'images/corbeau_junior.png', 'images/corbeau_adulte.png'], localFallback: 'images/corbeau.png' },
+      renard: { fallbackEmoji: '🦊', glow: 'rgba(249, 115, 22, 0.32)', label: 'Renard', localStageImages: ['images/renard_nouveau_ne.png', 'images/renard_bebe.png', 'images/renard_junior.png', 'images/renard_adulte.png'], localFallback: 'images/renard.png' },
+      grenouille: { fallbackEmoji: '🐸', glow: 'rgba(34, 197, 94, 0.32)', label: 'Grenouille', localStageImages: ['images/grenouille_nouveau_ne.png', 'images/grenouille_bebe.png', 'images/grenouille_junior.png', 'images/grenouille_adulte.png'], localFallback: 'images/grenouille.png' },
+      panthere: { fallbackEmoji: '🐆', glow: 'rgba(148, 163, 184, 0.32)', label: 'Panthère des neiges', localStageImages: ['images/panthere_nouveau_ne.png', 'images/panthere_bebe.png', 'images/panthere_junior.png', 'images/panthere_adulte.png'], localFallback: 'images/panthere.png' },
+      daim: { fallbackEmoji: '🦌', glow: 'rgba(217, 119, 6, 0.32)', label: 'Daim', localStageImages: ['images/daim_nouveau_ne.png', 'images/daim_bebe.png', 'images/daim_junior.png', 'images/daim_adulte.png'], localFallback: 'images/daim.png' },
+      faucon: { fallbackEmoji: '🦅', glow: 'rgba(56, 189, 248, 0.32)', label: 'Faucon pèlerin', localStageImages: ['images/faucon_nouveau_ne.png', 'images/faucon_bebe.png', 'images/faucon_junior.png', 'images/faucon_adulte.png'], localFallback: 'images/faucon.png' },
+      souris: { fallbackEmoji: '🐭', glow: 'rgba(244, 114, 182, 0.32)', label: 'Souris rousse', localStageImages: ['images/souris_nouveau_ne.png', 'images/souris_bebe.png', 'images/souris_junior.png', 'images/souris_adulte.png'], localFallback: 'images/souris.png' },
+      ecureuil: { fallbackEmoji: '🐿️', glow: 'rgba(234, 88, 12, 0.32)', label: 'Écureuil', localStageImages: ['images/ecureuil_nouveau_ne.png', 'images/ecureuil_bebe.png', 'images/ecureuil_junior.png', 'images/ecureuil_adulte.png'], localFallback: 'images/ecureuil.png' }
     };
 
     const EVOLUTION_STAGES = [
@@ -444,116 +257,17 @@
     ];
 
     const HABITAT_THEMES = {
-      none: {
-        id: 'none',
-        name: 'Aucun habitat équipé',
-        localBg: null,
-        gradient: 'radial-gradient(circle at 50% 42%, #1E293B 0%, #0F172A 65%, #090D16 100%)',
-        borderClass: 'border-[#253044]',
-        badgeIcon: '🏠',
-        decorTop: [],
-        decorBottom: []
-      },
-      hab_clearing: {
-        id: 'hab_clearing',
-        name: 'Clairière Enchantée',
-        localBg: ['images/habitat_clairiere.jpeg', 'images/habitat_clairiere.jpg'],
-        gradient: 'radial-gradient(circle at 50% 30%, #10B981 0%, #065F46 48%, #06281E 100%)',
-        borderClass: 'border-emerald-400/50',
-        badgeIcon: '🌿',
-        decorTop: ['✨', '🍃', '🦋', '✨'],
-        decorBottom: ['🍄', '🌿', '🌸', '🪵']
-      },
-      hab_cozy: {
-        id: 'hab_cozy',
-        name: 'Salon Cosy',
-        localBg: ['images/habitat_salon.jpeg', 'images/habitat_salon.jpg'],
-        gradient: 'radial-gradient(circle at 50% 30%, #D97706 0%, #78350F 48%, #291206 100%)',
-        borderClass: 'border-amber-400/50',
-        badgeIcon: '🕯️',
-        decorTop: ['🕯️', '✨', '🧶', '🕯️'],
-        decorBottom: ['🛋️', '📚', '🧸', '☕']
-      },
-      hab_serre: {
-        id: 'hab_serre',
-        name: 'Serre Suspendue',
-        localBg: ['images/habitat_serre.jpeg', 'images/habitat_serre.jpg'],
-        gradient: 'radial-gradient(circle at 50% 30%, #34D399 0%, #047857 48%, #042F2E 100%)',
-        borderClass: 'border-teal-300/50',
-        badgeIcon: '🪴',
-        decorTop: ['✨', '🌿', '🕊️', '✨'],
-        decorBottom: ['🪴', '🌸', '☀️', '🍃']
-      },
-      hab_jungle: {
-        id: 'hab_jungle',
-        name: 'Pavillon Jungle',
-        localBg: ['images/habitat_jungle.jpeg', 'images/habitat_jungle.jpg'],
-        gradient: 'radial-gradient(circle at 50% 30%, #16A34A 0%, #14532D 48%, #052E16 100%)',
-        borderClass: 'border-lime-400/50',
-        badgeIcon: '🌴',
-        decorTop: ['🦜', '🌿', '✨', '🍃'],
-        decorBottom: ['🌴', '🌺', '🎋', '🪵']
-      },
-      hab_oasis: {
-        id: 'hab_oasis',
-        name: 'Oasis Étoilée',
-        localBg: ['images/habitat_oasis.jpeg', 'images/habitat_oasis.jpg'],
-        gradient: 'radial-gradient(circle at 50% 30%, #F59E0B 0%, #B45309 48%, #451A03 100%)',
-        borderClass: 'border-amber-300/50',
-        badgeIcon: '🏜️',
-        decorTop: ['✨', '🌙', '🏮', '✨'],
-        decorBottom: ['🌴', '⛺', '💧', '⭐']
-      },
-      hab_crystal: {
-        id: 'hab_crystal',
-        name: 'Grotte aux Cristaux',
-        localBg: ['images/habitat_grotte.jpeg', 'images/habitat_grotte.jpg'],
-        gradient: 'radial-gradient(circle at 50% 30%, #3B82F6 0%, #1E3A8A 48%, #0B1437 100%)',
-        borderClass: 'border-sky-400/50',
-        badgeIcon: '💎',
-        decorTop: ['💎', '✨', '💠', '💎'],
-        decorBottom: ['🔮', '💎', '🌊', '🪨']
-      },
-      hab_igloo: {
-        id: 'hab_igloo',
-        name: 'Igloo Aurore',
-        localBg: ['images/habitat_igloo.jpeg', 'images/habitat_igloo.jpg'],
-        gradient: 'radial-gradient(circle at 50% 30%, #38BDF8 0%, #0369A1 48%, #082F49 100%)',
-        borderClass: 'border-cyan-300/50',
-        badgeIcon: '❄️',
-        decorTop: ['❄️', '✨', '🌨️', '❄️'],
-        decorBottom: ['🧊', '🕯️', '🧣', '⭐']
-      },
-      hab_marin: {
-        id: 'hab_marin',
-        name: 'Palais Sous-Marin',
-        localBg: ['images/habitat_marin.jpeg', 'images/habitat_marin.jpg'],
-        gradient: 'radial-gradient(circle at 50% 30%, #0EA5E9 0%, #1D4ED8 48%, #172554 100%)',
-        borderClass: 'border-blue-400/50',
-        badgeIcon: '🐚',
-        decorTop: ['🫧', '🐠', '✨', '🫧'],
-        decorBottom: ['🐚', '🪸', '🌊', '✨']
-      },
-      hab_volcan: {
-        id: 'hab_volcan',
-        name: 'Refuge Volcanique',
-        localBg: ['images/habitat_volcan.jpeg', 'images/habitat_volcan.jpg'],
-        gradient: 'radial-gradient(circle at 50% 30%, #EA580C 0%, #9A3412 48%, #431407 100%)',
-        borderClass: 'border-orange-500/50',
-        badgeIcon: '🔥',
-        decorTop: ['🔥', '✨', '🏮', '🔥'],
-        decorBottom: ['🌋', '🕯️', '🪨', '✨']
-      },
-      hab_space: {
-        id: 'hab_space',
-        name: 'Observatoire Spatial',
-        localBg: ['images/habitat_observatoire.jpeg', 'images/habitat_observatoire.jpg'],
-        gradient: 'radial-gradient(circle at 50% 30%, #9333EA 0%, #3B0764 48%, #0D041C 100%)',
-        borderClass: 'border-purple-400/50',
-        badgeIcon: '🪐',
-        decorTop: ['⭐', '🪐', '🌙', '🌟'],
-        decorBottom: ['🔭', '🚀', '☄️', '✨']
-      }
+      none: { id: 'none', name: 'Aucun habitat équipé', localBg: null, gradient: 'radial-gradient(circle at 50% 42%, #1E293B 0%, #0F172A 65%, #090D16 100%)', borderClass: 'border-[#253044]', badgeIcon: '🏠', decorTop: [], decorBottom: [] },
+      hab_clearing: { id: 'hab_clearing', name: 'Clairière Enchantée', localBg: ['images/habitat_clairiere.jpeg', 'images/habitat_clairiere.jpg'], gradient: 'radial-gradient(circle at 50% 30%, #10B981 0%, #065F46 48%, #06281E 100%)', borderClass: 'border-emerald-400/50', badgeIcon: '🌿', decorTop: ['✨', '🍃', '🦋', '✨'], decorBottom: ['🍄', '🌿', '🌸', '🪵'] },
+      hab_cozy: { id: 'hab_cozy', name: 'Salon Cosy', localBg: ['images/habitat_salon.jpeg', 'images/habitat_salon.jpg'], gradient: 'radial-gradient(circle at 50% 30%, #D97706 0%, #78350F 48%, #291206 100%)', borderClass: 'border-amber-400/50', badgeIcon: '🕯️', decorTop: ['🕯️', '✨', '🧶', '🕯️'], decorBottom: ['🛋️', '📚', '🧸', '☕'] },
+      hab_serre: { id: 'hab_serre', name: 'Serre Suspendue', localBg: ['images/habitat_serre.jpeg', 'images/habitat_serre.jpg'], gradient: 'radial-gradient(circle at 50% 30%, #34D399 0%, #047857 48%, #042F2E 100%)', borderClass: 'border-teal-300/50', badgeIcon: '🪴', decorTop: ['✨', '🌿', '🕊️', '✨'], decorBottom: ['🪴', '🌸', '☀️', '🍃'] },
+      hab_jungle: { id: 'hab_jungle', name: 'Pavillon Jungle', localBg: ['images/habitat_jungle.jpeg', 'images/habitat_jungle.jpg'], gradient: 'radial-gradient(circle at 50% 30%, #16A34A 0%, #14532D 48%, #052E16 100%)', borderClass: 'border-lime-400/50', badgeIcon: '🌴', decorTop: ['🦜', '🌿', '✨', '🍃'], decorBottom: ['🌴', '🌺', '🎋', '🪵'] },
+      hab_oasis: { id: 'hab_oasis', name: 'Oasis Étoilée', localBg: ['images/habitat_oasis.jpeg', 'images/habitat_oasis.jpg'], gradient: 'radial-gradient(circle at 50% 30%, #F59E0B 0%, #B45309 48%, #451A03 100%)', borderClass: 'border-amber-300/50', badgeIcon: '🏜️', decorTop: ['✨', '🌙', '🏮', '✨'], decorBottom: ['🌴', '⛺', '💧', '⭐'] },
+      hab_crystal: { id: 'hab_crystal', name: 'Grotte aux Cristaux', localBg: ['images/habitat_grotte.jpeg', 'images/habitat_grotte.jpg'], gradient: 'radial-gradient(circle at 50% 30%, #3B82F6 0%, #1E3A8A 48%, #0B1437 100%)', borderClass: 'border-sky-400/50', badgeIcon: '💎', decorTop: ['💎', '✨', '💠', '💎'], decorBottom: ['🔮', '💎', '🌊', '🪨'] },
+      hab_igloo: { id: 'hab_igloo', name: 'Igloo Aurore', localBg: ['images/habitat_igloo.jpeg', 'images/habitat_igloo.jpg'], gradient: 'radial-gradient(circle at 50% 30%, #38BDF8 0%, #0369A1 48%, #082F49 100%)', borderClass: 'border-cyan-300/50', badgeIcon: '❄️', decorTop: ['❄️', '✨', '🌨️', '❄️'], decorBottom: ['🧊', '🕯️', '🧣', '⭐'] },
+      hab_marin: { id: 'hab_marin', name: 'Palais Sous-Marin', localBg: ['images/habitat_marin.jpeg', 'images/habitat_marin.jpg'], gradient: 'radial-gradient(circle at 50% 30%, #0EA5E9 0%, #1D4ED8 48%, #172554 100%)', borderClass: 'border-blue-400/50', badgeIcon: '🐚', decorTop: ['🫧', '🐠', '✨', '🫧'], decorBottom: ['🐚', '🪸', '🌊', '✨'] },
+      hab_volcan: { id: 'hab_volcan', name: 'Refuge Volcanique', localBg: ['images/habitat_volcan.jpeg', 'images/habitat_volcan.jpg'], gradient: 'radial-gradient(circle at 50% 30%, #EA580C 0%, #9A3412 48%, #431407 100%)', borderClass: 'border-orange-500/50', badgeIcon: '🔥', decorTop: ['🔥', '✨', '🏮', '🔥'], decorBottom: ['🌋', '🕯️', '🪨', '✨'] },
+      hab_space: { id: 'hab_space', name: 'Observatoire Spatial', localBg: ['images/habitat_observatoire.jpeg', 'images/habitat_observatoire.jpg'], gradient: 'radial-gradient(circle at 50% 30%, #9333EA 0%, #3B0764 48%, #0D041C 100%)', borderClass: 'border-purple-400/50', badgeIcon: '🪐', decorTop: ['⭐', '🪐', '🌙', '🌟'], decorBottom: ['🔭', '🚀', '☄️', '✨'] }
     };
 
     const SHOP_ITEMS = [
@@ -615,6 +329,7 @@
       { id: 'c_easy_4', difficulty: 'easy', minSeconds: 45, title: 'Trio Express', desc: 'Choisis 3 gros objets qui traînent et range-les proprement.', rewardCoins: 20, rewardXp: 20 },
       { id: 'c_easy_5', difficulty: 'easy', minSeconds: 45, title: 'Rangement Ninja 🥷', desc: 'Range 5 objets sur la pointe des pieds sans faire le moindre bruit !', rewardCoins: 20, rewardXp: 20 },
       { id: 'c_easy_6', difficulty: 'easy', minSeconds: 45, title: 'Chasse au Trésor Caché 🔍', desc: 'Vérifie sous le lit, la couette et les coussins et range tout ce qui s’y cache.', rewardCoins: 20, rewardXp: 20 },
+      { id: 'c_easy_monter', difficulty: 'easy', noTimer: true, minSeconds: 0, title: 'Monter ses affaires 🪜', desc: 'Prends tout ce qui doit monter et dépose chaque objet à sa place, sans chrono.', rewardCoins: 25, rewardXp: 25 },
 
       { id: 'c_med_1', difficulty: 'medium', minSeconds: 60, title: 'Mission Livres & BD', desc: 'Aligne tous les livres, cahiers et BD sur l’étagère.', rewardCoins: 30, rewardXp: 30 },
       { id: 'c_med_2', difficulty: 'medium', minSeconds: 60, title: 'Trio du Bureau', desc: 'Range 8 petits objets (crayons, feutres, papiers) sur le bureau.', rewardCoins: 30, rewardXp: 30 },
@@ -622,6 +337,7 @@
       { id: 'c_med_4', difficulty: 'medium', minSeconds: 60, title: 'Chasse aux Jouets', desc: 'Range 10 jouets ou pièces de construction dans leur boîte.', rewardCoins: 30, rewardXp: 30 },
       { id: 'c_med_5', difficulty: 'medium', minSeconds: 60, title: 'Chasse aux Intrus 🕵️', desc: 'Repère et rapporte à leur vraie place tous les objets qui n’appartiennent pas à cette pièce.', rewardCoins: 30, rewardXp: 30 },
       { id: 'c_med_6', difficulty: 'medium', minSeconds: 60, title: 'Mission Un Seul Voyage 🧺', desc: 'Réunis un maximum d’objets qui traînent dans tes bras et range-les en un seul aller-retour.', rewardCoins: 30, rewardXp: 30 },
+      { id: 'c_med_ecole', difficulty: 'medium', noTimer: true, minSeconds: 0, title: 'Ranger ses affaires d’école 🎒', desc: 'Trie et range cartable, trousse, cahiers et feuilles à leur place, sans chrono.', rewardCoins: 35, rewardXp: 35 },
 
       { id: 'c_hard_1', difficulty: 'hard', minSeconds: 90, title: 'Opération Sol Net', desc: 'Libère entièrement le sol de la chambre : plus rien ne doit toucher le tapis !', rewardCoins: 45, rewardXp: 45 },
       { id: 'c_hard_2', difficulty: 'hard', minSeconds: 90, title: 'Zéro Objet sur le Lit', desc: 'Débarrasse complètement le lit, refais la couette et range chaque affaire.', rewardCoins: 45, rewardXp: 45 },
@@ -1211,7 +927,7 @@
             </div>
           </div>
 
-          <!-- Réinitialisation / Nouvel animal -->
+          <!-- Actions Compagnon -->
           <div class="pt-1 flex flex-wrap justify-center gap-2">
             <button onclick="openRenamePetModal()" class="px-3.5 py-2 rounded-xl bg-[#151B26] hover:bg-[#1E2634] border border-[#232D3F] text-slate-300 hover:text-white text-xs font-semibold transition flex items-center gap-1.5">
               <span>✏️</span>
@@ -1219,7 +935,7 @@
             </button>
             <button onclick="openResetPetModal()" class="px-3.5 py-2 rounded-xl bg-[#151B26] hover:bg-[#1E2634] border border-[#232D3F] text-slate-400 hover:text-slate-200 text-xs font-semibold transition flex items-center gap-1.5">
               <span>🔄</span>
-              <span>Changer d'animal / Recommencer</span>
+              <span>Changer d'animal</span>
             </button>
           </div>
 
@@ -1305,7 +1021,7 @@
     }
 
     // =========================================================================
-    // 8. ONGLET DÉFIS & CHRONOMÈTRES
+    // 8. ONGLET DÉFIS & CHRONOMÈTRES (AVEC DÉFIS SANS CHRONO & RESET RECORDS)
     // =========================================================================
     let selectedDifficulty = 'easy';
 
@@ -1324,6 +1040,42 @@
       if (!main) return;
 
       if (activeChallenge) {
+        if (activeChallenge.noTimer) {
+          const elapsedNoTimer = Math.max(0, Math.floor((Date.now() - (activeChallenge.startedAt || Date.now())) / 1000));
+          main.innerHTML = `
+            <div class="p-4 space-y-4 flex-1 flex flex-col justify-between">
+              <div class="bg-[#151B26] border border-[#232D3F] rounded-3xl p-5 text-center space-y-4">
+                <span class="inline-block px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-bold">
+                  Défi sans chrono
+                </span>
+                <h2 class="text-xl font-extrabold text-white">${activeChallenge.title}</h2>
+                <p class="text-xs text-slate-300 max-w-xs mx-auto">${activeChallenge.desc}</p>
+
+                <div class="py-4">
+                  <div class="text-3xl font-extrabold text-blue-300">🌿 À ton rythme</div>
+                  <div class="text-[11px] font-semibold text-slate-400 mt-1.5">
+                    Pas de compte à rebours ni de record de vitesse sur cette mission.
+                  </div>
+                </div>
+
+                <div class="text-xs text-slate-400">
+                  Récompense : <span class="text-amber-300 font-bold">+${activeChallenge.rewardCoins} 🪙</span> · <span class="text-blue-300 font-bold">+${activeChallenge.rewardXp} XP</span>
+                </div>
+              </div>
+
+              <div class="space-y-2.5">
+                <button onclick="completeActiveChallenge()" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-extrabold text-sm shadow-lg shadow-emerald-500/25 transition active:scale-95">
+                  Mission terminée ! Valider 🎉
+                </button>
+                <button onclick="cancelActiveChallenge()" class="w-full py-2.5 rounded-2xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-300 text-xs font-bold transition">
+                  Abandonner le défi
+                </button>
+              </div>
+            </div>
+          `;
+          return;
+        }
+
         const isDone = activeChallenge.remaining <= 0;
         const elapsedSeconds = Math.max(1, activeChallenge.total - activeChallenge.remaining);
         const pct = Math.min(100, Math.max(0, Math.round((elapsedSeconds / activeChallenge.total) * 100)));
@@ -1371,6 +1123,7 @@
       }
 
       const filteredChallenges = CONSTRAINT_CHALLENGES.filter((c) => c.difficulty === selectedDifficulty);
+      const hasAnyRecord = state.challengeRecords && Object.keys(state.challengeRecords).length > 0;
 
       main.innerHTML = `
         <div class="p-4 space-y-4">
@@ -1399,7 +1152,8 @@
           <div class="space-y-2.5">
             ${filteredChallenges.map((ch) => {
               const meta = DIFFICULTY_META[ch.difficulty];
-              const bestSec = state.challengeRecords && typeof state.challengeRecords[ch.id] === 'number'
+              const isNoTimer = Boolean(ch.noTimer);
+              const bestSec = !isNoTimer && state.challengeRecords && typeof state.challengeRecords[ch.id] === 'number'
                 ? state.challengeRecords[ch.id]
                 : null;
               return `
@@ -1408,7 +1162,7 @@
                     <div>
                       <div class="flex flex-wrap items-center gap-1.5">
                         <span class="inline-block px-2 py-0.5 rounded-full border text-[10px] font-bold ${meta.badgeClass}">
-                          ${meta.icon} ${meta.label} · ${ch.minSeconds}s max
+                          ${meta.icon} ${meta.label} · ${isNoTimer ? 'Sans chrono' : `${ch.minSeconds}s max`}
                         </span>
                         ${bestSec !== null ? `
                           <span class="inline-block px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[10px] font-bold">
@@ -1423,12 +1177,19 @@
                   <div class="flex items-center justify-between pt-2 border-t border-white/5">
                     <span class="text-xs font-bold text-amber-300">+${ch.rewardCoins} 🪙 · +${ch.rewardXp} XP</span>
                     <button onclick="startConstraintChallenge('${ch.id}')" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition active:scale-95">
-                      Démarrer ⚡
+                      ${isNoTimer ? 'Commencer ✨' : 'Démarrer ⚡'}
                     </button>
                   </div>
                 </div>
               `;
             }).join('')}
+          </div>
+
+          <div class="pt-1 flex justify-center">
+            <button onclick="openResetRecordsModal()" ${hasAnyRecord ? '' : 'disabled'} class="px-3.5 py-2 rounded-xl bg-[#151B26] hover:bg-[#1E2634] disabled:opacity-45 disabled:pointer-events-none border border-[#232D3F] text-slate-400 hover:text-slate-200 text-xs font-semibold transition flex items-center gap-1.5">
+              <span>🏅</span>
+              <span>Réinitialiser les records</span>
+            </button>
           </div>
         </div>
       `;
@@ -1446,8 +1207,22 @@
 
       sfxClick();
       stopChallengeTimer();
+
+      if (ch.noTimer) {
+        activeChallenge = {
+          ...ch,
+          noTimer: true,
+          total: 0,
+          remaining: 0,
+          startedAt: Date.now()
+        };
+        renderChallenges();
+        return;
+      }
+
       activeChallenge = {
         ...ch,
+        noTimer: false,
         total: ch.minSeconds,
         remaining: ch.minSeconds
       };
@@ -1482,17 +1257,21 @@
     function completeActiveChallenge() {
       if (!activeChallenge) return;
       const ch = activeChallenge;
+      const isNoTimer = Boolean(ch.noTimer);
       const elapsedSeconds = Math.max(1, ch.total - ch.remaining);
       stopChallengeTimer();
       activeChallenge = null;
 
-      if (!state.challengeRecords || typeof state.challengeRecords !== 'object') {
-        state.challengeRecords = {};
-      }
-      const prevRecord = typeof state.challengeRecords[ch.id] === 'number' ? state.challengeRecords[ch.id] : null;
-      const isNewRecord = prevRecord === null || elapsedSeconds < prevRecord;
-      if (isNewRecord) {
-        state.challengeRecords[ch.id] = elapsedSeconds;
+      let isNewRecord = false;
+      if (!isNoTimer) {
+        if (!state.challengeRecords || typeof state.challengeRecords !== 'object') {
+          state.challengeRecords = {};
+        }
+        const prevRecord = typeof state.challengeRecords[ch.id] === 'number' ? state.challengeRecords[ch.id] : null;
+        isNewRecord = prevRecord === null || elapsedSeconds < prevRecord;
+        if (isNewRecord) {
+          state.challengeRecords[ch.id] = elapsedSeconds;
+        }
       }
 
       sfxVictory();
@@ -1503,10 +1282,42 @@
       grantXp(ch.rewardXp);
       saveState();
 
-      const recordMsg = isNewRecord ? ` · 🏅 Nouveau record : ${elapsedSeconds}s !` : ` (${elapsedSeconds}s)`;
+      const recordMsg = isNoTimer
+        ? ''
+        : (isNewRecord ? ` · 🏅 Nouveau record : ${elapsedSeconds}s !` : ` (${elapsedSeconds}s)`);
       showToast(`🏆 Défi réussi ! +${ch.rewardCoins} 🪙 et +${ch.rewardXp} XP${recordMsg}`, 'success');
       switchTab('sanctuary');
       spawnJoyParticles();
+    }
+
+    function openResetRecordsModal() {
+      sfxClick();
+      openModal(`
+        <div class="flex items-center justify-between">
+          <h3 class="text-base font-extrabold text-white">🏅 Réinitialiser les records</h3>
+          <button onclick="closeModal()" class="text-slate-400 hover:text-white text-sm font-bold">✕</button>
+        </div>
+        <p class="text-xs text-slate-300 leading-relaxed">
+          Veux-tu effacer tous les meilleurs temps enregistrés sur les défis ? Les pièces, l'XP et le compagnon ne changent pas.
+        </p>
+        <div class="grid grid-cols-2 gap-2.5 pt-1">
+          <button onclick="closeModal()" class="py-2.5 px-3 rounded-xl bg-[#1E2634] hover:bg-[#283346] text-slate-200 text-xs font-bold transition">
+            Annuler
+          </button>
+          <button onclick="confirmResetRecords()" class="py-2.5 px-3 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold transition">
+            Effacer les records
+          </button>
+        </div>
+      `);
+    }
+
+    function confirmResetRecords() {
+      sfxClick();
+      state.challengeRecords = {};
+      saveState();
+      closeModal();
+      showToast('🏅 Tous les records de défis ont été réinitialisés.', 'info');
+      renderChallenges();
     }
 
     // =========================================================================
@@ -1710,10 +1521,11 @@
     }
 
     // =========================================================================
-    // 10. MENU DÉMO (MASQUÉ), RÉINITIALISATION & NAVIGATION GLOBALE
+    // 10. MENU DÉMO (MASQUÉ), CHANGEMENT D'ANIMAL & NAVIGATION GLOBALE
     // =========================================================================
     let secretDemoTapCount = 0;
     let secretDemoTapTimer = null;
+    let pendingSwitchSpecies = null;
 
     function handleSecretDemoTap() {
       secretDemoTapCount += 1;
@@ -1789,34 +1601,105 @@
 
     function openResetPetModal() {
       sfxClick();
+      pendingSwitchSpecies = state.species || 'loutre';
+      renderSwitchPetPickerModal();
+    }
+
+    function renderSwitchPetPickerModal() {
+      const speciesList = Object.values(SPECIES_DATA);
+      const chosenSpec = SPECIES_DATA[pendingSwitchSpecies] || SPECIES_DATA.loutre;
+
       openModal(`
         <div class="flex items-center justify-between">
-          <h3 class="text-base font-extrabold text-white">🔄 Nouveau compagnon</h3>
+          <h3 class="text-base font-extrabold text-white">🔄 Changer d'animal</h3>
           <button onclick="closeModal()" class="text-slate-400 hover:text-white text-sm font-bold">✕</button>
         </div>
-        <p class="text-xs text-slate-300 leading-relaxed">
-          Veux-tu vraiment recommencer avec un nouvel animal ? Les pièces, l'XP et les objets actuels de <span class="font-bold text-white">${state.petName}</span> seront remis à zéro.
+        <p class="text-xs text-slate-300">
+          Choisis l'animal souhaité, puis décide si tu veux garder ta progression actuelle ou tout recommencer à zéro.
         </p>
-        <div class="grid grid-cols-2 gap-2.5 pt-1">
-          <button onclick="closeModal()" class="py-2.5 px-3 rounded-xl bg-[#1E2634] hover:bg-[#283346] text-slate-200 text-xs font-bold transition">
-            Garder ${state.petName}
+
+        <div class="grid grid-cols-4 gap-1.5 max-h-36 overflow-y-auto pr-0.5">
+          ${speciesList.map((sp) => {
+            const isSel = sp.id === pendingSwitchSpecies;
+            return `
+              <button onclick="selectSwitchSpecies('${sp.id}')" class="p-1.5 rounded-xl border flex flex-col items-center gap-0.5 transition ${isSel ? 'bg-blue-500/20 border-blue-400 text-white' : 'bg-[#0D1117] border-[#232D3F] text-slate-400 hover:border-slate-600'}">
+                <span class="text-xl">${sp.emoji}</span>
+                <span class="text-[10px] font-semibold truncate w-full text-center">${sp.name}</span>
+              </button>
+            `;
+          }).join('')}
+        </div>
+
+        <div class="space-y-1">
+          <label class="block text-[11px] font-semibold text-slate-300">Prénom (optionnel, par défaut : ${chosenSpec.defaultPetName}) :</label>
+          <input
+            id="switch-pet-name-input"
+            type="text"
+            maxlength="16"
+            placeholder="${chosenSpec.defaultPetName}"
+            class="w-full px-3 py-2 rounded-xl bg-[#0D1117] border border-[#2A3548] text-white text-xs font-semibold focus:outline-none focus:border-blue-500"
+          />
+        </div>
+
+        <div class="space-y-2 pt-1">
+          <button onclick="applySwitchPet(true)" class="w-full py-2.5 px-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition">
+            ✨ Changer d'animal en gardant la progression
           </button>
-          <button onclick="confirmChildReset()" class="py-2.5 px-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition">
-            Recommencer
+          <button onclick="applySwitchPet(false)" class="w-full py-2.5 px-3 rounded-xl bg-rose-600/90 hover:bg-rose-500 text-white text-xs font-bold transition">
+            🔄 Tout recommencer à zéro (perte de progression)
           </button>
         </div>
       `);
     }
 
-    function confirmChildReset() {
+    function selectSwitchSpecies(speciesId) {
       sfxClick();
-      demoResetAll();
+      const input = document.getElementById('switch-pet-name-input');
+      const typedVal = input ? input.value : '';
+      pendingSwitchSpecies = speciesId;
+      renderSwitchPetPickerModal();
+      const nextInput = document.getElementById('switch-pet-name-input');
+      if (nextInput && typedVal) nextInput.value = typedVal;
+    }
+
+    function applySwitchPet(keepProgress) {
+      const spec = SPECIES_DATA[pendingSwitchSpecies] || SPECIES_DATA.loutre;
+      const input = document.getElementById('switch-pet-name-input');
+      const customName = input && input.value.trim() ? input.value.trim().slice(0, 16) : '';
+
+      stopChallengeTimer();
+      activeChallenge = null;
+
+      if (keepProgress) {
+        state.species = spec.id;
+        state.petName = customName || spec.defaultPetName;
+        state.lastActiveAt = Date.now();
+        saveState();
+        closeModal();
+        sfxVictory();
+        showToast(`✨ ${state.petName} (${spec.name}) prend la relève avec ta progression !`, 'success');
+        switchTab('sanctuary');
+        return;
+      }
+
+      state = {
+        ...getDefaultState(),
+        adopted: true,
+        species: spec.id,
+        petName: customName || spec.defaultPetName,
+        lastActiveAt: Date.now()
+      };
+      saveState();
+      closeModal();
+      sfxVictory();
+      showToast(`🔄 Nouvelle partie lancée avec ${state.petName} !`, 'info');
+      switchTab('sanctuary');
     }
 
     // Ouvre la modale permettant de renommer l'animal sans réinitialiser sa progression
     function openRenamePetModal() {
       sfxClick();
-      const safeName = String(state.petName || '').replace(/"/g, '&quot;');
+      const safeName = String(state.petName || '').replace(/"/g, '"');
       openModal(`
         <div class="flex items-center justify-between">
           <h3 class="text-base font-extrabold text-white">✏️ Nouveau prénom</h3>
